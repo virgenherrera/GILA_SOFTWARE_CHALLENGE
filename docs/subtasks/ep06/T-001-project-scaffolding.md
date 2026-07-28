@@ -42,7 +42,7 @@ Bootstrap the entire project skeleton: Clojure backend (Ring/Reitit), Angular 22
 | deps.edn | Clojure dependency manifest with pinned versions |
 | src/ecommerce/core.clj | Application entry point, server startup |
 | src/ecommerce/router.clj | Reitit router with /api/health route |
-| src/ecommerce/middleware.clj | Error handling, CORS, content-type middleware |
+| src/ecommerce/middleware.clj | Error handling, security headers, content-type middleware (no CORS --- same-origin via nginx, see [middleware-pipeline.md](../../architecture/middleware-pipeline.md)) |
 | src/ecommerce/db.clj | Database connection pool (HikariCP) and migration runner |
 | src/ecommerce/validation.clj | Shared Malli schemas for product, cart, order |
 | resources/migrations/001-create-products.sql | Products table DDL |

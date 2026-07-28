@@ -144,8 +144,8 @@ align with the 3-stage pipeline defined in
 ```bash
 docker compose run --rm backend clojure -M:lint        # clj-kondo
 docker compose run --rm backend clojure -M:fmt --check  # cljfmt
-docker compose run --rm frontend npx ng lint            # eslint + angular-eslint
-docker compose run --rm frontend npx prettier --check . # prettier
+docker compose run --rm frontend pnpm exec ng lint            # eslint + angular-eslint
+docker compose run --rm frontend pnpm exec prettier --check . # prettier
 ```
 
 ### Stage 2b: Dynamic Tests (unit + integration by name)
@@ -158,22 +158,28 @@ Tests are distinguished by **naming convention**, not separate suite configs:
 ```bash
 # All dynamic tests (unit + integration)
 docker compose run --rm backend clojure -M:test
-docker compose run --rm frontend npx vitest run
+docker compose run --rm frontend pnpm exec vitest run
 
-# Filter: unit only
-docker compose run --rm backend clojure -M:test --focus :unit
-docker compose run --rm frontend npx vitest run --testPathPattern='\.spec\.ts$' --testPathIgnorePatterns='integration'
+# Filter: unit only (skip namespaces tagged ^:integration)
+docker compose run --rm backend clojure -M:test --skip-meta :integration
+docker compose run --rm frontend pnpm exec vitest run --exclude '**/*.integration.spec.ts'
 
-# Filter: integration only
-docker compose run --rm backend clojure -M:test --focus :integration
-docker compose run --rm frontend npx vitest run --testPathPattern='integration\.spec\.ts$'
+# Filter: integration only (focus on namespaces tagged ^:integration)
+docker compose run --rm backend clojure -M:test --focus-meta :integration
+docker compose run --rm frontend pnpm exec vitest run integration.spec.ts
 ```
+
+> **Implementation note**: backend filtering requires `^:integration` metadata on integration
+> test namespace forms (e.g., `(ns ^:integration myapp.product.repository-integration-test ...)`).
+> Kaocha's `--focus-meta` / `--skip-meta` operate on namespace metadata, not on namespace name
+> suffixes. The naming convention (`*-integration-test`) remains for human readability; the
+> metadata tag is what the tooling filters on.
 
 ### Stage 3: E2E (Playwright)
 
 ```bash
 # Requires full stack running (docker compose up)
-docker compose run --rm playwright npx playwright test
+docker compose run --rm playwright pnpm exec playwright test
 ```
 
 ### Handoff Quality Gate Variables
@@ -192,9 +198,13 @@ decrement — follows this cycle without exception:
 2. **Green** — Write the minimal implementation code required to make the failing test pass.
    Resist adding behavior the current test does not require; additional behavior gets its own
    Red step first.
-3. **Refactor** — With the test suite green, improve the implementation's structure, naming,
-   or duplication without changing observable behavior. Re-run the full suite after every
-   refactor step to confirm it remains green.
+3. **Refactor** — With the test suite green, improve the implementation applying
+   **SOLID**, **DRY**, **KISS**, **Clean Architecture**, and **Hexagonal Architecture**
+   principles without changing observable behavior. This is where structure emerges:
+   extract ports and adapters, eliminate duplication, name things precisely, ensure single
+   responsibility. Re-run the full suite after every refactor step to confirm it remains
+   green. The Refactor step is not optional cleanup — it is where engineering quality is
+   built into the codebase.
 4. **Commit** — Commit the Red→Green→Refactor unit as a coherent change once the suite is
    green. A commit that introduces new logic without an accompanying test is not acceptable
    under this workflow.

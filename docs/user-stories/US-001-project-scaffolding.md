@@ -76,7 +76,7 @@ As a developer, I want the project skeleton (backend, frontend, Docker, database
 | `deps.edn` | Clojure dependency map with all libraries at exact pinned versions per tech-stack.md; aliases for `:build`, `:test`, `:lint`, `:fmt` |
 | `src/ecommerce/core.clj` | Main entry point; Jetty server bootstrap via `ring-jetty-adapter`; reads port from env or defaults to 3000 |
 | `src/ecommerce/router.clj` | Reitit data-driven router; `GET /api/health` endpoint; Malli coercion middleware; JSON content negotiation |
-| `src/ecommerce/middleware.clj` | Error-envelope middleware (catches all exceptions, returns `{error: {code, message}}`); CORS middleware; JSON response coercion |
+| `src/ecommerce/middleware.clj` | Error-envelope middleware (catches all exceptions, returns `{error: {code, message}}`); security headers middleware; JSON response coercion (no CORS --- same-origin via nginx proxy, see [middleware-pipeline.md](../architecture/middleware-pipeline.md)) |
 | `src/ecommerce/db.clj` | HikariCP connection pool configuration via `next.jdbc`; datasource initialization from env vars; migration runner |
 | `src/ecommerce/validation.clj` | Shared Malli schemas for all Product fields (name, sku, price, stock, weight_kg, category, description) |
 | `resources/migrations/001-create-products.sql` | `CREATE TABLE products` with all columns, constraints, and `idx_products_category` index |

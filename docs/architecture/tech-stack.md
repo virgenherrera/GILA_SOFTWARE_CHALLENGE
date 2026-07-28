@@ -62,6 +62,17 @@ has no JVM, no Clojure CLI, no Leiningen.
 | `org.clojure/data.json` | 2.5.1 | JSON serialization |
 | `org.clojure/tools.logging` | 1.3.0 | Logging facade |
 | `ch.qos.logback/logback-classic` | 1.5.16 | Logging implementation |
+| `metosin/muuntaja` | 0.6.11 | Content negotiation (JSON-only, see [Middleware Pipeline](middleware-pipeline.md)) |
+| `buddy/buddy-sign` | 3.4.0 | HMAC-SHA256 cookie signing for cart identity (see [Security Guidelines](security-guidelines.md)) |
+| `metosin/ring-swagger-ui` | 5.9.0 | Swagger UI 5.x static assets for API docs (see [API Docs Strategy](api-docs-strategy.md)) |
+
+Test/dev dependencies (`:test` alias in `deps.edn`):
+
+| Library | Version | Purpose |
+| ------- | ------- | ------- |
+| `lambdaisland/kaocha` | 1.91.1392 | Test runner with metadata-based filtering |
+| `lambdaisland/kaocha-cloverage` | 1.1.89 | Code coverage integration for Kaocha |
+| `clj-test-containers/clj-test-containers` | 0.7.4 | Testcontainers for ephemeral PostgreSQL in integration tests |
 
 All versions are pinned exactly in `deps.edn` --- no floating ranges, no `RELEASE` or
 `LATEST` markers.
@@ -99,7 +110,7 @@ Angular is chosen over ClojureScript and other JavaScript frameworks because:
   3-day deadline is the strongest argument for any framework choice.
 
 Node.js is installed only inside the Docker build container. The developer's host machine
-has no Node.js, no npm.
+has no Node.js, no pnpm.
 
 ### Libraries
 
@@ -195,9 +206,9 @@ build. If it does not compile, everything stops here.
 
 | Artifact | Backend Command | Frontend Command |
 | -------- | --------------- | ---------------- |
-| Application | `clojure -T:build uber` | `npx ng build --configuration=production` |
+| Application | `clojure -T:build uber` | `pnpm exec ng build --configuration=production` |
 | API docs | (generated from API contract at build time) | --- |
-| Dependencies | `clojure -P` (resolve + cache) | `npm ci` (exact lockfile) |
+| Dependencies | `clojure -P` (resolve + cache) | `pnpm install --frozen-lockfile` (exact lockfile) |
 
 **Gate**: all artifacts produced without errors. The backend uberjar exists, the frontend
 `dist/` directory contains the compiled application, dependencies resolved cleanly.
@@ -211,8 +222,8 @@ feedback). Dynamic tests run second.
 
 | Check | Backend Command | Frontend Command |
 | ----- | --------------- | ---------------- |
-| Lint | `clojure -M:lint` (clj-kondo) | `npx ng lint` (eslint + angular-eslint) |
-| Format | `clojure -M:fmt --check` (cljfmt) | `npx prettier --check .` |
+| Lint | `clojure -M:lint` (clj-kondo) | `pnpm exec ng lint` (eslint + angular-eslint) |
+| Format | `clojure -M:fmt --check` (cljfmt) | `pnpm exec prettier --check .` |
 
 **Gate**: zero lint errors, zero format violations. Warnings are allowed but tracked.
 
@@ -231,15 +242,20 @@ separate suite configurations. This enables flexible filtering:
 ```bash
 # Run ALL tests (unit + integration)
 clojure -M:test                          # backend
-npx vitest run                           # frontend
+pnpm exec vitest run                     # frontend
 
-# Filter by name pattern
-clojure -M:test --focus :unit            # backend: unit only (Kaocha metadata filter)
-npx vitest run --testPathPattern='\.spec\.ts$' --testPathIgnorePatterns='integration'  # frontend: unit only
+# Filter: unit only (skip namespaces tagged ^:integration)
+clojure -M:test --skip-meta :integration                           # backend
+pnpm exec vitest run --exclude '**/*.integration.spec.ts'          # frontend
 
-clojure -M:test --focus :integration     # backend: integration only
-npx vitest run --testPathPattern='integration\.spec\.ts$'  # frontend: integration only
+# Filter: integration only (focus on namespaces tagged ^:integration)
+clojure -M:test --focus-meta :integration                          # backend
+pnpm exec vitest run integration.spec.ts                           # frontend
 ```
+
+> **Note**: backend filtering requires `^:integration` metadata on integration test namespace
+> forms. The naming convention (`*-integration-test`) is for human readability; the metadata
+> tag is what Kaocha filters on.
 
 **Gate**: all tests pass. Zero failures, zero skipped (skipped tests are treated as
 incomplete work, not as acceptable state).
@@ -250,7 +266,7 @@ A single Playwright suite exercises the full application stack end-to-end. This 
 requires the complete Docker Compose environment running (backend + frontend + database).
 
 ```bash
-npx playwright test
+pnpm exec playwright test
 ```
 
 **Gate**: all E2E tests pass against the fully composed application.
@@ -272,7 +288,7 @@ subjective `MAN` gates exist in the build pipeline.
 ### Zero-Local-Install Guarantee
 
 The developer's host machine requires only Docker and Docker Compose. No JDK, no
-Clojure CLI, no Node.js, no npm, no PostgreSQL client. Every tool runs inside a
+Clojure CLI, no Node.js, no pnpm, no PostgreSQL client. Every tool runs inside a
 container.
 
 ### Multi-Stage Dockerfiles
@@ -310,7 +326,7 @@ Key design decisions:
 ```dockerfile
 # Stage 1: Build
 FROM node:22-alpine AS build
-# npm ci (exact versions), ng lint, vitest, ng build --configuration=production
+# pnpm install --frozen-lockfile (exact versions), ng lint, vitest, ng build --configuration=production
 
 # Stage 2: Test
 FROM build AS test
@@ -320,7 +336,7 @@ FROM build AS test
 # Stage 3: Production
 FROM nginx:1.27-alpine AS production
 # Copy only dist/frontend/browser/ from build stage
-# No Node.js, no npm, no source code in production
+# No Node.js, no pnpm, no source code in production
 EXPOSE 80
 ```
 
@@ -335,9 +351,10 @@ Key design decisions:
 
 ```yaml
 services:
-  db:        # PostgreSQL 17.5
-  backend:   # Clojure uberjar on JRE 21
-  frontend:  # nginx serving static Angular build
+  db:          # PostgreSQL 17.5
+  backend:     # Clojure uberjar on JRE 21
+  frontend:    # nginx serving static Angular build
+  playwright:  # E2E test runner (mcr.microsoft.com/playwright)
 ```
 
 ```mermaid
@@ -354,6 +371,12 @@ flowchart LR
   `/api/*` requests to the backend, avoiding CORS configuration.
 - **Database volume**: optional named volume for PostgreSQL data persistence. Omitted by
   default for a clean evaluation experience (each `docker compose up` starts fresh).
+- **Docker socket mount**: the `backend` service mounts `/var/run/docker.sock` to enable
+  Testcontainers to launch ephemeral PostgreSQL instances for integration tests. This is
+  required only during the test phase (`docker compose run --rm backend clojure -M:test`).
+- **Playwright container**: `mcr.microsoft.com/playwright:v1.62.0-noble` with `ipc: host`
+  (Chromium requires shared memory). Connects to frontend via Compose DNS (`http://frontend:80`).
+  `depends_on: frontend: condition: service_healthy` ensures the frontend is ready.
 
 ## 7. CSV Import Pipeline
 
@@ -515,7 +538,7 @@ flowchart TD
     subgraph "Stage 1: BUILD"
         B1[Backend: resolve deps]
         B2[Backend: compile + uberjar]
-        B3[Frontend: npm ci]
+        B3[Frontend: pnpm install --frozen-lockfile]
         B4[Frontend: ng build --prod]
         B5[API docs: generate]
         B1 --> B2
@@ -623,8 +646,8 @@ docker compose run --rm backend clojure -P
 docker compose run --rm backend clojure -T:build uber
 
 # Frontend: install + build
-docker compose run --rm frontend npm ci
-docker compose run --rm frontend npx ng build --configuration=production
+docker compose run --rm frontend pnpm install --frozen-lockfile
+docker compose run --rm frontend pnpm exec ng build --configuration=production
 ```
 
 ### Stage 2a: Static Analysis Commands
@@ -635,8 +658,8 @@ docker compose run --rm backend clojure -M:lint
 docker compose run --rm backend clojure -M:fmt --check
 
 # Frontend
-docker compose run --rm frontend npx ng lint
-docker compose run --rm frontend npx prettier --check .
+docker compose run --rm frontend pnpm exec ng lint
+docker compose run --rm frontend pnpm exec prettier --check .
 ```
 
 ### Stage 2b: Dynamic Test Commands
@@ -644,22 +667,22 @@ docker compose run --rm frontend npx prettier --check .
 ```bash
 # All tests (unit + integration)
 docker compose run --rm backend clojure -M:test
-docker compose run --rm frontend npx vitest run
+docker compose run --rm frontend pnpm exec vitest run
 
-# Filter by name pattern — backend (Kaocha metadata)
-docker compose run --rm backend clojure -M:test --focus :unit
-docker compose run --rm backend clojure -M:test --focus :integration
+# Filter: unit only (skip ^:integration namespaces / integration spec files)
+docker compose run --rm backend clojure -M:test --skip-meta :integration
+docker compose run --rm frontend pnpm exec vitest run --exclude '**/*.integration.spec.ts'
 
-# Filter by name pattern — frontend (Vitest path pattern)
-docker compose run --rm frontend npx vitest run --testPathPattern='\.spec\.ts$' --testPathIgnorePatterns='integration'
-docker compose run --rm frontend npx vitest run --testPathPattern='integration\.spec\.ts$'
+# Filter: integration only (focus on ^:integration namespaces / integration spec files)
+docker compose run --rm backend clojure -M:test --focus-meta :integration
+docker compose run --rm frontend pnpm exec vitest run integration.spec.ts
 ```
 
 ### Stage 3: E2E Commands
 
 ```bash
 # Requires full stack running (docker compose up)
-docker compose run --rm playwright npx playwright test
+docker compose run --rm playwright pnpm exec playwright test
 ```
 
 ### Database Commands
@@ -675,14 +698,14 @@ docker compose down -v && docker compose up --build
 | -------- | ------- |
 | `{build_command}` | `docker compose up --build` |
 | `{build_command_be}` | `docker compose run --rm backend clojure -T:build uber` |
-| `{build_command_fe}` | `docker compose run --rm frontend npx ng build --configuration=production` |
+| `{build_command_fe}` | `docker compose run --rm frontend pnpm exec ng build --configuration=production` |
 | `{lint_command}` | `docker compose run --rm backend clojure -M:lint` |
-| `{lint_command_fe}` | `docker compose run --rm frontend npx ng lint` |
+| `{lint_command_fe}` | `docker compose run --rm frontend pnpm exec ng lint` |
 | `{fmt_command}` | `docker compose run --rm backend clojure -M:fmt --check` |
-| `{fmt_command_fe}` | `docker compose run --rm frontend npx prettier --check .` |
+| `{fmt_command_fe}` | `docker compose run --rm frontend pnpm exec prettier --check .` |
 | `{test_command}` | `docker compose run --rm backend clojure -M:test` |
-| `{test_command_fe}` | `docker compose run --rm frontend npx vitest run` |
-| `{e2e_command}` | `docker compose run --rm playwright npx playwright test` |
+| `{test_command_fe}` | `docker compose run --rm frontend pnpm exec vitest run` |
+| `{e2e_command}` | `docker compose run --rm playwright pnpm exec playwright test` |
 
 ## 10. Alternatives Considered
 

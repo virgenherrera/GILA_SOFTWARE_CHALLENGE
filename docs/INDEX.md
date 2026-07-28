@@ -54,6 +54,14 @@ Legend: green = complete, blue = current, gray = pending.
 - [x] [Testing Strategy](architecture/testing-strategy.md)
 - [x] [API Contract](architecture/api-contract.md)
 - [x] [Data Model](architecture/data-model.md)
+- [x] [Health Check Strategy](architecture/health-check-strategy.md)
+- [x] [Middleware Pipeline](architecture/middleware-pipeline.md)
+- [x] [Payload Validation & Pruning](architecture/validation-pruning.md)
+- [x] [Error Handling Pipeline](architecture/error-handling.md)
+- [x] [Security Guidelines](architecture/security-guidelines.md)
+- [x] [TDD Workflow](architecture/tdd-workflow.md)
+- [x] [API Documentation Strategy](architecture/api-docs-strategy.md)
+- [x] [Frontend Package Management](architecture/pnpm-config.md)
 
 ## Refinement
 
@@ -115,7 +123,8 @@ Legend: green = complete, blue = current, gray = pending.
 
 ## Sprint Planning
 
-TBD --- populated during Plan phase.
+- [x] [Batch 1 --- MVP Implementation Plan](subtasks/batch-1-plan.md) --- 7 execution waves, 16 tasks, dependency graph
+- Handoff files: [T-001](subtasks/ep06/T-001-project-scaffolding.md) through [T-016](subtasks/ep06/T-016-readme-documentation.md)
 
 ## Navigation Notes
 
