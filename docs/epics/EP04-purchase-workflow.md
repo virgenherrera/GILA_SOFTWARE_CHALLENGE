@@ -83,9 +83,10 @@ flowchart TD
 - Stock is the single source of truth for purchasability; a cart may reference a quantity
   that is no longer available and must be re-validated at checkout time, never assumed
   valid from the moment it was added.
-- Every monetary value shown to the shopper (unit price, subtotal, total) must reconcile
-  with the product data at the time of checkout, not a stale snapshot from when the item
-  was added to the cart.
+- The unit price shown to the shopper is the snapshot captured when the item was added to
+  the cart (`unit_price_snapshot`), not a live re-fetch of the current product price. This
+  snapshot carries through to the order. Stock availability (not price) is re-validated at
+  checkout time.
 - Concurrent checkouts against the same product's limited stock must not both succeed
   when combined quantity exceeds availability; this epic defines the observable behavior
   (one succeeds, the conflicting one is rejected), not the concurrency mechanism.

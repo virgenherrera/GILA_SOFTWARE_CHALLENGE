@@ -2,8 +2,8 @@
 
 ## Current Phase & State
 
-**Phase**: Architect --- all artifacts drafted, pending MIM approval.
-**Sub-state**: MIM Gate --- tech-stack, testing-strategy, api-contract, data-model ready for review.
+**Phase**: Plan --- decomposing refined stories into handoff files for implementation.
+**Sub-state**: Refine complete --- 16 stories written, addenda committed, transitioning to Plan.
 
 To begin: describe the idea, problem, and target audience. The orchestrator guides
 the pipeline from here.

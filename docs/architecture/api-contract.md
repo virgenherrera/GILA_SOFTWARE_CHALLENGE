@@ -91,6 +91,7 @@ to the request as a whole.
 | `VALIDATION_ERROR` | 400 | One or more fields failed validation; `details` lists each field and reason |
 | `NOT_FOUND` | 404 | The requested resource does not exist |
 | `CONFLICT` | 409 | A uniqueness constraint was violated (e.g., duplicate SKU) |
+| `PRODUCT_IN_USE` | 409 | Cannot delete a product referenced by existing orders or carts |
 | `INSUFFICIENT_STOCK` | 409 | One or more cart items exceed available stock at checkout time |
 | `INTERNAL_ERROR` | 500 | An unexpected server error; no stack traces, SQL fragments, or file paths are leaked |
 
@@ -246,11 +247,11 @@ Creates a new product in the catalog.
 
 | Field | Type | Required | Constraints |
 | ----- | ---- | -------- | ----------- |
-| `name` | string | yes | Non-empty after trim; whitespace-only is rejected |
-| `sku` | string | yes | Non-empty; unique across catalog; immutable after creation |
-| `description` | string | no | May be empty or omitted |
-| `category` | string | no | May be empty or omitted (uncategorized) |
-| `price` | decimal | yes | Strictly greater than 0 |
+| `name` | string | yes | Non-empty after trim; whitespace-only is rejected; max 255 characters |
+| `sku` | string | yes | Non-empty; unique across catalog; immutable after creation; max 50 characters; case-sensitive |
+| `description` | string | no | May be empty or omitted; max 2000 characters |
+| `category` | string | no | May be empty or omitted (uncategorized); max 100 characters |
+| `price` | decimal | yes | Strictly greater than 0; max 2 decimal places |
 | `stock` | integer | yes | Greater than or equal to 0 |
 | `weight_kg` | decimal | no | Greater than or equal to 0 when present; may be omitted |
 
@@ -378,6 +379,22 @@ Empty body on successful deletion.
   "error": {
     "code": "NOT_FOUND",
     "message": "Product not found"
+  }
+}
+```
+
+#### Response --- 409 Conflict
+
+Returned when the product is referenced by existing order or cart items.
+
+```json
+{
+  "error": {
+    "code": "PRODUCT_IN_USE",
+    "message": "Cannot delete product 'RS-001': referenced by existing orders",
+    "details": [
+      { "field": "sku", "reason": "Product is referenced by 3 order(s)" }
+    ]
   }
 }
 ```
@@ -1020,11 +1037,11 @@ VALIDATION_ERROR)
 
 | Field | Required | Type | Constraint | Reject Examples |
 | ----- | -------- | ---- | ---------- | --------------- |
-| `name` | yes | string | Non-empty after trim | `""`, `"   "` |
-| `sku` | yes | string | Non-empty, unique | `""`, duplicate |
-| `description` | no | string | _(none)_ | _(nothing rejected)_ |
-| `category` | no | string | _(none)_ | _(nothing rejected)_ |
-| `price` | yes | decimal | `> 0` | `0`, `"free"`, `"$29.99"`, negative |
+| `name` | yes | string | Non-empty after trim; max 255 chars | `""`, `"   "` |
+| `sku` | yes | string | Non-empty, unique, case-sensitive; max 50 chars | `""`, duplicate |
+| `description` | no | string | Max 2000 chars | _(nothing rejected unless over max)_ |
+| `category` | no | string | Max 100 chars | _(nothing rejected unless over max)_ |
+| `price` | yes | decimal | `> 0`; max 2 decimal places | `0`, `"free"`, `"$29.99"`, negative, `29.999` |
 | `stock` | yes | integer | `>= 0` | `-1`, `1.5`, empty |
 | `weight_kg` | no | decimal | `>= 0` when present | `-1` |
 

@@ -25,10 +25,10 @@ flowchart TD
 
     style INDEX fill:#3b82f6,color:#fff
     style BRIEF fill:#22c55e,color:#fff
-    style GLOSS fill:#94a3b8,color:#fff
-    style ARCH fill:#94a3b8,color:#fff
-    style EPICS fill:#94a3b8,color:#fff
-    style STORIES fill:#94a3b8,color:#fff
+    style GLOSS fill:#22c55e,color:#fff
+    style ARCH fill:#22c55e,color:#fff
+    style EPICS fill:#22c55e,color:#fff
+    style STORIES fill:#22c55e,color:#fff
     style TASKS fill:#94a3b8,color:#fff
 ```
 
@@ -54,6 +54,64 @@ Legend: green = complete, blue = current, gray = pending.
 - [x] [Testing Strategy](architecture/testing-strategy.md)
 - [x] [API Contract](architecture/api-contract.md)
 - [x] [Data Model](architecture/data-model.md)
+
+## Refinement
+
+- [x] [MVP Batch 1 --- Refinement Addenda](epics/mvp-batch-1-refinement.md) --- 18 resolved decisions, MVP cut, implementation order
+
+## User Stories --- MVP v1 (16 stories)
+
+### EP06 --- Infrastructure
+
+- [ ] [US-001 --- Project Scaffolding](user-stories/US-001-project-scaffolding.md)
+
+### EP01 --- Product Management (Backend)
+
+- [ ] [US-002 --- Create Product with Validation & Sanitization](user-stories/US-002-create-product.md)
+- [ ] [US-003 --- Update Product](user-stories/US-003-update-product.md)
+- [ ] [US-004 --- Delete Product](user-stories/US-004-delete-product.md)
+
+### EP02 --- CSV Import (Backend)
+
+- [ ] [US-005 --- CSV Upload & Background Processing Pipeline](user-stories/US-005-csv-upload-processing.md)
+- [ ] [US-006 --- CSV Row Validation](user-stories/US-006-csv-row-validation.md)
+- [ ] [US-007 --- Import Results & Error Reporting](user-stories/US-007-import-results-reporting.md)
+
+### EP03 --- Product Search (Backend)
+
+- [ ] [US-008 --- Product Search with Filters, Sort & Pagination](user-stories/US-008-product-search.md)
+
+### EP04 --- Purchase Workflow (Backend)
+
+- [ ] [US-009 --- Cart Operations](user-stories/US-009-cart-operations.md)
+- [ ] [US-010 --- Checkout & Order Creation](user-stories/US-010-checkout-order.md)
+
+### EP05 --- User Interface (Frontend)
+
+- [ ] [US-011 --- Product Management Views](user-stories/US-011-product-management-views.md)
+- [ ] [US-012 --- CSV Import View](user-stories/US-012-csv-import-view.md)
+- [ ] [US-013 --- Product Search View](user-stories/US-013-product-search-view.md)
+- [ ] [US-014 --- Cart & Checkout Views](user-stories/US-014-cart-checkout-views.md)
+
+### EP06 --- Delivery
+
+- [ ] [US-015 --- Docker Compose Multi-Stage Setup](user-stories/US-015-docker-compose-setup.md)
+- [ ] [US-016 --- README & Decision Documentation](user-stories/US-016-readme-documentation.md)
+
+## Deferred --- v2+
+
+| Item | Epic | Reason |
+|------|------|--------|
+| Duplicate product as template | EP01 | Could Have |
+| Warning before delete with purchase history | EP01 | Should Have --- FK already protects |
+| Real-time progress via SSE | EP02 | Could Have --- polling suffices |
+| Dry-run preview | EP02 | Could Have |
+| Export/download skipped rows | EP02 | Should Have --- API errors endpoint covers |
+| Search suggestions | EP03 | Could Have |
+| Session-remembered filters | EP03 | Could Have |
+| Responsive layout | EP05 | Should Have --- Low UX weight |
+| Cart Abandoned transition | EP04 | Not required |
+| Order Fulfilled transition | EP04 | Not required |
 
 ## Sprint Planning
 
