@@ -38,8 +38,8 @@ Implement `POST /api/products` with full validation using shared Malli schemas, 
 | docs/architecture/middleware-pipeline.md | all | Middleware stack where validation and error handling execute |
 | docs/architecture/validation-pruning.md | all | Malli closed schema, multi-error collection for product fields |
 | docs/architecture/error-handling.md | all | Exception→error code translation (VALIDATION_ERROR, CONFLICT) |
-| docs/architecture/security-guidelines.md | all | Input security (XSS rejection, SQL injection via parameterized queries) |
 | docs/architecture/tdd-workflow.md | all | TDD process for validation rules and API handlers |
+| docs/architecture/testing-strategy.md | all | Test pyramid, security test cases, TDD workflow |
 
 ## Deliverables
 
@@ -63,11 +63,11 @@ Implement `POST /api/products` with full validation using shared Malli schemas, 
 | # | Gate | Command/Check | Type | Pass Criteria |
 |---|------|---------------|------|---------------|
 | 1 | Handoff exists | `test -f docs/subtasks/ep01/T-002-create-product.md` | EXE | exit 0 |
-| 2 | Unit tests pass | `docker compose run --rm backend clojure -M:test` | EXE | exit 0 |
-| 3 | Integration tests pass | `docker compose run --rm backend clojure -M:test` | EXE | exit 0 |
+| 2 | Unit tests pass | `docker compose run --rm backend clojure -M:test --skip-meta :integration` | EXE | exit 0 |
+| 3 | Integration tests pass | `docker compose run --rm backend clojure -M:test --focus-meta :integration` | EXE | exit 0 |
 | 4 | Empty name rejected | `curl -s -X POST http://localhost:3000/api/products -H 'Content-Type: application/json' -d '{"name":"","sku":"TEST-001","price":10,"stock":5}' -w '%{http_code}'` | EXE | HTTP 400 |
-| 5 | Duplicate SKU rejected | Two POSTs with same SKU → second returns 409 | MANUAL | HTTP 409 with DUPLICATE_SKU code |
-| 6 | XSS sanitized | POST with `<script>alert(1)</script>` in name → stored without tags | MANUAL | Name stored as `alert(1)` or escaped |
+| 5 | Duplicate SKU rejected | Two POSTs with same SKU → second returns 409 | MANUAL | HTTP 409 with CONFLICT code |
+| 6 | XSS sanitized | POST with `<script>alert(1)</script>` in name → rejected or safely encoded per security-guidelines.md | MANUAL | Payload is either rejected at validation (400) or safely encoded on output; never tag-stripped |
 | 7 | SQLi neutralized | POST with `'; DROP TABLE products;--` in name → stored as literal string | MANUAL | No table dropped, string stored literally |
 | 8 | Multi-error response | POST with multiple invalid fields → all errors returned in one response | MANUAL | errors array contains all violations |
 | 9 | No internal leak | Error responses never contain stack traces or SQL details | MANUAL | Only structured error codes and messages |
@@ -79,7 +79,6 @@ Implement `POST /api/products` with full validation using shared Malli schemas, 
 - NOT in scope: Frontend UI for product creation
 - NOT in scope: CSV import endpoint
 - NOT in scope: Product search or filtering
-- NOT in scope: Category assignment during creation
 
 ## Anti-patterns
 
@@ -89,7 +88,7 @@ Implement `POST /api/products` with full validation using shared Malli schemas, 
 | Catch-all exception handler in endpoint | Hides bugs, returns misleading 500s | Catch specific exceptions (duplicate key, validation) and let middleware handle the rest |
 | String concatenation for SQL | SQL injection vulnerability | Use parameterized queries via HoneySQL or next.jdbc |
 | Return first error only | Poor UX, forces repeated submissions | Collect all validation errors and return them in a single response |
-| Expose PostgreSQL error details | Information disclosure vulnerability | Translate DB errors to domain error codes (e.g., DUPLICATE_SKU) |
+| Expose PostgreSQL error details | Information disclosure vulnerability | Translate DB errors to domain error codes (e.g., CONFLICT) |
 
 ## Rollback Guidance
 
@@ -116,7 +115,7 @@ This removes the product handler, repository, and tests, and restores the router
 - Dead code and unused dependencies MUST be removed
 
 ### PROJECT-PIPELINE
-- Pipeline stages: install → build → lint → test:unit → test:integration
+- Pipeline stages: install → build → lint → test:unit → test:integration → test:e2e
 - Failing stage STOPS the pipeline
 
 ## Status Protocol

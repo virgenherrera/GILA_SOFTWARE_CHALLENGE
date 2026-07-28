@@ -42,6 +42,8 @@ Finalize Docker multi-stage builds and compose configuration so that `docker com
 | docs/architecture/pnpm-config.md | all | Frontend Dockerfile pnpm configuration |
 | docs/architecture/health-check-strategy.md | all | Docker healthcheck configuration |
 | docs/architecture/tdd-workflow.md | all | TDD process reference |
+| docs/architecture/testing-strategy.md | all | Test pyramid, per-epic test matrix, security test cases, TDD scaffolding exception |
+| docs/user-stories/US-015-docker-compose-setup.md | all | Acceptance criteria for Docker Compose finalization |
 
 ## Deliverables
 
@@ -57,7 +59,7 @@ Finalize Docker multi-stage builds and compose configuration so that `docker com
 |------|--------|
 | Dockerfile.backend | Finalize multi-stage: build (uberjar) -> test (run tests) -> prod (JRE only, no JDK) |
 | Dockerfile.frontend | Finalize multi-stage: build (ng build) -> test (vitest) -> prod (nginx only, no Node) |
-| docker-compose.yml | Final service config: startup order, health checks, internal network, no exposed DB port |
+| docker-compose.yml | Final service config: startup order, health checks, internal network, no exposed DB port; re-confirm backend mounts /var/run/docker.sock for Testcontainers (from T-001); add `playwright` service (Node 22, Playwright, runs E2E tests against the full stack) |
 | nginx.conf | Final proxy rules: /api/* -> backend:3000, / -> frontend static files |
 
 ## Quality Gates
@@ -65,20 +67,23 @@ Finalize Docker multi-stage builds and compose configuration so that `docker com
 | # | Gate | Command/Check | Type | Pass Criteria |
 |---|------|---------------|------|---------------|
 | 1 | Clean start | `docker compose down -v && docker compose up --build -d` | EXE | All 3 services start without error |
-| 2 | Migrations run | `docker compose exec postgres psql -U ecommerce -c "\\dt"` | EXE | All 8 migration tables present |
-| 3 | Backend multi-stage | Inspect Dockerfile.backend | REVIEW | build: uberjar, test: runs tests, prod: JRE only |
-| 4 | Frontend multi-stage | Inspect Dockerfile.frontend | REVIEW | build: ng build, test: vitest, prod: nginx only |
+| 2 | Migrations run | `docker compose exec db psql -U app -d ecommerce -c "\\dt"` | EXE | All 8 migration tables present |
+| 3 | Backend multi-stage | Inspect Dockerfile.backend | REVIEW | build: uberjar, test: runs lint + unit tests + integration tests, prod: JRE only |
+| 4 | Frontend multi-stage | Inspect Dockerfile.frontend | REVIEW | build: ng build, test: runs lint + unit tests, prod: nginx only |
 | 5 | Nginx proxy | `curl -sf http://localhost:8080/api/health` | EXE | HTTP 200, proxied to backend:3000 |
 | 6 | Frontend reachable | `curl -sf http://localhost:8080` | EXE | HTTP 200, Angular app served |
 | 7 | Health checks | `docker compose ps` | EXE | All services show "healthy" status |
 | 8 | Startup order | Inspect docker-compose.yml depends_on | REVIEW | db -> backend -> frontend |
 | 9 | No host deps | No JDK/Node/npm/PostgreSQL commands used outside Docker | REVIEW | All tooling runs inside containers |
-| 10 | No exposed DB | `docker compose port postgres 5432` returns empty | EXE | PostgreSQL not exposed to host |
+| 10 | No exposed DB | `docker compose port db 5432` returns empty | EXE | PostgreSQL not exposed to host |
 | 11 | Exact versions | No `latest` tags in Dockerfiles, no floating versions in deps | REVIEW | All versions pinned |
 | 12 | Backend tests | `docker compose run --rm backend clojure -M:test` | EXE | exit 0 |
 | 13 | Frontend tests | `docker compose run --rm frontend pnpm exec vitest run` | EXE | exit 0 |
 | 14 | Smoke test | `bash test/smoke-test.sh` | EXE | exit 0 |
 | 15 | Clean rebuild | `docker compose down -v && docker compose up --build -d` | EXE | Idempotent, no stale state |
+| 16 | Backend lint | `docker compose run --rm backend clojure -M:lint` | EXE | exit 0, no lint errors |
+| 17 | Frontend lint | `docker compose run --rm frontend pnpm exec ng lint` | EXE | exit 0, no lint errors |
+| 18 | Playwright service | Inspect docker-compose.yml | REVIEW | `playwright` service present (Node 22, Playwright, runs E2E tests against full stack) |
 
 ## Boundaries
 
@@ -125,7 +130,7 @@ rm -f test/smoke-test.sh
 - Dead code MUST be removed
 
 ### PROJECT-PIPELINE
-- Pipeline: install -> build -> lint -> test:unit -> test:integration
+- Pipeline: install -> build -> lint -> test:unit -> test:integration -> test:e2e
 - Failing stage STOPS the pipeline
 
 ## Status Protocol
@@ -141,7 +146,7 @@ Blocker: (if applicable)
 ### Deliverables
 - [ ] Dockerfile.backend finalized (build -> test -> prod stages)
 - [ ] Dockerfile.frontend finalized (build -> test -> prod stages)
-- [ ] docker-compose.yml finalized (health checks, startup order, internal network)
+- [ ] docker-compose.yml finalized (health checks, startup order, internal network, docker.sock mount for Testcontainers, playwright service)
 - [ ] nginx.conf finalized (/api/* proxy, static file serving)
 - [ ] test/smoke-test.sh created and executable
 
@@ -161,3 +166,6 @@ Blocker: (if applicable)
 - [ ] Gate 13: Frontend tests pass in Docker
 - [ ] Gate 14: Smoke test passes
 - [ ] Gate 15: Clean rebuild is idempotent
+- [ ] Gate 16: Backend lint passes
+- [ ] Gate 17: Frontend lint passes
+- [ ] Gate 18: Playwright service present

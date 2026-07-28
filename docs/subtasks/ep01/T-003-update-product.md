@@ -35,7 +35,9 @@ Implement `PUT /api/products/:sku` with shared Malli validation, SKU immutabilit
 | src/ecommerce/validation.clj | all | Shared schemas for validation reuse |
 | docs/architecture/validation-pruning.md | all | Malli closed schema, payload pruning on PUT body |
 | docs/architecture/error-handling.md | all | Exception→error code translation |
+| docs/architecture/security-guidelines.md | all | XSS screening, SQLi prevention, cookie config, security headers |
 | docs/architecture/tdd-workflow.md | all | TDD process reference |
+| docs/architecture/testing-strategy.md | all | Test pyramid, security test cases, TDD workflow |
 
 ## Deliverables
 
@@ -59,14 +61,17 @@ Implement `PUT /api/products/:sku` with shared Malli validation, SKU immutabilit
 | # | Gate | Command/Check | Type | Pass Criteria |
 |---|------|---------------|------|---------------|
 | 1 | Handoff exists | `test -f docs/subtasks/ep01/T-003-update-product.md` | EXE | exit 0 |
-| 2 | Unit tests pass | `docker compose run --rm backend clojure -M:test` | EXE | exit 0 |
-| 3 | Integration tests pass | `docker compose run --rm backend clojure -M:test` | EXE | exit 0 |
-| 4 | SKU immutability | PUT with different SKU in body than URL → rejected | MANUAL | HTTP 400 or SKU in body ignored |
-| 5 | 404 for non-existent | PUT to `/api/products/NONEXISTENT-SKU` → 404 | MANUAL | HTTP 404 with PRODUCT_NOT_FOUND |
+| 2 | Unit tests pass | `docker compose run --rm backend clojure -M:test --skip-meta :integration` | EXE | exit 0 |
+| 3 | Integration tests pass | `docker compose run --rm backend clojure -M:test --focus-meta :integration` | EXE | exit 0 |
+| 4 | SKU immutability | PUT `/api/products/:sku` with a body containing a different `sku` field → rejected | MANUAL | HTTP 400 BAD_REQUEST; the URL `:sku` parameter is always authoritative and the body `sku` field, if present, must match or be absent |
+| 5 | 404 for non-existent | PUT to `/api/products/NONEXISTENT-SKU` → 404 | MANUAL | HTTP 404 with NOT_FOUND |
 | 6 | Validation reuse | No duplicate Malli schemas in update handler | REVIEW | Same schemas as POST handler |
 | 7 | Cart snapshot immune | Update product price → existing cart_items retain original snapshot price | MANUAL | cart_items.unit_price_snapshot unchanged |
-| 8 | Existing tests unbroken | All T-002 tests still pass after changes | EXE | `docker compose run --rm backend clojure -M:test` exit 0 |
-| 9 | No side effects | `git diff --stat` | EXE | Only expected files |
+| 8 | XSS sanitized on update | PUT with `<script>alert(1)</script>` in name → rejected or safely encoded per security-guidelines.md | MANUAL | Payload is either rejected at validation (400) or safely encoded on output; never tag-stripped |
+| 9 | SQLi neutralized on update | PUT with `'; DROP TABLE products;--` in name → stored as inert string via parameterized query | MANUAL | No table dropped, string stored literally per security-guidelines.md |
+| 10 | No internal leak | Error responses from the update endpoint never contain stack traces, raw SQL fragments, file paths, or internal hostnames | MANUAL | Only structured error codes and messages |
+| 11 | Existing tests unbroken | All T-002 tests still pass after changes | EXE | `docker compose run --rm backend clojure -M:test` exit 0 |
+| 12 | No side effects | `git diff --stat` | EXE | Only expected files |
 
 ## Boundaries
 
@@ -110,7 +115,7 @@ This restores handler, repository, and router to their T-002 state and removes t
 - Dead code and unused dependencies MUST be removed
 
 ### PROJECT-PIPELINE
-- Pipeline stages: install → build → lint → test:unit → test:integration
+- Pipeline stages: install → build → lint → test:unit → test:integration → test:e2e
 - Failing stage STOPS the pipeline
 
 ## Status Protocol
@@ -138,5 +143,8 @@ Blocker: (if applicable)
 - [ ] Gate 5: 404 for non-existent product
 - [ ] Gate 6: Validation reuse confirmed
 - [ ] Gate 7: Cart snapshot immune
-- [ ] Gate 8: Existing tests unbroken
-- [ ] Gate 9: No side effects
+- [ ] Gate 8: XSS sanitized on update
+- [ ] Gate 9: SQLi neutralized on update
+- [ ] Gate 10: No internal leak
+- [ ] Gate 11: Existing tests unbroken
+- [ ] Gate 12: No side effects

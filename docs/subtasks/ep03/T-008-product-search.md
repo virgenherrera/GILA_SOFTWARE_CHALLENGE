@@ -42,6 +42,7 @@ Implement `GET /api/products` (paginated listing with full-text search, category
 | docs/architecture/error-handling.md | all | Exception→error code translation for search errors |
 | docs/architecture/security-guidelines.md | all | Search input security (script content in search queries) |
 | docs/architecture/tdd-workflow.md | all | TDD process reference |
+| docs/architecture/testing-strategy.md | all | Test pyramid, security test cases, search-specific test matrix |
 
 ## Deliverables
 
@@ -127,7 +128,7 @@ rm -f test/ecommerce/product/search_integration_test.clj
 - Dead code MUST be removed
 
 ### PROJECT-PIPELINE
-- Pipeline: install -> build -> lint -> test:unit -> test:integration
+- Pipeline: install -> build -> lint -> test:unit -> test:integration -> test:e2e
 - Failing stage STOPS the pipeline
 
 ## Status Protocol

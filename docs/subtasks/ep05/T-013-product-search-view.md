@@ -11,7 +11,7 @@
 | Persona | Customer |
 | Model Tier | standard |
 | Priority | Must Have |
-| Depends On | T-008 (backend search API) |
+| Depends On | T-008, T-011 |
 
 ## Objective
 
@@ -38,6 +38,7 @@ Implement an Angular 22 search interface with keyword input, category filter dro
 | docs/architecture/security-guidelines.md | all | Search input must not render as HTML |
 | docs/architecture/tdd-workflow.md | all | TDD process for Angular components |
 | docs/architecture/pnpm-config.md | all | pnpm configuration reference |
+| docs/architecture/testing-strategy.md | all | Test pyramid, search view test matrix |
 
 ## Deliverables
 
@@ -123,7 +124,7 @@ Revert app.routes.ts changes manually if other routes were added in the same com
 - Dead code MUST be removed
 
 ### PROJECT-PIPELINE
-- Pipeline: install -> build -> lint -> test:unit -> test:integration
+- Pipeline: install -> build -> lint -> test:unit -> test:integration -> test:e2e
 - Failing stage STOPS the pipeline
 
 ## Status Protocol

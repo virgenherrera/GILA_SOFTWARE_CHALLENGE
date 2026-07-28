@@ -38,6 +38,7 @@ Implement an Angular 22 cart view (item list, quantities, totals, adjustment), c
 | docs/architecture/error-handling.md | all | INSUFFICIENT_STOCK error display at checkout |
 | docs/architecture/tdd-workflow.md | all | TDD process for Angular components |
 | docs/architecture/pnpm-config.md | all | pnpm configuration reference |
+| docs/architecture/testing-strategy.md | all | Test pyramid, purchase workflow test matrix |
 
 ## Deliverables
 
@@ -108,6 +109,7 @@ Implement an Angular 22 cart view (item list, quantities, totals, adjustment), c
 | Allow negative quantity in UI | Backend rejects it, wastes a round trip | Validate qty > 0 with Zod before sending PUT |
 | Navigate away from cart on stock error | User loses cart context, cannot adjust quantities | Show 409 error inline on affected items, keep cart open |
 | Create monolithic cart+checkout component | Violates container-presentational pattern | Separate cart and checkout into distinct modules with dedicated routes |
+| Assume cookie `Path` scoping doesn't matter | The cart cookie uses `Path=/api` (not `/api/cart`) per security-guidelines.md §3; this is directly observable in browser DevTools — if the cookie path is wrong (scoped to `/api/cart`), checkout requests to `/api/checkout` won't include the cookie and will fail silently | Verify cookie `Path=/api` and transmission in the DevTools Network tab during E2E testing |
 
 ## Rollback Guidance
 
@@ -132,7 +134,7 @@ Revert app.routes.ts and shared layout changes manually if other modifications e
 - Dead code MUST be removed
 
 ### PROJECT-PIPELINE
-- Pipeline: install -> build -> lint -> test:unit -> test:integration
+- Pipeline: install -> build -> lint -> test:unit -> test:integration -> test:e2e
 - Failing stage STOPS the pipeline
 
 ## Status Protocol

@@ -38,6 +38,7 @@ Implement Angular 22 CSV import interface with file upload triggering POST /api/
 | docs/architecture/security-guidelines.md | all | Display of raw_row_data must be safely escaped |
 | docs/architecture/tdd-workflow.md | all | TDD process for Angular components |
 | docs/architecture/pnpm-config.md | all | pnpm configuration reference |
+| docs/architecture/testing-strategy.md | all | Test pyramid, CSV import test matrix, security test cases |
 
 ## Deliverables
 
@@ -132,7 +133,7 @@ This removes all import view components, service, routes, and restores the root 
 - Dead code MUST be removed
 
 ### PROJECT-PIPELINE
-- Pipeline: install -> build -> lint -> test:unit -> test:integration
+- Pipeline: install -> build -> lint -> test:unit -> test:integration -> test:e2e
 - Failing stage STOPS the pipeline
 
 ## Status Protocol

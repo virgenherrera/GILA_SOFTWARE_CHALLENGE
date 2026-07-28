@@ -32,14 +32,14 @@ items deferred to v2+ are documented in
 | T-003 | US-003 | Update Product | ep01 | standard | T-002 |
 | T-004 | US-004 | Delete Product | ep01 | standard | T-002 |
 | T-005 | US-005 | CSV Upload & Background Processing Pipeline | ep02 | standard | T-001, T-002 |
-| T-006 | US-006 | CSV Row Validation | ep02 | standard | T-005 |
+| T-006 | US-006 | CSV Row Validation | ep02 | standard | T-005, T-002 |
 | T-007 | US-007 | Import Results & Error Reporting | ep02 | standard | T-006 |
 | T-008 | US-008 | Product Search with Filters, Sort & Pagination | ep03 | standard | T-001, T-002 |
 | T-009 | US-009 | Cart Operations | ep04 | standard | T-001, T-002 |
 | T-010 | US-010 | Checkout & Order Creation | ep04 | reasoning | T-009 |
-| T-011 | US-011 | Product Management Views | ep05 | standard | T-002, T-003, T-004 |
+| T-011 | US-011 | Product Management Views | ep05 | standard | T-002, T-003, T-004, T-008 |
 | T-012 | US-012 | CSV Import View | ep05 | standard | T-005, T-006, T-007 |
-| T-013 | US-013 | Product Search View | ep05 | standard | T-008 |
+| T-013 | US-013 | Product Search View | ep05 | standard | T-008, T-011 |
 | T-014 | US-014 | Cart & Checkout Views | ep05 | standard | T-009, T-010 |
 | T-015 | US-015 | Docker Compose Multi-Stage Setup | ep06 | standard | T-002 through T-014 |
 | T-016 | US-016 | README & Decision Documentation | ep06 | standard | T-015 |
@@ -104,6 +104,7 @@ graph TD
     T001 --> T005
     T002 --> T005
     T005 --> T006
+    T002 --> T006
     T006 --> T007
     T001 --> T009
     T002 --> T009
@@ -111,10 +112,12 @@ graph TD
     T002 --> T011
     T003 --> T011
     T004 --> T011
+    T008 --> T011
     T005 --> T012
     T006 --> T012
     T007 --> T012
     T008 --> T013
+    T011 --> T013
     T009 --> T014
     T010 --> T014
     T011 --> T015
@@ -123,6 +126,17 @@ graph TD
     T014 --> T015
     T015 --> T016
 ```
+
+### Notes on Dependency Graph
+
+**Missing dependencies corrected:**
+- T-008 → T-011: Product Management Views now explicitly depend on the Search API, as both CRUD and search operations inform product display patterns.
+- T-011 → T-013: Product Search View now explicitly depends on Product Management Views, as both frontend tasks share the `product.service.ts` module established in T-011.
+- T-002 → T-006: CSV Row Validation now explicitly depends on T-002 (Create Product), as validation rules must align with the Product entity schema.
+
+**Critical integrations:**
+- **T-013 Search-to-Cart Bridge**: Product Search View (T-013) includes an "Add to Cart" action that invokes `POST /api/cart/items` (defined in T-009). This provides a direct purchase path from search results.
+- **T-015 E2E Infrastructure**: Docker Compose Finalization (T-015) now includes Playwright service setup in `docker-compose.yml`. E2E test infrastructure is delivered by T-015; actual E2E test scenarios and suites are written as part of each feature task's quality gates and handoff acceptance criteria.
 
 ## 4. Execution Order (numbered waves)
 
@@ -175,21 +189,20 @@ sequential.
 
 ### Wave 4 --- Frontend Views (parallel)
 
-| Task | Title | Backend Gate |
-|------|-------|--------------|
-| T-011 | Product Management Views | T-002 + T-003 + T-004 (all CRUD endpoints) |
-| T-012 | CSV Import View | T-005 + T-006 + T-007 (full import pipeline) |
-| T-013 | Product Search View | T-008 (search endpoint) |
-| T-014 | Cart & Checkout Views | T-009 + T-010 (full purchase workflow) |
+| Task | Title | Backend Gate | Frontend Gate |
+|------|-------|--------------|---------------|
+| T-011 | Product Management Views | T-002 + T-003 + T-004 + T-008 (all CRUD endpoints + search API) | none |
+| T-012 | CSV Import View | T-005 + T-006 + T-007 (full import pipeline) | none |
+| T-013 | Product Search View | T-008 (search endpoint) | T-011 (reuses `product.service.ts`) |
+| T-014 | Cart & Checkout Views | T-009 + T-010 (full purchase workflow) | none |
 
-All four frontend tasks are independent and can execute in parallel, but each is gated
-by completion of its corresponding backend branch.
+All four frontend tasks can execute in parallel once their backend gates are satisfied. T-013 additionally depends on T-011 completing first, as it reuses the product service module. All frontend views must be complete before Docker finalization (T-015).
 
-### Wave 5 --- Packaging (sequential)
+### Wave 5 --- Packaging & E2E Infrastructure (sequential)
 
 | Task | Title | Rationale |
 |------|-------|-----------|
-| T-015 | Docker Compose Finalization | Multi-stage builds, service orchestration, health checks. Requires all application code (T-002 through T-014) to be complete. |
+| T-015 | Docker Compose Finalization | Multi-stage builds, service orchestration, health checks. Includes Playwright service for E2E testing. Requires all application code (T-002 through T-014) to be complete. E2E test infrastructure (runner, service definitions) is delivered here; individual E2E test scenarios are part of each feature task's quality gates. |
 
 ### Wave 6 --- Documentation (sequential)
 

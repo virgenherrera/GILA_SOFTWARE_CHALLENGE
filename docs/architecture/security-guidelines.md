@@ -292,14 +292,19 @@ rules).
 - The backend serves JSON only. There is no server-side HTML templating anywhere
   in the request path, so there is no server-side injection point for markup to
   execute.
-- CSV import explicitly **rejects** rows containing `<script>` tags as a
+- CSV import explicitly **rejects** rows containing common XSS vectors as a
   security test requirement --- this is a defense-in-depth rejection at the
   input boundary, in addition to (not instead of) Angular's output escaping.
-  Scope note: this is a literal `<script>` substring check against the known
-  XSS-trap test fixture, not comprehensive XSS screening (it does not detect
-  event-handler attributes, `javascript:` URIs, or obfuscated markup). The
-  broader XSS defense is Angular's built-in template sanitization on the
-  frontend (Section 4 above), not this CSV-specific check.
+  The screening covers:
+  1. `<script>` tags (substring check)
+  2. Event handler attributes (`onerror=`, `onload=`, `onclick=`, etc.)
+  3. `javascript:` URIs
+  
+  This scope matches US-006 acceptance criteria AC-006.10. The screening is a
+  heuristic check, not a full HTML sanitizer --- it does not detect obfuscated
+  markup or advanced evasion techniques. The broader XSS defense is Angular's
+  built-in template sanitization on the frontend (Section 4 above), not this
+  CSV-specific check.
 - Error responses never echo raw user input back into a message body (Section
   8), closing the reflected-XSS-via-error-message path some APIs leave open.
 

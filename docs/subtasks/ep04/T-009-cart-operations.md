@@ -29,8 +29,8 @@ Implement cart API endpoints (GET /api/cart, POST /api/cart/items, PUT /api/cart
 | File | Lines | Why Needed |
 |------|-------|------------|
 | docs/user-stories/US-009-cart-operations.md | all | 17 acceptance criteria to implement |
-| docs/architecture/api-contract.md | all | Cart endpoint shapes, error envelope |
-| docs/architecture/data-model.md | all | carts/cart_items schema, FK constraints |
+| docs/architecture/api-contract.md | 672-871 | Cart endpoint shapes, error envelope |
+| docs/architecture/data-model.md | carts/cart_items sections | carts/cart_items schema, FK constraints |
 | docs/architecture/tech-stack.md | all | Libraries for cookie signing |
 | src/ecommerce/router.clj | all | Router to add cart routes to |
 | src/ecommerce/product/repository.clj | all | Product lookup for stock and price |
@@ -38,9 +38,10 @@ Implement cart API endpoints (GET /api/cart, POST /api/cart/items, PUT /api/cart
 | src/ecommerce/middleware.clj | all | Error middleware integration |
 | src/ecommerce/db.clj | all | DB connection for repository layer |
 | docs/architecture/middleware-pipeline.md | all | Cart cookie middleware placement (route-level) |
-| docs/architecture/security-guidelines.md | all | buddy-sign cookie signing, SameSite=Strict, CSRF protection |
+| docs/architecture/security-guidelines.md | all | buddy-sign cookie signing, Path=/api, SameSite=Strict, CSRF protection |
 | docs/architecture/error-handling.md | all | INSUFFICIENT_STOCK error code |
 | docs/architecture/tdd-workflow.md | all | TDD process reference |
+| docs/architecture/testing-strategy.md | all | Test pyramid, security test cases, purchase workflow test matrix |
 
 ## Deliverables
 
@@ -67,7 +68,7 @@ Implement cart API endpoints (GET /api/cart, POST /api/cart/items, PUT /api/cart
 | 1 | Handoff exists | `test -f docs/subtasks/ep04/T-009-cart-operations.md` | EXE | exit 0 |
 | 2 | Unit tests pass | `docker compose run --rm backend clojure -M:test` | EXE | exit 0 |
 | 3 | Integration tests pass | `docker compose run --rm backend clojure -M:test` | EXE | exit 0 |
-| 4 | Add to empty cart | POST /api/cart/items with valid product → 201, Set-Cookie with signed cart_id | MANUAL | Cookie created, item in cart |
+| 4 | Add to empty cart | POST /api/cart/items with valid product → 200, Set-Cookie with signed cart_id | MANUAL | Cookie created, item in cart |
 | 5 | Add existing product | POST same SKU again → quantity increases, snapshot price unchanged | MANUAL | qty incremented, same unit_price_snapshot |
 | 6 | Stock exceeded | POST qty > available stock → 409 INSUFFICIENT_STOCK | MANUAL | HTTP 409 with error code |
 | 7 | Qty zero rejected | PUT qty=0 → 400 | MANUAL | HTTP 400, use DELETE instead |
@@ -99,6 +100,7 @@ Implement cart API endpoints (GET /api/cart, POST /api/cart/items, PUT /api/cart
 | Allow qty=0 via PUT | Ambiguous semantics, inconsistent with REST | Reject 400; force explicit DELETE for item removal |
 | Auto-cap quantity at stock level | Silent behavior change surprises the user | Reject with 409 INSUFFICIENT_STOCK, tell user available qty |
 | Create cart cookie on GET | Unnecessary cookies for browsers just browsing | Create cookie lazily on first POST /api/cart/items only |
+| Scope cart cookie to Path=/api/cart | Cookie not sent to /api/checkout per RFC 6265 path-matching; breaks checkout silently | Use Path=/api per security-guidelines.md §3 |
 
 ## Rollback Guidance
 
@@ -124,7 +126,7 @@ This removes all cart code and restores the router to its pre-modification state
 - Dead code MUST be removed
 
 ### PROJECT-PIPELINE
-- Pipeline: install -> build -> lint -> test:unit -> test:integration
+- Pipeline: install -> build -> lint -> test:unit -> test:integration -> test:e2e
 - Failing stage STOPS the pipeline
 
 ## Status Protocol

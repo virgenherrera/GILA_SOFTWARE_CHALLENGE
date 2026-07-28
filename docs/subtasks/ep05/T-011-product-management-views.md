@@ -41,6 +41,7 @@ Implement Angular 22 product management views: product list with pagination, pro
 | docs/architecture/security-guidelines.md | all | XSS: Angular auto-escapes template bindings, never use innerHTML |
 | docs/architecture/tdd-workflow.md | all | TDD process for Angular components and Zod validators |
 | docs/architecture/pnpm-config.md | all | pnpm configuration for frontend dependencies |
+| docs/architecture/testing-strategy.md | all | Test pyramid, frontend component testing, EP05 test matrix |
 
 ## Deliverables
 
@@ -67,6 +68,7 @@ Implement Angular 22 product management views: product list with pagination, pro
 | frontend/src/app/products/product.service.ts | HTTP service for product CRUD operations |
 | frontend/src/app/products/product.routes.ts | Product feature routes (list, detail, create, edit) |
 | frontend/src/app/products/product.service.spec.ts | Tests for product service |
+| frontend/src/app/shared/validation/product.contract.spec.ts | Contract test verifying Zod schemas produce identical accept/reject decisions as backend Malli schemas for a canonical set of inputs |
 
 ### Files to Modify
 
@@ -140,7 +142,7 @@ This removes all product view components, service, routes, and restores the root
 - Dead code MUST be removed
 
 ### PROJECT-PIPELINE
-- Pipeline: install -> build -> lint -> test:unit -> test:integration
+- Pipeline: install -> build -> lint -> test:unit -> test:integration -> test:e2e
 - Failing stage STOPS the pipeline
 
 ## Status Protocol

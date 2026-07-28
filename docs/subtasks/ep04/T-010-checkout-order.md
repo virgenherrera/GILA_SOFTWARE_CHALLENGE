@@ -41,6 +41,7 @@ Implement atomic checkout (POST /api/checkout) with SELECT FOR UPDATE concurrenc
 | docs/architecture/security-guidelines.md | all | Cart cookie verification at checkout |
 | docs/architecture/error-handling.md | all | INSUFFICIENT_STOCK, atomic rollback error handling |
 | docs/architecture/tdd-workflow.md | all | TDD process for concurrent checkout race test |
+| docs/architecture/testing-strategy.md | all | Test pyramid, security test cases, purchase workflow test matrix |
 
 ## Deliverables
 
@@ -99,6 +100,7 @@ Implement atomic checkout (POST /api/checkout) with SELECT FOR UPDATE concurrenc
 | Use cart snapshot price for stock validation | Price and stock are independent; stock check needs current stock | Use current stock for validation, snapshot price only for order amounts |
 | Non-atomic multi-step checkout | Partial state: order created but stock not decremented | Single DB transaction wrapping all steps |
 | Allow checkout on already-checked-out cart | Double ordering, stock accounting error | Check cart status = Active before proceeding |
+| Ignore cart cookie Path | T-009 sets the cart cookie with `Path=/api` (not `/api/cart`) per security-guidelines.md §3. If the cookie path is wrong, checkout fails silently because the browser won't send the cookie to `/api/checkout`. See RFC 6265 path-matching. | Verify cookie is received; on missing cookie, return 400 with clear message |
 
 ## Rollback Guidance
 
@@ -124,7 +126,7 @@ This removes checkout service, order repository, all tests, and restores the rou
 - Dead code MUST be removed
 
 ### PROJECT-PIPELINE
-- Pipeline: install -> build -> lint -> test:unit -> test:integration
+- Pipeline: install -> build -> lint -> test:unit -> test:integration -> test:e2e
 - Failing stage STOPS the pipeline
 
 ## Status Protocol

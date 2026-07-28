@@ -11,6 +11,7 @@
 | Persona | Catalog Manager |
 | Model Tier | standard |
 | Priority | Must Have |
+| Depends On | T-005, T-002 |
 
 ## Objective
 
@@ -29,9 +30,10 @@ Implement row-level validation for CSV import using shared Malli schemas from th
 | File | Lines | Why Needed |
 |------|-------|------------|
 | docs/user-stories/US-006-csv-row-validation.md | all | All 15 acceptance criteria and 10 trap types |
-| docs/architecture/api-contract.md | 938-1047 | Validation contract (shared field rules) |
+| docs/architecture/api-contract.md | 992-1107 | Validation contract (shared field rules) |
 | docs/architecture/data-model.md | 27-50 | Products table schema (field types, constraints) |
-| docs/architecture/data-model.md | 155-172 | import_errors table schema |
+| docs/architecture/data-model.md | 140-184 | csv_import_jobs and import_errors table schemas |
+| docs/architecture/testing-strategy.md | all | Test pyramid, CSV trap types, security test cases |
 | src/ecommerce/validation.clj | all | Shared Malli schemas to reuse (not duplicate) |
 | src/ecommerce/import/worker.clj | all | Go-loop to wire validator into |
 | src/ecommerce/import/repository.clj | all | Import job repository for status updates |
@@ -55,7 +57,7 @@ Implement row-level validation for CSV import using shared Malli schemas from th
 | `test/fixtures/csv/empty-rows.csv` | File with interspersed completely empty rows |
 | `test/fixtures/csv/duplicate-sku-in-file.csv` | File with two rows sharing the same SKU |
 | `test/fixtures/csv/duplicate-sku-in-catalog.csv` | File with a SKU that matches an existing product |
-| `test/fixtures/csv/xss-payload.csv` | Rows with script tags and event handler payloads in name |
+| `test/fixtures/csv/xss-payload.csv` | Rows with script tags and event handler payloads in name. XSS screening covers `<script>` tags, event handler attributes (`onerror`, `onload`, `onclick`), and `javascript:` URIs, per US-006 acceptance criteria AC-006.10. See expanded scope in security-guidelines.md §6. |
 | `test/fixtures/csv/sql-injection.csv` | Rows with SQL injection payload in name |
 | `test/fixtures/csv/mixed-traps.csv` | File with multiple trap types for integration testing |
 | `test/fixtures/csv/valid.csv` | File with all valid rows for baseline testing |
@@ -132,7 +134,7 @@ rm -rf test/fixtures/csv/
 - Dead code MUST be removed
 
 ### PROJECT-PIPELINE
-- Pipeline: install -> build -> lint -> test:unit -> test:integration
+- Pipeline: install → build → lint → test:unit → test:integration → test:e2e
 - Failing stage STOPS the pipeline
 
 ## Status Protocol

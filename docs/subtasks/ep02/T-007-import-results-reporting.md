@@ -11,6 +11,7 @@
 | Persona | Catalog Manager |
 | Model Tier | standard |
 | Priority | Must Have |
+| Depends On | T-006 |
 
 ## Objective
 
@@ -21,7 +22,7 @@ Implement `GET /api/imports/:id` summary enhancement and `GET /api/imports/:id/e
 - [ ] T-006 complete (import errors stored in `import_errors` table after validation)
 - [ ] `csv_import_jobs` table populated with status and counts after imports
 - [ ] `import_errors` table has records with row_number, field_name, error_reason, raw_row_data
-- [ ] Paging envelope pattern established in the codebase (from T-008 or shared utility)
+- [ ] Pagination helper is a deliverable of this task (T-007 is the first task requiring pagination). T-008 reuses the pagination utility created here.
 - [ ] Docker Compose runs (`docker compose up -d` exits cleanly)
 
 ## Context Bundle
@@ -29,10 +30,10 @@ Implement `GET /api/imports/:id` summary enhancement and `GET /api/imports/:id/e
 | File | Lines | Why Needed |
 |------|-------|------------|
 | docs/user-stories/US-007-import-results-reporting.md | all | All 8 acceptance criteria |
-| docs/architecture/api-contract.md | 36-66 | Standard paging envelope specification |
-| docs/architecture/api-contract.md | 551-613 | GET /api/imports/:id/errors contract |
-| docs/architecture/data-model.md | 136-154 | csv_import_jobs table schema |
-| docs/architecture/data-model.md | 155-172 | import_errors table schema |
+| docs/architecture/api-contract.md | 76-100 | Standard paging envelope specification |
+| docs/architecture/api-contract.md | 605-670 | GET /api/imports/:id/errors contract |
+| docs/architecture/data-model.md | 140-184 | csv_import_jobs and import_errors table schemas |
+| docs/architecture/testing-strategy.md | all | Test pyramid, CSV trap types, security test cases |
 | src/ecommerce/import/handler.clj | all | Existing handler to extend with errors endpoint |
 | src/ecommerce/import/repository.clj | all | Existing repository patterns for job queries |
 | docs/architecture/error-handling.md | all | Error response sanitization (no raw data leakage) |
@@ -113,7 +114,7 @@ rm -f test/ecommerce/import/error_reporting_integration_test.clj
 - Dead code MUST be removed
 
 ### PROJECT-PIPELINE
-- Pipeline: install -> build -> lint -> test:unit -> test:integration
+- Pipeline: install → build → lint → test:unit → test:integration → test:e2e
 - Failing stage STOPS the pipeline
 
 ## Status Protocol

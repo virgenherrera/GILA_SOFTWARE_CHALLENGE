@@ -11,6 +11,7 @@
 | Persona | Catalog Manager |
 | Model Tier | standard |
 | Priority | Must Have |
+| Depends On | T-001, T-002 |
 
 ## Objective
 
@@ -28,8 +29,9 @@ Implement `POST /api/imports` for CSV file upload with background processing via
 
 | File | Lines | Why Needed |
 |------|-------|------------|
-| docs/architecture/api-contract.md | 402-498 | POST /api/imports and GET /api/imports/:id contracts |
-| docs/architecture/data-model.md | 136-172 | csv_import_jobs and import_errors table schemas |
+| docs/architecture/api-contract.md | 468-546 | POST /api/imports and GET /api/imports/:id contracts |
+| docs/architecture/data-model.md | 140-184 | csv_import_jobs and import_errors table schemas |
+| docs/architecture/testing-strategy.md | all | Test pyramid, CSV trap types, security test cases |
 | docs/user-stories/US-005-csv-upload-processing.md | all | All 9 acceptance criteria |
 | docs/architecture/tech-stack.md | all | Library versions (core.async, clojure.data.csv, Ring) |
 | src/ecommerce/router.clj | all | Current route definitions to extend |
@@ -77,7 +79,7 @@ Implement `POST /api/imports` for CSV file upload with background processing via
 
 ## Boundaries
 
-- NOT in scope: SSE progress streaming (GET /api/imports/:id/progress)
+- NOT in scope: SSE progress streaming (GET /api/imports/:id/progress). Note: api-contract.md §4 references SSE for progress monitoring. SSE is deferred to v2; this task uses polling via GET /api/imports/:id instead.
 - NOT in scope: Dry-run preview of import results before committing
 - NOT in scope: Row-level validation logic (that is T-006)
 - NOT in scope: Import error listing endpoint (GET /api/imports/:id/errors --- that is T-007)
@@ -120,7 +122,7 @@ No database rollback needed --- tables were created by T-001 migrations.
 - Dead code MUST be removed
 
 ### PROJECT-PIPELINE
-- Pipeline: install -> build -> lint -> test:unit -> test:integration
+- Pipeline: install → build → lint → test:unit → test:integration → test:e2e
 - Failing stage STOPS the pipeline
 
 ## Status Protocol

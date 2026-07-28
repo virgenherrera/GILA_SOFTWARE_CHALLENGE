@@ -39,6 +39,7 @@ Bootstrap the entire project skeleton: Clojure backend (Ring/Reitit), Angular 22
 | docs/architecture/api-docs-strategy.md | all | OpenAPI/Swagger UI route setup |
 | docs/architecture/pnpm-config.md | all | pnpm configuration for frontend scaffold |
 | docs/architecture/health-check-strategy.md | all | Health endpoint contract and behavior |
+| docs/architecture/testing-strategy.md | all | Test pyramid, per-epic test matrix, security test cases, TDD scaffolding exception |
 
 ## Deliverables
 
@@ -46,11 +47,11 @@ Bootstrap the entire project skeleton: Clojure backend (Ring/Reitit), Angular 22
 
 | File | Purpose |
 |------|---------|
-| deps.edn | Clojure dependency manifest with pinned versions |
+| deps.edn | Clojure dependency manifest with pinned versions; aliases for :build, :test, :lint, :fmt |
 | src/ecommerce/core.clj | Application entry point, server startup |
 | src/ecommerce/router.clj | Reitit router with /api/health route |
 | src/ecommerce/middleware.clj | Error handling, security headers, content-type middleware (no CORS --- same-origin via nginx, see [middleware-pipeline.md](../../architecture/middleware-pipeline.md)) |
-| src/ecommerce/db.clj | Database connection pool (HikariCP) and migration runner |
+| src/ecommerce/db.clj | Database connection pool (HikariCP) configuration via next.jdbc; datasource initialization from env vars |
 | src/ecommerce/validation.clj | Shared Malli schemas for product, cart, order |
 | resources/migrations/001-create-products.sql | Create `products` table, `search_vector` column, and `idx_products_category` |
 | resources/migrations/002-create-products-search-trigger.sql | Create `products_search_vector_update()` function, its trigger, and `idx_products_search_vector` (GIN) |
@@ -64,8 +65,9 @@ Bootstrap the entire project skeleton: Clojure backend (Ring/Reitit), Angular 22
 | frontend/src/app/shared/validation/product.schema.ts | Shared product validation (mirrors Malli schemas) |
 | Dockerfile.backend | Multi-stage Clojure build |
 | Dockerfile.frontend | Multi-stage Angular build with nginx |
-| docker-compose.yml | 3 services: backend, frontend, db |
+| docker-compose.yml | 3 services (backend, frontend, db) with health checks, dependency ordering, shared network; db service mounts ./resources/migrations into /docker-entrypoint-initdb.d for migration execution; backend mounts /var/run/docker.sock for Testcontainers |
 | nginx.conf | Frontend reverse proxy config |
+| README.md | Placeholder with project name and "See docs/ for documentation" |
 
 ### Files to Modify
 
@@ -85,12 +87,16 @@ Bootstrap the entire project skeleton: Clojure backend (Ring/Reitit), Angular 22
 | 6 | Angular builds | `docker compose run --rm frontend pnpm exec ng build` | EXE | exit 0, zero errors |
 | 7 | Backend tests pass | `docker compose run --rm backend clojure -M:test` | EXE | exit 0 |
 | 8 | No side effects | `git diff --stat` | EXE | Only expected files |
+| 9 | Backend lint | `docker compose run --rm backend clojure -M:lint` | EXE | exit 0, no lint errors |
+| 10 | Backend format | `docker compose run --rm backend clojure -M:fmt --check` | EXE | exit 0, no format violations |
+| 11 | Frontend lint | `docker compose run --rm frontend pnpm exec ng lint` | EXE | exit 0, no lint errors |
+| 12 | Frontend format | `docker compose run --rm frontend pnpm exec prettier --check .` | EXE | exit 0, no format violations |
 
 ## Boundaries
 
 - NOT in scope: Feature endpoints (CRUD, search, cart, import)
 - NOT in scope: E2E Playwright setup
-- NOT in scope: README content beyond placeholder
+- NOT in scope: README content (placeholder README.md is a deliverable of this task)
 - NOT in scope: Frontend routing beyond app shell
 - NOT in scope: Seed data or sample records
 
@@ -128,7 +134,7 @@ This removes all generated files and tears down containers including volumes (da
 - Dead code and unused dependencies MUST be removed
 
 ### PROJECT-PIPELINE
-- Pipeline stages: install → build → lint → test:unit → test:integration
+- Pipeline stages: install → build → lint → test:unit → test:integration → test:e2e
 - Failing stage STOPS the pipeline
 
 ## Status Protocol
@@ -155,6 +161,7 @@ Blocker: (if applicable)
 - [ ] Dockerfile.frontend
 - [ ] docker-compose.yml
 - [ ] nginx.conf
+- [ ] README.md
 
 ### Quality Gates
 - [ ] Gate 1: Handoff exists
@@ -165,3 +172,7 @@ Blocker: (if applicable)
 - [ ] Gate 6: Angular builds cleanly
 - [ ] Gate 7: Backend tests pass
 - [ ] Gate 8: No side effects
+- [ ] Gate 9: Backend lint passes
+- [ ] Gate 10: Backend format passes
+- [ ] Gate 11: Frontend lint passes
+- [ ] Gate 12: Frontend format passes

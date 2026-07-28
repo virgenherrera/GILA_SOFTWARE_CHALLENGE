@@ -35,6 +35,7 @@ Implement `DELETE /api/products/:sku` with hard delete semantics. When a product
 | src/ecommerce/middleware.clj | all | Error middleware for exception translation |
 | docs/architecture/error-handling.md | all | PRODUCT_IN_USE error code translation |
 | docs/architecture/tdd-workflow.md | all | TDD process reference |
+| docs/architecture/testing-strategy.md | all | Test pyramid, security test cases, TDD workflow |
 
 ## Deliverables
 
@@ -58,16 +59,18 @@ Implement `DELETE /api/products/:sku` with hard delete semantics. When a product
 | # | Gate | Command/Check | Type | Pass Criteria |
 |---|------|---------------|------|---------------|
 | 1 | Handoff exists | `test -f docs/subtasks/ep01/T-004-delete-product.md` | EXE | exit 0 |
-| 2 | Unit tests pass | `docker compose run --rm backend clojure -M:test` | EXE | exit 0 |
-| 3 | Integration tests pass | `docker compose run --rm backend clojure -M:test` | EXE | exit 0 |
+| 2 | Unit tests pass | `docker compose run --rm backend clojure -M:test --skip-meta :integration` | EXE | exit 0 |
+| 3 | Integration tests pass | `docker compose run --rm backend clojure -M:test --focus-meta :integration` | EXE | exit 0 |
 | 4 | 204 for unreferenced | DELETE product with no cart/order references → 204 | MANUAL | HTTP 204, empty body |
-| 5 | 404 for non-existent | DELETE `/api/products/NONEXISTENT-SKU` → 404 | MANUAL | HTTP 404 with PRODUCT_NOT_FOUND |
+| 5 | 404 for non-existent | DELETE `/api/products/NONEXISTENT-SKU` → 404 | MANUAL | HTTP 404 with NOT_FOUND |
 | 6 | 409 for order reference | DELETE product referenced by order_items → 409 | MANUAL | HTTP 409 with PRODUCT_IN_USE |
 | 7 | 409 for cart reference | DELETE product referenced by cart_items → 409 | MANUAL | HTTP 409 with PRODUCT_IN_USE |
 | 8 | No SQL leak | 409 response contains domain error code, not constraint name | MANUAL | No `fk_cart_items_product` or `23503` in response |
-| 9 | Absent from search | After successful delete, product not returned by any query | MANUAL | SELECT by SKU returns empty |
+| 9 | Absent from search | After successful delete, product not returned by any query | MANUAL | SELECT by SKU returns empty. **Deferred verification**: This gate cannot be exercised until T-008 (Product Search) is complete. Mark as deferred during T-004 execution; verify during T-008's quality gates. |
 | 10 | Existing tests unbroken | All T-002 and T-003 tests still pass | EXE | `docker compose run --rm backend clojure -M:test` exit 0 |
 | 11 | No side effects | `git diff --stat` | EXE | Only expected files |
+
+**Note on Gates 2-3**: Delete has minimal pure domain logic — the core behavior (FK violation detection, error translation) only manifests against a real database. Most verification for this task is integration-level; the unit-test gate mainly covers input validation (e.g., malformed SKU parameter) rather than business logic.
 
 ## Boundaries
 
@@ -112,7 +115,7 @@ This restores handler, repository, and router to their pre-T-004 state and remov
 - Dead code and unused dependencies MUST be removed
 
 ### PROJECT-PIPELINE
-- Pipeline stages: install → build → lint → test:unit → test:integration
+- Pipeline stages: install → build → lint → test:unit → test:integration → test:e2e
 - Failing stage STOPS the pipeline
 
 ## Status Protocol
