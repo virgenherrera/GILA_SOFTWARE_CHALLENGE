@@ -48,6 +48,7 @@ sequenceDiagram
 | Custom `:type/product-in-use` | `PRODUCT_IN_USE` | 409 | Delete product with orders/carts |
 | Custom `:type/insufficient-stock` | `INSUFFICIENT_STOCK` | 409 | Checkout with insufficient stock |
 | `PSQLException` (unique violation) | `CONFLICT` | 409 | DB-level SKU uniqueness |
+| `SQLTransientConnectionException` | `SERVICE_UNAVAILABLE` | 503 | DB unreachable or pool exhausted (HikariCP connection timeout) |
 | Any other `Exception` | `INTERNAL_ERROR` | 500 | Unexpected errors |
 
 ```mermaid
@@ -60,6 +61,7 @@ flowchart TD
     B -->|:type/product-in-use| G["409 PRODUCT_IN_USE"]
     B -->|:type/insufficient-stock| H["409 INSUFFICIENT_STOCK"]
     B -->|PSQLException unique violation| I["409 CONFLICT"]
+    B -->|SQLTransientConnectionException| K["503 SERVICE_UNAVAILABLE"]
     B -->|Any other Exception| J["500 INTERNAL_ERROR"]
 ```
 

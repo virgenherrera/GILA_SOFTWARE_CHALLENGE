@@ -66,6 +66,11 @@ has no JVM, no Clojure CLI, no Leiningen.
 | `buddy/buddy-sign` | 3.4.0 | HMAC-SHA256 cookie signing for cart identity (see [Security Guidelines](security-guidelines.md)) |
 | `metosin/ring-swagger-ui` | 5.9.0 | Swagger UI 5.x static assets for API docs (see [API Docs Strategy](api-docs-strategy.md)) |
 
+> **Logging configuration** (`logback-classic`): configuration via
+> `resources/logback.xml`. Root log level is configurable via `LOG_LEVEL` env
+> var (default: INFO). No file appenders --- all output goes to stdout for
+> Docker log capture.
+
 Test/dev dependencies (`:test` alias in `deps.edn`):
 
 | Library | Version | Purpose |
@@ -313,6 +318,9 @@ FROM eclipse-temurin:21-jre-jammy AS production
 # jre-jammy image does not ship it
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
+# Run as non-root user
+RUN useradd -r app
+USER app
 EXPOSE 3000
 ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
@@ -320,6 +328,9 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 Key design decisions:
 - **JDK in build, JRE in production**: the production image contains no compiler, no
   Clojure CLI, no source code --- only the uberjar and the minimal JRE.
+- **Non-root production user**: the production stage runs as a non-root user
+  (`RUN useradd -r app && USER app`), limiting blast radius if the process is
+  compromised.
 - **Test stage as gate**: tests run inside the Docker build. A failing test prevents the
   production image from being created.
 - **Layer caching**: `deps.edn` is copied and resolved before source code, so dependency
@@ -385,12 +396,44 @@ flowchart LR
   `/api/*` requests to the backend, avoiding CORS configuration.
 - **Database volume**: optional named volume for PostgreSQL data persistence. Omitted by
   default for a clean evaluation experience (each `docker compose up` starts fresh).
-- **Docker socket mount**: the `backend` service mounts `/var/run/docker.sock` to enable
-  Testcontainers to launch ephemeral PostgreSQL instances for integration tests. This is
-  required only during the test phase (`docker compose run --rm backend clojure -M:test`).
+- **Docker socket mount (test command only)**: the docker.sock mount is passed via the
+  test command (`docker compose run -v /var/run/docker.sock:/var/run/docker.sock backend
+  clojure -M:test`), NOT in the `backend` service definition. It exists solely so
+  Testcontainers can launch ephemeral PostgreSQL instances for integration tests. The
+  production backend container MUST NOT have access to the Docker daemon.
 - **Playwright container**: `mcr.microsoft.com/playwright:v1.62.0-noble` with `ipc: host`
   (Chromium requires shared memory). Connects to frontend via Compose DNS (`http://frontend:80`).
   `depends_on: frontend: condition: service_healthy` ensures the frontend is ready.
+
+### Configuration & Environment Variables
+
+| Variable | Service | Required | Default | Validation |
+|---|---|---|---|---|
+| `POSTGRES_USER` | db | yes | `app` | non-empty |
+| `POSTGRES_PASSWORD` | db, backend | yes | none | non-empty |
+| `POSTGRES_DB` | db | yes | `ecommerce` | non-empty |
+| `DB_HOST` | backend | yes | `db` | non-empty |
+| `DB_PORT` | backend | no | `5432` | integer 1–65535 |
+| `DB_NAME` | backend | yes | `ecommerce` | non-empty |
+| `DB_USER` | backend | yes | `app` | non-empty |
+| `DB_PASSWORD` | backend | yes | none | non-empty |
+| `CART_COOKIE_SECRET` | backend | yes | none (dev default in compose) | non-blank, ≥32 chars |
+| `PORT` | backend | no | `3000` | integer 1–65535 |
+| `LOG_LEVEL` | backend | no | `INFO` | one of: TRACE, DEBUG, INFO, WARN, ERROR |
+
+All required variables with no default MUST be validated at startup by
+`src/ecommerce/config.clj`. The service MUST exit with code 1 and a message naming the
+missing/invalid variable if validation fails. This is the single source of truth for
+configuration --- all other docs reference this table.
+
+The `.env → docker-compose (env_file) → container environment` flow: a `.env` file at
+project root is loaded by Docker Compose automatically. `.env` is gitignored;
+`.env.example` is committed with safe development defaults and comments marking
+required-no-default vars.
+
+> **Note**: `PORT` is coupled to nginx.conf `proxy_pass`, the Dockerfile `EXPOSE`, and
+> the compose healthcheck. Changing it requires updating all three. For this project,
+> 3000 is the canonical port.
 
 ## 7. CSV Import Pipeline
 

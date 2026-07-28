@@ -48,11 +48,13 @@ Bootstrap the entire project skeleton: Clojure backend (Ring/Reitit), Angular 22
 | File | Purpose |
 |------|---------|
 | deps.edn | Clojure dependency manifest with pinned versions; aliases for :build, :test, :lint, :fmt |
-| src/ecommerce/core.clj | Application entry point, server startup |
+| src/ecommerce/core.clj | Application entry point, server startup; shutdown hook (stop Jetty, close HikariCP pool, flush logs) |
 | src/ecommerce/router.clj | Reitit router with /api/health route |
 | src/ecommerce/middleware.clj | Error handling, security headers, content-type middleware (no CORS --- same-origin via nginx, see [middleware-pipeline.md](../../architecture/middleware-pipeline.md)) |
-| src/ecommerce/db.clj | Database connection pool (HikariCP) configuration via next.jdbc; datasource initialization from env vars |
+| src/ecommerce/config.clj | Reads and validates ALL env vars at startup before Jetty binds; every required var must be non-nil AND non-blank; PORT/DB_PORT parse as integers in 1–65535; on failure logs "Missing or invalid environment variable: <NAME>" and calls (System/exit 1). Exposes validated config map to db.clj and core.clj. References canonical env var table in tech-stack.md §6. |
+| src/ecommerce/db.clj | Database connection pool via next.jdbc; HikariCP connection pool configured from validated config map (see config.clj); no direct env var reads; HikariCP configured with initializationFailTimeout=-1 (lazy init), connectionTimeout=5000 (fail fast on pool exhaustion) |
 | src/ecommerce/validation.clj | Shared Malli schemas for product, cart, order |
+| resources/logback.xml | Logback configuration: console appender (stdout only, no file rotation --- Docker captures logs); root level from `${LOG_LEVEL:-INFO}`; HikariCP and Jetty loggers at WARN to suppress housekeeping noise |
 | resources/migrations/001-create-products.sql | Create `products` table, `search_vector` column, and `idx_products_category` |
 | resources/migrations/002-create-products-search-trigger.sql | Create `products_search_vector_update()` function, its trigger, and `idx_products_search_vector` (GIN) |
 | resources/migrations/003-create-carts.sql | Create `carts` table and `idx_carts_status` |
@@ -65,8 +67,10 @@ Bootstrap the entire project skeleton: Clojure backend (Ring/Reitit), Angular 22
 | frontend/src/app/shared/validation/product.schema.ts | Shared product validation (mirrors Malli schemas) |
 | Dockerfile.backend | Multi-stage Clojure build |
 | Dockerfile.frontend | Multi-stage Angular build with nginx |
-| docker-compose.yml | 3 services (backend, frontend, db) with health checks, dependency ordering, shared network; db service mounts ./resources/migrations into /docker-entrypoint-initdb.d for migration execution; backend mounts /var/run/docker.sock for Testcontainers |
+| docker-compose.yml | 3 services (backend, frontend, db) with health checks, dependency ordering, shared network; db service mounts ./resources/migrations into /docker-entrypoint-initdb.d for migration execution; NO docker.sock mount in the backend service definition --- Testcontainers gets the socket via the test command only (`docker compose run -v /var/run/docker.sock:/var/run/docker.sock backend clojure -M:test`) |
 | nginx.conf | Frontend reverse proxy config |
+| .dockerignore | Excludes .git, node_modules, dist, docs, *.md, .env* from Docker build context |
+| .env.example | All env vars from tech-stack.md §6 with safe dev defaults and comments; committed to repo (unlike .env which is gitignored) |
 | README.md | Placeholder with project name and "See docs/ for documentation" |
 
 ### Files to Modify
@@ -81,7 +85,7 @@ Bootstrap the entire project skeleton: Clojure backend (Ring/Reitit), Angular 22
 |---|------|---------------|------|---------------|
 | 1 | Handoff exists | `test -f docs/subtasks/ep06/T-001-project-scaffolding.md` | EXE | exit 0 |
 | 2 | Docker builds | `docker compose up --build -d` | EXE | All 3 services start without error |
-| 3 | Health endpoint | `curl -sf http://localhost:3000/api/health` | EXE | HTTP 200 with JSON body |
+| 3 | Health endpoint | `docker compose exec backend curl -sf http://localhost:3000/api/health` | EXE | HTTP 200 with JSON body (backend port is not published to the host; curl is in the image per tech-stack.md) |
 | 4 | Tables created | `docker compose exec db psql -U app -d ecommerce -c "\dt"` | EXE | 7 tables listed |
 | 5 | No floating versions | `grep -E 'LATEST|RELEASE' deps.edn` | EXE | No matches (exit 1) |
 | 6 | Angular builds | `docker compose run --rm frontend pnpm exec ng build` | EXE | exit 0, zero errors |
@@ -91,6 +95,7 @@ Bootstrap the entire project skeleton: Clojure backend (Ring/Reitit), Angular 22
 | 10 | Backend format | `docker compose run --rm backend clojure -M:fmt --check` | EXE | exit 0, no format violations |
 | 11 | Frontend lint | `docker compose run --rm frontend pnpm exec ng lint` | EXE | exit 0, no lint errors |
 | 12 | Frontend format | `docker compose run --rm frontend pnpm exec prettier --check .` | EXE | exit 0, no format violations |
+| 13 | Env validation fail-fast | `docker compose run --rm -e DB_PASSWORD= backend java -jar app.jar` | EXE | Exits non-zero, output names DB_PASSWORD |
 
 ## Boundaries
 
@@ -152,8 +157,10 @@ Blocker: (if applicable)
 - [ ] src/ecommerce/core.clj
 - [ ] src/ecommerce/router.clj
 - [ ] src/ecommerce/middleware.clj
+- [ ] src/ecommerce/config.clj
 - [ ] src/ecommerce/db.clj
 - [ ] src/ecommerce/validation.clj
+- [ ] resources/logback.xml
 - [ ] resources/migrations/001-008.sql (8 files)
 - [ ] frontend/ (Angular scaffold)
 - [ ] frontend/src/app/shared/validation/product.schema.ts
@@ -161,6 +168,8 @@ Blocker: (if applicable)
 - [ ] Dockerfile.frontend
 - [ ] docker-compose.yml
 - [ ] nginx.conf
+- [ ] .dockerignore
+- [ ] .env.example
 - [ ] README.md
 
 ### Quality Gates
@@ -176,3 +185,4 @@ Blocker: (if applicable)
 - [ ] Gate 10: Backend format passes
 - [ ] Gate 11: Frontend lint passes
 - [ ] Gate 12: Frontend format passes
+- [ ] Gate 13: Env validation fail-fast

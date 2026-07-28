@@ -219,7 +219,8 @@ process-wide wrappers:
                                coercion/coerce-response-middleware
                                coercion/coerce-request-middleware]}})
         (ring/create-default-handler))
-      (wrap-security-headers)))
+      (wrap-security-headers)
+      (wrap-request-logging)))
 ```
 
 | Layer | Scope | Contains |
@@ -227,6 +228,19 @@ process-wide wrappers:
 | `ring/router` `:data :middleware` | Every declared route | The eight-step chain from Section 2 (minus multipart, which is route-scoped) |
 | `ring/create-default-handler` | Unmatched paths | Reitit's default 404 / 405 / 406 responses |
 | `wrap-security-headers` | Every response, matched or not | Section 5 headers |
+| `wrap-request-logging` | Every request and response, OUTERMOST layer | Request/response logging, see below |
+
+### Request Logging Middleware (`wrap-request-logging`)
+
+`wrap-request-logging` is the OUTERMOST middleware entry --- it wraps everything
+else in the pipeline, including `wrap-security-headers`. Logs method, path,
+status, duration-ms at INFO level. Exclusions: NEVER logs Cookie/Set-Cookie
+headers, request bodies, or response bodies. This is the only place where
+request metadata is logged.
+
+> **Note**: the logging middleware is deliberately outermost so it captures the
+> final status code (including error middleware transformations) and total
+> duration.
 
 There is no global cart-cookie middleware. Cart identity (`wrap-cart-cookie`,
 via `buddy-sign`) is applied at the **route level only** --- to `/api/cart/*`

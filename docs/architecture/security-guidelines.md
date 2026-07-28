@@ -82,8 +82,11 @@ sequenceDiagram
   (:require [buddy.sign.compact :as compact]))
 
 (def ^:private secret
-  (or (System/getenv "CART_COOKIE_SECRET")
-      (throw (ex-info "CART_COOKIE_SECRET required" {}))))
+  (let [s (System/getenv "CART_COOKIE_SECRET")]
+    (when (or (nil? s) (clojure.string/blank? s))
+      (throw (ex-info "CART_COOKIE_SECRET is missing or blank"
+                      {:var "CART_COOKIE_SECRET"})))
+    s))
 
 (defn sign-cart-id [cart-id]
   (compact/sign (str cart-id) secret))
@@ -112,6 +115,11 @@ buried inside the first request that tries to sign a cookie. Fail fast at the
 boundary where the mistake was made (deployment configuration), not deep inside
 request-handling code.
 
+> **IMPORTANT --- AOT compilation**: the secret must be read inside an init function
+> called from `-main`, not in a top-level `def`. A bare `def` would execute at AOT
+> compile time inside the Docker build stage (where no runtime secrets exist),
+> failing the build.
+
 Key generation and injection:
 
 ```bash
@@ -125,8 +133,13 @@ repository:
 services:
   backend:
     environment:
-      CART_COOKIE_SECRET: ${CART_COOKIE_SECRET}
+      CART_COOKIE_SECRET: ${CART_COOKIE_SECRET:-dev-only-insecure-secret-change-in-prod}
 ```
+
+> **Note**: the dev default is intentionally insecure and clearly named. Production
+> deployments MUST override via `.env` or host environment. The `config.clj`
+> validation accepts it (it's non-blank and ≥32 chars) but logs a warning when the
+> value contains `insecure`.
 
 ### Behavior on a tampered cookie
 

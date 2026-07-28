@@ -59,7 +59,7 @@ Finalize Docker multi-stage builds and compose configuration so that `docker com
 |------|--------|
 | Dockerfile.backend | Finalize multi-stage: build (uberjar) -> test (run tests) -> prod (JRE only, no JDK) |
 | Dockerfile.frontend | Finalize multi-stage: build (ng build) -> test (vitest) -> prod (nginx only, no Node) |
-| docker-compose.yml | Final service config: startup order, health checks, internal network, no exposed DB port; re-confirm backend mounts /var/run/docker.sock for Testcontainers (from T-001); add `playwright` service (Node 22, Playwright, runs E2E tests against the full stack) |
+| docker-compose.yml | Final service config: startup order, health checks, internal network, no exposed DB port; backend service has NO host port mapping --- only frontend:8080 is published; NO docker.sock mount in the backend service definition --- Testcontainers gets the socket via the test command only (`docker compose run -v /var/run/docker.sock:/var/run/docker.sock backend clojure -M:test`); restart: unless-stopped on backend and db services; stop_grace_period: 15s on backend; add `playwright` service (Node 22, Playwright, runs E2E tests against the full stack) |
 | nginx.conf | Final proxy rules: /api/* -> backend:3000, / -> frontend static files |
 
 ## Quality Gates
@@ -84,6 +84,10 @@ Finalize Docker multi-stage builds and compose configuration so that `docker com
 | 16 | Backend lint | `docker compose run --rm backend clojure -M:lint` | EXE | exit 0, no lint errors |
 | 17 | Frontend lint | `docker compose run --rm frontend pnpm exec ng lint` | EXE | exit 0, no lint errors |
 | 18 | Playwright service | Inspect docker-compose.yml | REVIEW | `playwright` service present (Node 22, Playwright, runs E2E tests against full stack) |
+| 19 | docker.sock absent from production | `docker compose up -d && docker inspect $(docker compose ps -q backend) --format '{{json .Mounts}}' \| rg docker.sock` | EXE | Returns no match |
+| 20 | Backend port not exposed | `docker compose port backend 3000` returns empty | EXE | Backend reachable only via nginx proxy |
+| 21 | Backend runs as non-root | `docker compose exec backend whoami` | EXE | Returns `app`, not `root` |
+| 22 | 503 when DB down | `docker compose stop db && curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/health` | EXE | Returns 503; `docker compose start db` → returns 200 within 30s |
 
 ## Boundaries
 
@@ -146,7 +150,7 @@ Blocker: (if applicable)
 ### Deliverables
 - [ ] Dockerfile.backend finalized (build -> test -> prod stages)
 - [ ] Dockerfile.frontend finalized (build -> test -> prod stages)
-- [ ] docker-compose.yml finalized (health checks, startup order, internal network, docker.sock mount for Testcontainers, playwright service)
+- [ ] docker-compose.yml finalized (health checks, startup order, internal network, no backend host port, no docker.sock in service definition, restart policies, stop_grace_period, playwright service)
 - [ ] nginx.conf finalized (/api/* proxy, static file serving)
 - [ ] test/smoke-test.sh created and executable
 
@@ -169,3 +173,7 @@ Blocker: (if applicable)
 - [ ] Gate 16: Backend lint passes
 - [ ] Gate 17: Frontend lint passes
 - [ ] Gate 18: Playwright service present
+- [ ] Gate 19: docker.sock absent from production
+- [ ] Gate 20: Backend port not exposed
+- [ ] Gate 21: Backend runs as non-root
+- [ ] Gate 22: 503 when DB down, 200 on recovery
