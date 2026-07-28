@@ -1,0 +1,148 @@
+# T-016 --- README & Decision Documentation
+
+## Metadata
+
+| Field | Value |
+|-------|-------|
+| Task ID | T-016 |
+| Batch | 3 |
+| Epic | EP06 --- Containerization & Docs |
+| Story | [US-016](../../user-stories/US-016-readme-documentation.md) |
+| Persona | Evaluator |
+| Model Tier | standard |
+| Priority | Must Have |
+| Depends On | T-015 (Docker Compose finalization) |
+
+## Objective
+
+Write README.md documenting run instructions, prerequisites, architectural decisions with alternatives considered, architecture overview, testing strategy, and known limitations. This is the last task because it must reflect the final state of the entire application.
+
+## Pre-conditions
+
+- [ ] ALL other tasks (T-001 through T-015) are complete
+- [ ] `docker compose up --build` starts the full application cleanly
+- [ ] All features are implemented and tests pass
+- [ ] No AI-generated comments exist in the codebase
+
+## Context Bundle
+
+| File | Lines | Why Needed |
+|------|-------|------------|
+| docs/architecture/tech-stack.md | all | Technology choices and versions |
+| docs/architecture/database-schema.md | all | Database design for architecture overview |
+| docs/architecture/api-contracts.md | all | API surface for architecture overview |
+| docs/architecture/security-guidelines.md | all | Security approach for decisions section |
+| docker-compose.yml | all | Actual run configuration to document |
+| Dockerfile.backend | all | Build process for architecture overview |
+| Dockerfile.frontend | all | Build process for architecture overview |
+| docs/domain-glossary.md | all | Domain terms for consistency |
+
+## Deliverables
+
+### Files to Create
+
+| File | Purpose |
+|------|---------|
+| README.md | Project documentation: run instructions, decisions, architecture, testing, limitations |
+
+### Files to Modify
+
+None.
+
+## Quality Gates
+
+| # | Gate | Command/Check | Type | Pass Criteria |
+|---|------|---------------|------|---------------|
+| 1 | README exists | `test -f README.md` | EXE | exit 0 |
+| 2 | Run instructions work | Follow README to start app from scratch | MANUAL | App starts on first attempt |
+| 3 | Prerequisites listed | README states Docker + Docker Compose only | REVIEW | No other prerequisites mentioned |
+| 4 | Decision 1 documented | Backend: Clojure vs Java/Python/Go/PHP | REVIEW | Choice + alternatives + rationale |
+| 5 | Decision 2 documented | Frontend: Angular 22 vs React/ClojureScript/Vanilla | REVIEW | Choice + alternatives + rationale |
+| 6 | Decision 3 documented | Database: PostgreSQL vs SQLite/MongoDB/MySQL | REVIEW | Choice + alternatives + rationale |
+| 7 | Decision 4 documented | Validation: Malli + Zod vs NestJS gateway | REVIEW | Choice + alternatives + rationale |
+| 8 | Decision 5 documented | CSV processing: core.async vs distributed step functions | REVIEW | Choice + alternatives + rationale |
+| 9 | Decision 6 documented | Search: PostgreSQL tsvector vs Elasticsearch | REVIEW | Choice + alternatives + rationale |
+| 10 | Decision 7 documented | Duplicate SKU: upsert for catalog, reject for in-file | REVIEW | Choice + alternatives + rationale |
+| 11 | Decision 8 documented | Delete: hard delete with FK protection | REVIEW | Choice + alternatives + rationale |
+| 12 | Decision 9 documented | Cart identity: signed cookie | REVIEW | Choice + alternatives + rationale |
+| 13 | Decision 10 documented | Checkout concurrency: SELECT FOR UPDATE | REVIEW | Choice + alternatives + rationale |
+| 14 | Architecture overview | How components interact (backend, frontend, DB, Docker) | REVIEW | Clear system description |
+| 15 | Testing strategy | TDD, test pyramid, security tests documented | REVIEW | Strategy summarized |
+| 16 | Known limitations | What would change with more time | REVIEW | Honest assessment present |
+| 17 | No AI comments | `grep -r "AI\|GPT\|Claude\|generated" --include="*.clj" --include="*.ts" src/ frontend/src/` | EXE | No AI attribution in code |
+| 18 | Docker start works | `docker compose down -v && docker compose up --build -d` | EXE | App starts per README instructions |
+
+## Boundaries
+
+- NOT in scope: Auto-generated API documentation (Swagger/OpenAPI)
+- NOT in scope: Architecture diagrams in README (reference docs/ directory)
+- NOT in scope: Contribution guidelines
+- NOT in scope: License file
+- NOT in scope: Changelog
+
+## Anti-patterns
+
+| What | Why It Fails | Do Instead |
+|------|-------------|------------|
+| Document planned features as if implemented | Misleads evaluator, damages credibility | Only document what actually exists and works |
+| Write a tutorial | Evaluator wants a reference, not a walkthrough | Write concise reference documentation |
+| Skip "alternatives considered" for decisions | Evaluator wants to see reasoning, not just choices | Each decision MUST list alternatives and why they were not chosen |
+| Copy-paste architecture docs verbatim | Redundant, shows no synthesis | Summarize and reference docs/ for details |
+| Include AI-generated comments in code | Challenge requirement violation | Remove any AI attribution from source files |
+
+## Rollback Guidance
+
+```bash
+git checkout -- README.md
+```
+
+## Compact Rules
+
+### PROJECT-TEST
+- All tests must pass before any commit
+- TDD (Red/Green/Refactor) is the default
+- Breaking an existing test is a blocking issue
+- Tests map directly to acceptance criteria
+- Test evidence is required for DOD
+
+### PROJECT-ANTI-DRIFT
+- Scope is defined by the handoff --- work outside boundaries is a violation
+- Version pinning: exact versions only
+- Dead code MUST be removed
+
+### PROJECT-PIPELINE
+- Pipeline: install -> build -> lint -> test:unit -> test:integration
+- Failing stage STOPS the pipeline
+
+## Status Protocol
+
+```
+Status: [IN_PROGRESS | BLOCKED | DONE | FAILED]
+Progress: X/Y items
+Blocker: (if applicable)
+```
+
+## Progress Tracker
+
+### Deliverables
+- [ ] README.md created
+
+### Quality Gates
+- [ ] Gate 1: README.md exists
+- [ ] Gate 2: Run instructions work on first attempt
+- [ ] Gate 3: Prerequisites are Docker-only
+- [ ] Gate 4: Decision 1 --- Backend language
+- [ ] Gate 5: Decision 2 --- Frontend framework
+- [ ] Gate 6: Decision 3 --- Database
+- [ ] Gate 7: Decision 4 --- Validation strategy
+- [ ] Gate 8: Decision 5 --- CSV processing
+- [ ] Gate 9: Decision 6 --- Search implementation
+- [ ] Gate 10: Decision 7 --- Duplicate SKU handling
+- [ ] Gate 11: Decision 8 --- Delete strategy
+- [ ] Gate 12: Decision 9 --- Cart identity
+- [ ] Gate 13: Decision 10 --- Checkout concurrency
+- [ ] Gate 14: Architecture overview present
+- [ ] Gate 15: Testing strategy documented
+- [ ] Gate 16: Known limitations listed
+- [ ] Gate 17: No AI comments in code
+- [ ] Gate 18: Docker start works per README
