@@ -30,7 +30,7 @@ flowchart TD
     EMPTY -->|Yes| SKIP1[Record: Skipped - Empty Row]
 
     EMPTY -->|No| FIELDVAL[Validate Required Fields]
-    FIELDVAL -->|Missing Name/Category/Weight| SKIP2[Record: Skipped - Missing Field]
+    FIELDVAL -->|Missing Name or SKU| SKIP2[Record: Skipped - Missing Required Field]
 
     FIELDVAL -->|Present| TYPEVAL[Validate Price and Stock]
     TYPEVAL -->|Malformed Price or Negative Stock| SKIP3[Record: Skipped - Invalid Value]
@@ -67,9 +67,10 @@ flowchart TD
   garbage pricing never enters the catalog.
 - [ ] **Must Have** --- As a Catalog Manager, I want rows with negative stock quantities rejected,
   so that inventory counts never go negative from an import.
-- [ ] **Must Have** --- As a Catalog Manager, I want rows with empty or whitespace-only names,
-  missing categories, or missing weights rejected, so that incomplete product records never
-  enter the catalog silently.
+- [ ] **Must Have** --- As a Catalog Manager, I want rows with empty or whitespace-only names
+  rejected, so that products without an identifiable name never enter the catalog. Missing
+  category and missing weight are valid per the domain model (category may be empty, weight
+  is optional) and must not cause rejection.
 - [ ] **Must Have** --- As a Catalog Manager, I want completely empty rows skipped without error
   noise, so that blank lines in the source file do not pollute the results.
 - [ ] **Must Have** --- As a Catalog Manager, I want any row containing script content or

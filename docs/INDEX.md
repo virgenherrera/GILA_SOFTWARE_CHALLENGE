@@ -50,8 +50,10 @@ Legend: green = complete, blue = current, gray = pending.
 
 ## Architecture
 
-- [ ] [Tech Stack](architecture/tech-stack.md) --- TBD, populated during Architect
-- [ ] [Testing Strategy](architecture/testing-strategy.md) --- TBD, populated during Architect
+- [x] [Tech Stack](architecture/tech-stack.md)
+- [x] [Testing Strategy](architecture/testing-strategy.md)
+- [x] [API Contract](architecture/api-contract.md)
+- [x] [Data Model](architecture/data-model.md)
 
 ## Sprint Planning
 

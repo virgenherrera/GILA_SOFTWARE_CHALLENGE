@@ -2,8 +2,8 @@
 
 ## Current Phase & State
 
-**Phase**: Architect --- defining tech stack, testing strategy, and API contracts.
-**Sub-state**: In Progress --- drafting architecture documents.
+**Phase**: Architect --- all artifacts drafted, pending MIM approval.
+**Sub-state**: MIM Gate --- tech-stack, testing-strategy, api-contract, data-model ready for review.
 
 To begin: describe the idea, problem, and target audience. The orchestrator guides
 the pipeline from here.
