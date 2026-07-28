@@ -130,6 +130,8 @@ Section 6). Any client sending `Accept: application/edn` or
 intentional: the API contract commits to JSON exclusively, and restricting the
 format set at the Muuntaja level enforces that contract structurally rather than
 by convention. There is no code path that could accidentally serve EDN.
+(This 406 behavior depends on Muuntaja's `:default-format` configuration ---
+verify at REPL.)
 
 ## 4. CORS Decision
 
@@ -192,7 +194,7 @@ Like `wrap-cors` in Section 4, `wrap-security-headers` wraps the entire
 default 404 handler and to responses for paths that never matched a route.
 
 **Why not `ring-defaults`**: `ring.middleware.defaults` bundles a wider set of
-headers and behaviors, but the current release pins `ring-core` 1.13.0+, which
+headers and behaviors, but the current release pins `ring-core` 1.15.5+, which
 would drift the project away from the pinned `ring-core` 1.12.2 documented in
 [Tech Stack](tech-stack.md). Three explicit lines of code cost less than an
 indirect version bump across the whole Ring dependency tree.
@@ -217,8 +219,7 @@ process-wide wrappers:
                                coercion/coerce-response-middleware
                                coercion/coerce-request-middleware]}})
         (ring/create-default-handler))
-      (wrap-security-headers)
-      (wrap-cookies)))
+      (wrap-security-headers)))
 ```
 
 | Layer | Scope | Contains |
@@ -226,13 +227,13 @@ process-wide wrappers:
 | `ring/router` `:data :middleware` | Every declared route | The eight-step chain from Section 2 (minus multipart, which is route-scoped) |
 | `ring/create-default-handler` | Unmatched paths | Reitit's default 404 / 405 / 406 responses |
 | `wrap-security-headers` | Every response, matched or not | Section 5 headers |
-| `wrap-cookies` | Every request/response | Cookie parsing and `Set-Cookie` writing |
 
-`wrap-cookies` sits at the outermost layer because cart identity depends on a
-signed cookie (via `buddy-sign`) that must be readable before routing and
-writable after any handler runs --- including the default 404 handler, in case a
-cart cookie needs to be issued even on an unmatched path. Full detail on the
-signing scheme lives in [Security Guidelines](security-guidelines.md).
+There is no global cart-cookie middleware. Cart identity (`wrap-cart-cookie`,
+via `buddy-sign`) is applied at the **route level only** --- to `/api/cart/*`
+and `/api/checkout` --- as detailed in Section 7 below. It does not run for
+the default 404 handler or for any path that does not match one of those
+routes, since those requests have no notion of cart state to begin with. Full
+detail on the signing scheme lives in [Security Guidelines](security-guidelines.md).
 
 ## 7. Route-Level Middleware
 
@@ -269,7 +270,10 @@ of work they do not need.
 
 - [Tech Stack](tech-stack.md) --- exact Ring, Reitit, Malli, and Muuntaja versions
 - [API Contract](api-contract.md) --- endpoint definitions and response shapes
-- [Health Check Strategy](health-check-strategy.md) --- how `/api/health` bypasses the standard chain
+- [Health Check Strategy](health-check-strategy.md) --- `/api/health` is a
+  standard Reitit route and goes through the full middleware chain described
+  above like any other route; it needs no bypass, since `wrap-cart-cookie`
+  (Section 7) is never applied to it in the first place
 - [Validation Pruning](validation-pruning.md) --- Malli schema pruning rules applied during coercion
 - [Error Handling](error-handling.md) --- the exception-middleware error taxonomy and response shapes
 - [Security Guidelines](security-guidelines.md) --- signed cart cookies and the buddy-sign scheme

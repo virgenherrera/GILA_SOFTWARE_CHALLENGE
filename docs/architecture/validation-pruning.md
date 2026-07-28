@@ -213,6 +213,13 @@ never written to the database at all. Store-raw-encode-on-output only applies to
 that is accepted; data identified as an injection payload during CSV validation never
 reaches storage.
 
+Scope note: this check is a literal `<script>` substring match against the known
+XSS-trap test fixture, not comprehensive XSS screening --- it does not detect
+event-handler attributes (`onerror=`), `javascript:` URIs, or obfuscated/encoded
+markup. It is a defense-in-depth rejection at one specific input boundary, not the
+application's XSS defense. The broader XSS defense is Angular's built-in template
+sanitization on the frontend (Section 5 above).
+
 ## 6. Validation Contract
 
 [API Contract](api-contract.md) Section 7 (Validation Contract) is the single source of

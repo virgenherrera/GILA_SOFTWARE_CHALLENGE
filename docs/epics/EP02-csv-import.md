@@ -117,12 +117,11 @@ The following constraints apply to every story in this epic:
 
 ## Related Architecture
 
-- [Tech Stack](../architecture/tech-stack.md) --- technology choices and rationale (placeholder,
-  populated during Architect phase)
-- [Validation Rules](../architecture/validation-rules.md) --- canonical field-level validation
-  contract shared with EP01 (placeholder, populated during Architect phase)
-- [CSV Import Pipeline](../architecture/csv-import-pipeline.md) --- parsing and staging design
-  (placeholder, populated during Architect phase)
+- [Tech Stack](../architecture/tech-stack.md) --- technology choices and rationale
+- [CSV Import Pipeline](../architecture/tech-stack.md#7-csv-import-pipeline) --- parsing and
+  staging design
+- [Validation Contract](../architecture/api-contract.md#7-validation-contract) --- canonical
+  field-level validation contract shared with EP01
 
 ## Related Documents
 

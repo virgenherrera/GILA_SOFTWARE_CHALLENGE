@@ -96,10 +96,15 @@ increases `quantity` on the existing row instead of inserting a duplicate line.
 | Column | Type | Constraints | Notes |
 | ------ | ---- | ----------- | ----- |
 | `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Surrogate identifier. |
-| `cart_id` | `UUID` | `UNIQUE REFERENCES carts(id)` | The cart this order originated from (`Cart \|\|--o\| Order`). Nullable only if an order-creation path without a cart is ever introduced; not expected in v1. |
+| `cart_id` | `UUID` | `UNIQUE NOT NULL REFERENCES carts(id)` | The cart this order originated from (`Cart \|\|--o\| Order`). NOT NULL --- v1 orders always originate from a cart. |
 | `status` | `TEXT` | `NOT NULL DEFAULT 'Pending'`, `CHECK (status IN ('Pending', 'Paid', 'Failed', 'Fulfilled'))` | Mirrors the Order state machine. |
 | `placed_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT now()` | Set when the order is created from a checked-out cart. |
 | `total_amount` | `NUMERIC(10,2)` | `NOT NULL`, `CHECK (total_amount >= 0)` | `Money` value object; sum of `order_items.line_subtotal`. |
+
+> **v1 scope note**: v1 uses only `Pending` and `Paid` states. `Failed` and `Fulfilled` are
+> reserved for v2 (simulated payment decline and order fulfillment tracking, respectively).
+> The CHECK constraint includes all planned states to avoid a schema migration when v2
+> features are implemented.
 
 **Indexes**:
 
@@ -144,6 +149,13 @@ table after insertion.
 | `total_rows` | `INTEGER` | `NOT NULL DEFAULT 0`, `CHECK (total_rows >= 0)` | Total data rows parsed from the file, excluding the header. |
 | `accepted_rows` | `INTEGER` | `NOT NULL DEFAULT 0`, `CHECK (accepted_rows >= 0)` | Rows that produced a `ProductCreated`/`ProductUpdated` event. |
 | `rejected_rows` | `INTEGER` | `NOT NULL DEFAULT 0`, `CHECK (rejected_rows >= 0)` | Rows that produced an `import_errors` record. |
+
+> **Skipped rows**: there is no `skipped_rows` column. Rows that are entirely empty are
+> excluded from both `accepted_rows` and `rejected_rows` and produce no `import_errors`
+> entry, so the skipped count is always derivable as
+> `total_rows - accepted_rows - rejected_rows` rather than stored redundantly. See the
+> [API Contract](api-contract.md#4-csv-import-api) for the full `skipped` row-status
+> semantics on the SSE stream.
 
 **Indexes**:
 
@@ -316,7 +328,7 @@ erDiagram
     ORDERS ||--o{ ORDER_ITEMS : contains
     PRODUCTS ||--o{ ORDER_ITEMS : "is referenced by"
     CSV_IMPORT_JOBS ||--o{ IMPORT_ERRORS : produces
-    CSV_IMPORT_JOBS ||--o{ PRODUCTS : "creates or updates"
+    CSV_IMPORT_JOBS ||..o{ PRODUCTS : "creates or updates (no FK, conceptual only)"
     PRODUCTS ||--o{ IMPORT_ERRORS : "may be referenced by"
 ```
 

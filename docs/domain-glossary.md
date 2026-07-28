@@ -115,6 +115,13 @@ stateDiagram-v2
     Failed --> [*]
 ```
 
+> **v1 scope note**: v1 uses only `Pending` and `Paid` --- the simulated payment always
+> succeeds (see [EP04](epics/EP04-purchase-workflow.md)), so no code path produces
+> `Failed`, and no fulfillment-tracking feature produces `Fulfilled`. Both states are
+> modeled here and in the [Data Model](architecture/data-model.md#24-orders) CHECK
+> constraint as reserved v2 states, to avoid a schema migration when v2 introduces
+> payment declines and fulfillment tracking.
+
 ## Entity Relationships
 
 ```mermaid

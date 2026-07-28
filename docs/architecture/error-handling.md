@@ -43,10 +43,10 @@ sequenceDiagram
 | -------------- | ---------- | ----------- | ------- |
 | `:reitit.coercion/request-coercion` | `VALIDATION_ERROR` | 400 | Invalid field values, unknown fields |
 | `:reitit.coercion/response-coercion` | `INTERNAL_ERROR` | 500 | Response doesn't match schema (a bug) |
-| Custom `:type :not-found` | `NOT_FOUND` | 404 | Product/order/cart not found |
-| Custom `:type :conflict` | `CONFLICT` | 409 | Duplicate SKU |
-| Custom `:type :product-in-use` | `PRODUCT_IN_USE` | 409 | Delete product with orders/carts |
-| Custom `:type :insufficient-stock` | `INSUFFICIENT_STOCK` | 409 | Checkout with insufficient stock |
+| Custom `:type/not-found` | `NOT_FOUND` | 404 | Product/order/cart not found |
+| Custom `:type/conflict` | `CONFLICT` | 409 | Duplicate SKU |
+| Custom `:type/product-in-use` | `PRODUCT_IN_USE` | 409 | Delete product with orders/carts |
+| Custom `:type/insufficient-stock` | `INSUFFICIENT_STOCK` | 409 | Checkout with insufficient stock |
 | `PSQLException` (unique violation) | `CONFLICT` | 409 | DB-level SKU uniqueness |
 | Any other `Exception` | `INTERNAL_ERROR` | 500 | Unexpected errors |
 
@@ -78,10 +78,13 @@ unrecognized:
 (def exception-middleware
   (exception/create-exception-middleware
     (merge exception/default-handlers
-      {::coercion/request-coercion  (coercion-error-handler 400)
-       ::coercion/response-coercion (coercion-error-handler 500)
-       :type/not-found              (fn [_ _] {:status 404 :body {:error {:code "NOT_FOUND" ...}}})
+      {::coercion/request-coercion   (coercion-error-handler 400)
+       ::coercion/response-coercion  (coercion-error-handler 500)
+       :type/not-found               (fn [_ _] {:status 404 :body {:error {:code "NOT_FOUND" ...}}})
        :type/conflict                (fn [_ _] {:status 409 :body {:error {:code "CONFLICT" ...}}})
+       :type/product-in-use          (fn [_ _] {:status 409 :body {:error {:code "PRODUCT_IN_USE" ...}}})
+       :type/insufficient-stock      (fn [_ _] {:status 409 :body {:error {:code "INSUFFICIENT_STOCK" ...}}})
+       org.postgresql.util.PSQLException (psql-exception-handler)
        ::exception/default          (fn [_ _] {:status 500 :body {:error {:code "INTERNAL_ERROR" ...}}})})))
 ```
 
@@ -89,16 +92,35 @@ Merging over `exception/default-handlers` preserves Reitit's built-in handling f
 framework-level exceptions (for example malformed request bodies that fail before
 reaching coercion) while overriding the handlers this application cares about.
 
+`psql-exception-handler` inspects `.getSQLState` on the caught `PSQLException`
+for `23505` (`unique_violation`) before mapping the response to `CONFLICT`/409.
+Any other PSQLException SQLState falls through to the default 500
+`INTERNAL_ERROR` handler rather than being blanket-mapped to 409 --- a
+`PSQLException` can also signal things like a connection failure or a
+constraint violation unrelated to uniqueness, none of which should read back
+to the client as a 409 conflict.
+
 ## 4. Coercion Error Transformation
 
 Malli's explanation data is not itself the API error shape --- it must be transformed
-into the `field`/`reason` pairs documented in [API Contract](api-contract.md) Section 2:
+into the `field`/`reason` pairs documented in [API Contract](api-contract.md) Section 2.
+
+**Verification note (read before relying on the code below):** the exact shape of
+`ex-data` for a `:reitit.coercion/request-coercion` exception (specifically, whether
+the Malli explanation lives at `:body :explain`, at the top level, or nested
+differently) needs REPL verification against Reitit 0.7.2 and Malli 0.16.4 ---
+library internals can shift between minor versions. This is tracked as a
+verification task for
+[T-001 --- Project Scaffolding](../subtasks/ep06/T-001-project-scaffolding.md), where the
+coercion middleware is first wired up. The block below is **pseudocode** ---
+verify the `ex-data` path against Reitit 0.7.2 at the REPL before treating it as
+production-ready:
 
 ```clojure
 (defn coercion-error-handler [status]
   (fn [exception _request]
     (let [data    (ex-data exception)
-          explain (-> data :body :explain)  ;; Malli explanation
+          explain (-> data :body :explain)  ;; Malli explanation -- UNVERIFIED path, see note above
           details (when explain
                     (for [[field msgs] (me/humanize explain)]
                       {:field  (name field)
@@ -108,14 +130,6 @@ into the `field`/`reason` pairs documented in [API Contract](api-contract.md) Se
                                 :message "Validation failed"}
                          details (assoc :details details))}})))
 ```
-
-**Verification note:** the exact shape of `ex-data` for a `:reitit.coercion/request-coercion`
-exception (specifically, whether the Malli explanation lives at `:body :explain`, at the
-top level, or nested differently) needs REPL verification against Reitit 0.7.2 and Malli
-0.16.4 --- library internals can shift between minor versions. This is tracked as a
-verification task for
-[T-001 --- Project Scaffolding](../subtasks/ep06/T-001-project-scaffolding.md), where the
-coercion middleware is first wired up.
 
 ## 5. Security Sanitization
 

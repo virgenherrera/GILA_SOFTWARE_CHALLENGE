@@ -38,7 +38,10 @@ to both the Clojure backend and the Angular frontend.
 | Integration | `clojure.test` + Testcontainers (PostgreSQL 17) | Vitest + MSW | Database queries, repository behavior, HTTP API endpoints, the full CSV parsing/validation pipeline | Fewer — one per persistence-touching behavior |
 | E2E | Playwright | Playwright | Full user flows through the running Angular UI: product CRUD, CSV upload, search, purchase | Minimal — one per critical user journey |
 
-The pyramid shape is deliberate and enforced, not aspirational:
+The pyramid shape is deliberate and enforced, not aspirational. Enforcement is structural: code
+review verifies that validation logic is tested at the unit layer first, and integration tests
+are reserved for persistence-touching behavior. A PR introducing a new integration test for logic
+that could be tested as a unit test is rejected at review.
 
 ```mermaid
 graph TD
@@ -109,6 +112,12 @@ tests aligned with the exact traps the challenge is graded against.
   script or a repository-layer seed function) executed against a Testcontainers-managed
   PostgreSQL 17 instance before each integration test run, and torn down after — no shared
   mutable state leaks between test cases.
+- **Database isolation per test** uses transaction-per-test rollback: each integration test runs
+  inside a transaction opened with `next.jdbc`'s `:rollback-only true` option. The transaction is
+  automatically rolled back after the test completes, guaranteeing zero state leakage between
+  tests regardless of test outcome (including crashes). The Testcontainers-managed PostgreSQL
+  instance provides the container-level isolation; transaction rollback provides the test-level
+  isolation within it.
 - Fixture files live alongside their test suites (e.g., `test/fixtures/csv/`) so each trap
   case's fixture is discoverable next to the test that exercises it.
 
@@ -166,7 +175,7 @@ docker compose run --rm frontend pnpm exec vitest run --exclude '**/*.integratio
 
 # Filter: integration only (focus on namespaces tagged ^:integration)
 docker compose run --rm backend clojure -M:test --focus-meta :integration
-docker compose run --rm frontend pnpm exec vitest run integration.spec.ts
+docker compose run --rm frontend pnpm exec vitest run '**/*.integration.spec.ts'
 ```
 
 > **Implementation note**: backend filtering requires `^:integration` metadata on integration
@@ -199,11 +208,12 @@ decrement — follows this cycle without exception:
    Resist adding behavior the current test does not require; additional behavior gets its own
    Red step first.
 3. **Refactor** — With the test suite green, improve the implementation applying
-   **SOLID**, **DRY**, **KISS**, **Clean Architecture**, and **Hexagonal Architecture**
-   principles without changing observable behavior. This is where structure emerges:
-   extract ports and adapters, eliminate duplication, name things precisely, ensure single
-   responsibility. Re-run the full suite after every refactor step to confirm it remains
-   green. The Refactor step is not optional cleanup — it is where engineering quality is
+   **SOLID**, **DRY**, **KISS**, **Clean Architecture**, **Hexagonal Architecture**, **OWASP**,
+   and **design patterns** principles without changing observable behavior. This is where
+   structure emerges: extract ports and adapters, eliminate duplication, name things precisely,
+   ensure single responsibility, close known vulnerability classes, and apply the design pattern
+   that fits the emerging shape. Re-run the full suite after every refactor step to confirm it
+   remains green. The Refactor step is not optional cleanup — it is where engineering quality is
    built into the codebase.
 4. **Commit** — Commit the Red→Green→Refactor unit as a coherent change once the suite is
    green. A commit that introduces new logic without an accompanying test is not acceptable
@@ -218,7 +228,7 @@ way a Clojure validation function is.
 | Requirement | Status | Detail |
 | ----------- | ------ | ------ |
 | Every acceptance criterion has a corresponding test | Required, gated | Traced against each epic's user stories and "Acceptance Boundaries" section; a merged change missing a test for a stated criterion fails review. |
-| Every CSV trap type has a dedicated test case | Required, gated | The nine trap types enumerated in [Section 4](#4-test-data-strategy) must each have an identifiable, individually named test — combining multiple traps into one assertion does not satisfy this requirement. |
+| Every CSV trap type has a dedicated test case | Required, gated | The ten trap types enumerated in [Section 4](#4-test-data-strategy) must each have an identifiable, individually named test — combining multiple traps into one assertion does not satisfy this requirement. |
 | Security test cases (XSS, SQL injection, script-in-search) | Required, gated | The three vectors in [Section 5](#5-security-test-cases) must exist as explicit tests before the corresponding epic (EP01, EP02, EP03) is considered done. |
 | Line/statement coverage percentage | Aspirational, tracked | Reported by the CI test run (Cloverage for Clojure, Vitest's `--coverage` for the frontend) and visible in test output, but not a merge gate on its own — a high percentage number does not substitute for the explicit, required test cases above. A conspicuous coverage gap in a security- or integrity-critical namespace is treated as a signal to review, not an automatic failure. |
 

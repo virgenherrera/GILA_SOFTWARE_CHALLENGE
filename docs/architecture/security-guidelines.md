@@ -160,9 +160,16 @@ them alone is sufficient; together they form layered defense.
 | --------- | ----- | ------- |
 | `HttpOnly` | `true` | JS cannot read the cookie value (mitigates XSS cookie theft) |
 | `SameSite` | `Strict` | Browser never sends the cookie on cross-site requests (mitigates CSRF) |
-| `Path` | `/api/cart` | Cookie only sent to cart-related endpoints |
+| `Path` | `/api` | Cookie sent to every `/api/*` endpoint |
 | `Max-Age` | `2592000` (30 days) | Cart persists for 30 days |
 | `Secure` | `false` (dev) | Challenge runs on HTTP localhost; would be `true` in production |
+
+Path is `/api` (not `/api/cart`) to ensure the cookie is sent on both
+`/api/cart/*` and `/api/checkout` requests per RFC 6265 path-matching rules. A
+narrower `/api/cart` path would satisfy the `/api/cart/*` routes but would
+never be attached to a `/api/checkout` request, since RFC 6265 only matches a
+cookie's `Path` as a prefix of the request path (or a parent directory of it)
+--- `/api/checkout` does not fall under `/api/cart`.
 
 `Secure: false` is a deliberate, environment-scoped exception, not a general
 recommendation. Section 11 documents TLS as an explicitly deferred concern for the
@@ -235,7 +242,7 @@ every response:
 
 ### Why NOT ring-defaults
 
-- `ring-defaults` 0.7.1 pins `ring-core` at 1.13.0+. This project pins
+- `ring-defaults` 0.7.1 pins `ring-core` at 1.15.5+. This project pins
   `ring-core` 1.12.2 (see [Tech Stack](tech-stack.md)). Adding `ring-defaults`
   would silently bump `ring-core` transitively, violating the version-pinning
   policy for no functional gain.
@@ -288,6 +295,11 @@ rules).
 - CSV import explicitly **rejects** rows containing `<script>` tags as a
   security test requirement --- this is a defense-in-depth rejection at the
   input boundary, in addition to (not instead of) Angular's output escaping.
+  Scope note: this is a literal `<script>` substring check against the known
+  XSS-trap test fixture, not comprehensive XSS screening (it does not detect
+  event-handler attributes, `javascript:` URIs, or obfuscated markup). The
+  broader XSS defense is Angular's built-in template sanitization on the
+  frontend (Section 4 above), not this CSV-specific check.
 - Error responses never echo raw user input back into a message body (Section
   8), closing the reflected-XSS-via-error-message path some APIs leave open.
 
@@ -412,4 +424,8 @@ in a production context.
   taxonomy and sanitized response shapes
 - [Testing Strategy](testing-strategy.md) --- security test cases (SQL
   injection, `<script>` rejection, cookie tampering)
-- [Health Check Strategy](health-check-strategy.md) --- why `/api/health` bypasses cart-cookie middleware
+- [Health Check Strategy](health-check-strategy.md) --- database-dependent
+  readiness reporting for `/api/health` (a standard route that goes through the
+  full middleware chain like any other; `wrap-cart-cookie` never applies to it
+  since that middleware is scoped to `/api/cart/*` and `/api/checkout` only,
+  see [Middleware Pipeline, Section 7](middleware-pipeline.md))

@@ -28,6 +28,51 @@ All timestamps use ISO 8601 in UTC with the `Z` suffix:
 2026-07-27T14:30:00Z
 ```
 
+### Health Check Endpoint
+
+`GET /api/health` reports the operational status of the backend and its database
+dependency. It is not paginated and does not use the Standard Error Response shape ---
+see [Health Check Strategy](health-check-strategy.md) for the full rationale (zombie
+service anti-pattern, Docker Compose healthcheck behavior, retry-with-backoff design).
+
+#### Response --- 200 OK
+
+All dependencies healthy.
+
+```json
+{
+  "status": "healthy",
+  "uptime_seconds": 12345,
+  "db": {
+    "status": "connected",
+    "latency_ms": 2
+  }
+}
+```
+
+#### Response --- 503 Service Unavailable
+
+One or more dependencies degraded.
+
+```json
+{
+  "status": "degraded",
+  "uptime_seconds": 12345,
+  "db": {
+    "status": "disconnected",
+    "error": "Connection refused"
+  }
+}
+```
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `status` | enum | `healthy` or `degraded` |
+| `uptime_seconds` | integer | Seconds since process start |
+| `db.status` | enum | `connected` or `disconnected` |
+| `db.latency_ms` | integer | Round-trip time in milliseconds of the `SELECT 1` check; present when `db.status` is `connected` |
+| `db.error` | string | Sanitized error message --- no hostnames, ports, or credentials; present when `db.status` is `disconnected` |
+
 ### Paging Envelope
 
 Every `GET` endpoint that returns a collection wraps its results in this envelope. There
@@ -83,6 +128,10 @@ to the request as a whole.
   }
 }
 ```
+
+The `field` key in `details[]` identifies the relevant entity: for validation errors it
+names the request field that failed (e.g., `"price"`); for business-rule conflicts it
+identifies the affected entity (e.g., the product SKU `"RS-001"`).
 
 ### Error Codes
 
@@ -184,7 +233,7 @@ Returned when filter parameters are malformed (e.g., `priceMin=abc`).
 
 - When `q` is empty or omitted, all products are returned (subject to filters).
 - When no filters are applied and the catalog is empty, the response is a valid Paging
-  envelope with an empty `data` array and `paging.total` of `0`.
+  envelope with an empty `items` array and `paging.total` of `0`.
 - `q` searches across `name`, `description`, and `sku` using PostgreSQL full-text search
   (`tsvector`/`tsquery`).
 - Filters are cumulative: applying `category` AND `priceMin` returns only products
@@ -542,6 +591,10 @@ data: {"status": "CompletedWithErrors", "total_rows": 100, "accepted_rows": 92, 
   human sees when opening the CSV in a spreadsheet.
 - If the client connects after the job has already completed, the server sends a single
   `complete` event and closes the stream.
+- Skipped rows (e.g., completely empty rows) are excluded from both `accepted_rows` and
+  `rejected_rows` counts. The invariant is:
+  `accepted_rows + rejected_rows + skipped_rows = total_rows`. Skipped rows do NOT produce
+  `import_errors` entries.
 
 #### Response --- 404 Not Found
 
@@ -569,25 +622,28 @@ Returns paginated import errors for a specific job.
       "row_number": 6,
       "raw_row_data": ",,,,,,",
       "field_name": null,
-      "error_reason": "Empty row"
+      "error_reason": "Empty row",
+      "product_sku": null
     },
     {
       "row_number": 12,
       "raw_row_data": "Sneakers,SN-001,,Footwear,$29.99,50,0.4",
       "field_name": "price",
-      "error_reason": "Must be a positive number; currency symbols are not accepted"
+      "error_reason": "Must be a positive number; currency symbols are not accepted",
+      "product_sku": "SN-001"
     },
     {
       "row_number": 18,
       "raw_row_data": "Widget,WD-001,,Tools,-5,100,0.2",
       "field_name": "price",
-      "error_reason": "Must be a positive number"
+      "error_reason": "Must be a positive number",
+      "product_sku": "WD-001"
     }
   ],
   "paging": {
     "page": 1,
     "perPage": 20,
-    "total": 8,
+    "total": 3,
     "prev": null,
     "next": null
   }
@@ -600,6 +656,7 @@ Returns paginated import errors for a specific job.
 | `raw_row_data` | string | The original CSV row as a string (sanitized for display; no executable content) |
 | `field_name` | string or null | The specific field that caused rejection; `null` for row-level errors (e.g., empty row) |
 | `error_reason` | string | Human-readable explanation of why the row was rejected |
+| `product_sku` | string or null | The product SKU the row would have affected, when identifiable; `null` for errors that occur before SKU parsing (e.g., empty row, malformed row structure) |
 
 #### Response --- 404 Not Found
 
@@ -617,6 +674,9 @@ Returns paginated import errors for a specific job.
 Covers the cart portion of EP04 (Purchase Workflow). The cart is session-scoped --- no
 authentication is required for this challenge. The server identifies the cart by session
 (cookie or equivalent).
+
+Cart identity is established via a signed cookie (buddy-sign HMAC-SHA256). See
+[Security Guidelines](security-guidelines.md) for cookie signing implementation details.
 
 ### Endpoints
 
@@ -1050,6 +1110,7 @@ VALIDATION_ERROR)
 - [Project Brief](../project-brief.md)
 - [Domain Glossary](../domain-glossary.md) --- entity definitions and value object constraints
 - [Tech Stack](./tech-stack.md) --- Malli (backend) and Zod (frontend) validation libraries
+- [Health Check Strategy](health-check-strategy.md) --- `/api/health` rationale and Docker Compose behavior
 - [EP01 --- Product Management](../epics/EP01-product-management.md) --- CRUD operations
 - [EP02 --- CSV Import](../epics/EP02-csv-import.md) --- bulk import pipeline
 - [EP03 --- Product Search](../epics/EP03-product-search.md) --- search and filtering

@@ -35,8 +35,8 @@ behavior."
 
 ### RED
 
-Write a test that exercises **one** acceptance criterion from the user story — not the whole
-story, one bullet of it. Run the suite:
+Write a **failing** test that exercises **one** acceptance criterion from the user story — not
+the whole story, one bullet of it. Run the suite:
 
 ```bash
 docker compose run --rm backend clojure -M:test
@@ -60,11 +60,11 @@ suite proves the behavior is correct.
 ### REFACTOR
 
 With **all** tests green (not just the one just added — the full suite), improve the
-implementation's structure: extract duplication, apply SOLID, DRY, KISS, and the project's
-Clean/Hexagonal Architecture boundaries (see [Tech Stack](tech-stack.md)). Re-run the full test
-suite after **every** individual refactor step, not just once at the end — a refactor is a
-sequence of small, independently-verified transformations, not one large rewrite validated in
-one pass.
+implementation's structure: extract duplication, apply **SOLID**, **DRY**, **KISS**,
+**Clean Architecture**, **Hexagonal Architecture**, **OWASP**, and **design patterns**
+(see [Tech Stack](tech-stack.md)). Re-run the full test suite after **every** individual
+refactor step, not just once at the end — a refactor is a sequence of small,
+independently-verified transformations, not one large rewrite validated in one pass.
 
 ### COMMIT
 

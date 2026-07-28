@@ -52,19 +52,19 @@ Bootstrap the entire project skeleton: Clojure backend (Ring/Reitit), Angular 22
 | src/ecommerce/middleware.clj | Error handling, security headers, content-type middleware (no CORS --- same-origin via nginx, see [middleware-pipeline.md](../../architecture/middleware-pipeline.md)) |
 | src/ecommerce/db.clj | Database connection pool (HikariCP) and migration runner |
 | src/ecommerce/validation.clj | Shared Malli schemas for product, cart, order |
-| resources/migrations/001-create-products.sql | Products table DDL |
-| resources/migrations/002-create-categories.sql | Categories table DDL |
-| resources/migrations/003-create-product-categories.sql | Product-categories join table DDL |
-| resources/migrations/004-create-carts.sql | Carts table DDL |
-| resources/migrations/005-create-cart-items.sql | Cart items table with FK to products |
-| resources/migrations/006-create-orders.sql | Orders table DDL |
-| resources/migrations/007-create-order-items.sql | Order items table with FK to products |
-| resources/migrations/008-create-import-jobs.sql | Import jobs table DDL |
+| resources/migrations/001-create-products.sql | Create `products` table, `search_vector` column, and `idx_products_category` |
+| resources/migrations/002-create-products-search-trigger.sql | Create `products_search_vector_update()` function, its trigger, and `idx_products_search_vector` (GIN) |
+| resources/migrations/003-create-carts.sql | Create `carts` table and `idx_carts_status` |
+| resources/migrations/004-create-cart-items.sql | Create `cart_items` table, its `UNIQUE (cart_id, product_sku)` constraint, and supporting indexes |
+| resources/migrations/005-create-orders.sql | Create `orders` table, `UNIQUE (cart_id)`, and `idx_orders_status` |
+| resources/migrations/006-create-order-items.sql | Create `order_items` table and supporting indexes |
+| resources/migrations/007-create-csv-import-jobs.sql | Create `csv_import_jobs` table and `idx_csv_import_jobs_status` |
+| resources/migrations/008-create-import-errors.sql | Create `import_errors` table and `idx_import_errors_job_id` |
 | frontend/ | Angular 22 scaffold (ng new, zoneless) |
 | frontend/src/app/shared/validation/product.schema.ts | Shared product validation (mirrors Malli schemas) |
 | Dockerfile.backend | Multi-stage Clojure build |
 | Dockerfile.frontend | Multi-stage Angular build with nginx |
-| docker-compose.yml | 3 services: backend, frontend, postgres |
+| docker-compose.yml | 3 services: backend, frontend, db |
 | nginx.conf | Frontend reverse proxy config |
 
 ### Files to Modify
@@ -80,8 +80,8 @@ Bootstrap the entire project skeleton: Clojure backend (Ring/Reitit), Angular 22
 | 1 | Handoff exists | `test -f docs/subtasks/ep06/T-001-project-scaffolding.md` | EXE | exit 0 |
 | 2 | Docker builds | `docker compose up --build -d` | EXE | All 3 services start without error |
 | 3 | Health endpoint | `curl -sf http://localhost:3000/api/health` | EXE | HTTP 200 with JSON body |
-| 4 | Tables created | `docker compose exec postgres psql -U ecommerce -c "\\dt"` | EXE | 7 tables listed |
-| 5 | No floating versions | `grep -E 'LATEST\|RELEASE' deps.edn` | EXE | No matches (exit 1) |
+| 4 | Tables created | `docker compose exec db psql -U app -d ecommerce -c "\dt"` | EXE | 7 tables listed |
+| 5 | No floating versions | `grep -E 'LATEST|RELEASE' deps.edn` | EXE | No matches (exit 1) |
 | 6 | Angular builds | `docker compose run --rm frontend pnpm exec ng build` | EXE | exit 0, zero errors |
 | 7 | Backend tests pass | `docker compose run --rm backend clojure -M:test` | EXE | exit 0 |
 | 8 | No side effects | `git diff --stat` | EXE | Only expected files |
@@ -100,7 +100,7 @@ Bootstrap the entire project skeleton: Clojure backend (Ring/Reitit), Angular 22
 |------|-------------|------------|
 | Use LATEST or RELEASE in deps.edn | Non-reproducible builds, breaks CI | Pin exact versions (e.g., `ring/ring-core {:mvn/version "1.12.1"}`) |
 | Install JDK or Node locally | Breaks portability, "works on my machine" | Use Docker for all builds and runtime |
-| Use Zone.js in Angular | Contradicts Angular 22 zoneless requirement | Use `provideExperimentalZonelessChangeDetection()` |
+| Use Zone.js in Angular | Contradicts Angular 22 zoneless requirement | Use `provideZonelessChangeDetection()` |
 | Single monolithic migration file | Hard to reason about, impossible to roll back selectively | One file per table, numbered sequentially |
 | Hardcode DB credentials | Security risk, inflexible | Use environment variables via docker-compose.yml |
 

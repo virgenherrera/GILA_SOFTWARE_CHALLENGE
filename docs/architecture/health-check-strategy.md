@@ -61,6 +61,10 @@ only on process **exit**, not on unhealthy status. This means:
 
 ## Health Endpoint Contract
 
+> **Note**: US-001's AC-001.1 uses simplified `{"status": "ok"}` for initial scaffolding.
+> The full contract documented here supersedes that simplified version once
+> health-check infrastructure is complete.
+
 ### `GET /api/health`
 
 **200 OK** --- all dependencies healthy:

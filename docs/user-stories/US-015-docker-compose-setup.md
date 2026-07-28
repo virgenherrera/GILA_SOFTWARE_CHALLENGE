@@ -54,7 +54,7 @@
 - [ ] **AC-015.4: Frontend container uses multi-stage Dockerfile**
   - **Given** the `Dockerfile.frontend` is a multi-stage build
   - **When** `docker compose up --build` builds the frontend image
-  - **Then** the build stage uses Node 22 to run `npm ci` and `ng build --configuration=production`
+  - **Then** the build stage uses Node 22 to run `pnpm install --frozen-lockfile` and `ng build --configuration=production`
   - **And** the test stage runs linting and all frontend tests (vitest)
   - **And** the production stage uses nginx 1.27-alpine to serve the compiled Angular static files
   - **And** the final image contains only nginx and the static build output (no Node.js, no `node_modules`, no source code)

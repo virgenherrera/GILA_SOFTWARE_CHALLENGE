@@ -34,7 +34,7 @@ As a developer, I want the project skeleton (backend, frontend, Docker, database
 
 - [ ] **AC-001.2: Frontend skeleton builds**
   - **Given** a fresh clone of the repository with no prior `node_modules` or `dist/` artifacts
-  - **When** `npm ci && npx ng build --configuration=production` is executed in the `frontend/` directory
+  - **When** `pnpm install --frozen-lockfile && pnpm exec ng build --configuration=production` is executed in the `frontend/` directory
   - **Then** the build completes with zero errors; and `package.json` pins all dependency versions exactly (no `^`, no `~`, no `*`), including `@angular/core` 22.0.0, `@angular/router` 22.0.0, `@angular/forms` 22.0.0, `@angular/common` 22.0.0, `zod` 3.24.4; and the Angular app bootstraps with `provideZonelessChangeDetection()` (no Zone.js import); and `HttpClient` is configured via `provideHttpClient()`; and a routing shell exists with at least one lazy-loaded route; and all components are standalone (no `NgModule` declarations)
 
 - [ ] **AC-001.3: Docker Compose skeleton starts all services**
@@ -90,7 +90,7 @@ As a developer, I want the project skeleton (backend, frontend, Docker, database
 | `frontend/` | Angular 22 project scaffold: `angular.json`, `tsconfig.json`, `package.json` with pinned deps, app shell with zoneless bootstrap |
 | `frontend/src/app/shared/validation/product.schema.ts` | Zod schemas mirroring backend Malli schemas for all Product fields |
 | `Dockerfile.backend` | Multi-stage: build (JDK 21, resolve deps, compile uberjar), test (lint + tests), production (JRE 21, uberjar only) |
-| `Dockerfile.frontend` | Multi-stage: build (Node 22, npm ci, ng build), test (lint + vitest), production (nginx 1.27-alpine, static dist only) |
+| `Dockerfile.frontend` | Multi-stage: build (Node 22, pnpm install --frozen-lockfile, ng build), test (lint + vitest), production (nginx 1.27-alpine, static dist only) |
 | `docker-compose.yml` | 3 services (db, backend, frontend) with health checks, dependency ordering, shared network |
 | `nginx.conf` | Reverse proxy: `/api/*` -> `backend:3000`; serve static Angular build from `/`; gzip compression |
 

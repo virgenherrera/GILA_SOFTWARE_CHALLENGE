@@ -250,7 +250,7 @@ pnpm exec vitest run --exclude '**/*.integration.spec.ts'          # frontend
 
 # Filter: integration only (focus on namespaces tagged ^:integration)
 clojure -M:test --focus-meta :integration                          # backend
-pnpm exec vitest run integration.spec.ts                           # frontend
+pnpm exec vitest run '**/*.integration.spec.ts'                    # frontend
 ```
 
 > **Note**: backend filtering requires `^:integration` metadata on integration test namespace
@@ -309,6 +309,10 @@ FROM build AS test
 FROM eclipse-temurin:21-jre-jammy AS production
 # Copy only the uberjar from build stage
 # Minimal JRE image, no build tools, no source code
+# curl is installed explicitly for the Compose healthcheck (see below); the base
+# jre-jammy image does not ship it
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 EXPOSE 3000
 ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
@@ -320,6 +324,10 @@ Key design decisions:
   production image from being created.
 - **Layer caching**: `deps.edn` is copied and resolved before source code, so dependency
   resolution is cached across builds when only source changes.
+- **curl installed explicitly**: `eclipse-temurin:21-jre-jammy` does not include `curl`
+  by default; it is installed as a single minimal `apt-get` layer solely to satisfy the
+  Docker Compose `healthcheck` (see [Health Check Strategy](health-check-strategy.md)),
+  which runs `curl -sf http://localhost:3000/api/health` inside the `backend` container.
 
 #### Frontend (`Dockerfile.frontend`)
 
@@ -349,12 +357,16 @@ Key design decisions:
 
 ### Docker Compose Topology
 
+The Compose file declares four services. Three are the **production stack**; the fourth
+(`playwright`) is a **test-only** service used exclusively in Stage 3 (E2E) and is never
+part of the running application:
+
 ```yaml
 services:
-  db:          # PostgreSQL 17.5
-  backend:     # Clojure uberjar on JRE 21
-  frontend:    # nginx serving static Angular build
-  playwright:  # E2E test runner (mcr.microsoft.com/playwright)
+  db:          # PostgreSQL 17.5                                    (production)
+  backend:     # Clojure uberjar on JRE 21                          (production)
+  frontend:    # nginx serving static Angular build                 (production)
+  playwright:  # E2E test runner (mcr.microsoft.com/playwright)      (test only, Stage 3)
 ```
 
 ```mermaid
@@ -364,7 +376,9 @@ flowchart LR
     BE --> DB[(db\nPostgreSQL:5432)]
 ```
 
-- **Single command**: `docker compose up --build` starts all three services.
+- **Single command**: `docker compose up --build` starts the 3 production services
+  (`db`, `backend`, `frontend`). `playwright` is not started by this command --- it is
+  invoked separately for Stage 3 E2E (see [Stage 3: E2E Commands](#stage-3-e2e-commands)).
 - **Health checks**: each service declares a health check so Compose can enforce startup
   order (`backend` waits for `db` healthy; `frontend` waits for `backend` healthy).
 - **Networking**: all services share a Docker bridge network. The frontend's nginx proxies
@@ -494,7 +508,7 @@ code, but they enforce the same validation contract.
 **How it works**:
 
 1. The **validation contract** is documented in the API specification with exact rules for
-   each field (see [Validation Rules](validation-rules.md)).
+   each field (see [Validation Rules](api-contract.md#7-validation-contract)).
 2. The **frontend** implements these rules as Zod schemas integrated with Angular reactive
    forms. Zod's `.safeParse()` drives custom validators on form controls, providing
    immediate field-level feedback. Forms disable submit until the schema passes.
@@ -675,7 +689,7 @@ docker compose run --rm frontend pnpm exec vitest run --exclude '**/*.integratio
 
 # Filter: integration only (focus on ^:integration namespaces / integration spec files)
 docker compose run --rm backend clojure -M:test --focus-meta :integration
-docker compose run --rm frontend pnpm exec vitest run integration.spec.ts
+docker compose run --rm frontend pnpm exec vitest run '**/*.integration.spec.ts'
 ```
 
 ### Stage 3: E2E Commands
