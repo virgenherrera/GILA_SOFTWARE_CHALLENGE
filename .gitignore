@@ -36,3 +36,6 @@ Thumbs.db
 coverage/
 *.lcov
 test-results/
+
+# Challenge source files
+ignoreThisPath/

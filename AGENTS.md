@@ -2,8 +2,8 @@
 
 ## Current Phase & State
 
-**Phase**: Capture --- project initialized from template. No idea captured yet.
-**Sub-state**: Pre-Capture --- no artifacts exist.
+**Phase**: Architect --- defining tech stack, testing strategy, and API contracts.
+**Sub-state**: In Progress --- drafting architecture documents.
 
 To begin: describe the idea, problem, and target audience. The orchestrator guides
 the pipeline from here.
