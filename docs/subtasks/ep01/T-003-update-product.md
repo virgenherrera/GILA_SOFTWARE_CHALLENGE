@@ -28,11 +28,14 @@ Implement `PUT /api/products/:sku` with shared Malli validation, SKU immutabilit
 | File | Lines | Why Needed |
 |------|-------|------------|
 | docs/user-stories/US-003-update-product.md | all | 7 acceptance criteria to implement |
-| docs/architecture/api-contracts.md | all | PUT request/response shape, error codes |
-| docs/architecture/database-schema.md | all | Products table, cart_items snapshot columns |
+| docs/architecture/api-contract.md | all | PUT request/response shape, error codes |
+| docs/architecture/data-model.md | all | Products table, cart_items snapshot columns |
 | src/ecommerce/product/handler.clj | all | Existing handler to add PUT endpoint to |
 | src/ecommerce/product/repository.clj | all | Existing repository to add update function to |
 | src/ecommerce/validation.clj | all | Shared schemas for validation reuse |
+| docs/architecture/validation-pruning.md | all | Malli closed schema, payload pruning on PUT body |
+| docs/architecture/error-handling.md | all | Exception→error code translation |
+| docs/architecture/tdd-workflow.md | all | TDD process reference |
 
 ## Deliverables
 

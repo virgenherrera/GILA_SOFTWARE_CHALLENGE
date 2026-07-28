@@ -35,6 +35,8 @@ Implement `GET /api/imports/:id` summary enhancement and `GET /api/imports/:id/e
 | docs/architecture/data-model.md | 155-172 | import_errors table schema |
 | src/ecommerce/import/handler.clj | all | Existing handler to extend with errors endpoint |
 | src/ecommerce/import/repository.clj | all | Existing repository patterns for job queries |
+| docs/architecture/error-handling.md | all | Error response sanitization (no raw data leakage) |
+| docs/architecture/tdd-workflow.md | all | TDD process reference |
 
 ## Deliverables
 

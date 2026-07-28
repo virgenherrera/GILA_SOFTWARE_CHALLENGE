@@ -38,6 +38,9 @@ Implement atomic checkout (POST /api/checkout) with SELECT FOR UPDATE concurrenc
 | src/ecommerce/router.clj | all | Router to add checkout/order routes |
 | src/ecommerce/db.clj | all | DB connection, transaction support |
 | src/ecommerce/middleware.clj | all | Error middleware integration |
+| docs/architecture/security-guidelines.md | all | Cart cookie verification at checkout |
+| docs/architecture/error-handling.md | all | INSUFFICIENT_STOCK, atomic rollback error handling |
+| docs/architecture/tdd-workflow.md | all | TDD process for concurrent checkout race test |
 
 ## Deliverables
 

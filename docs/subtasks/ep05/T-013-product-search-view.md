@@ -28,12 +28,16 @@ Implement an Angular 22 search interface with keyword input, category filter dro
 
 | File | Lines | Why Needed |
 |------|-------|------------|
-| docs/architecture/api-contracts.md | GET /api/products section | Query params, paging envelope, response shape |
+| docs/architecture/api-contract.md | GET /api/products section | Query params, paging envelope, response shape |
 | docs/architecture/tech-stack.md | all | Angular 22 version, Zod version, zoneless config |
 | docs/user-stories/US-013-product-search-view.md | all | Acceptance criteria |
 | frontend/src/app/products/product.service.ts | all | Existing service to reuse for API calls |
 | frontend/src/app/app.routes.ts | all | Current route config to extend |
 | docs/domain-glossary.md | all | Domain terms for naming consistency |
+| docs/architecture/error-handling.md | all | API error response shape for search errors |
+| docs/architecture/security-guidelines.md | all | Search input must not render as HTML |
+| docs/architecture/tdd-workflow.md | all | TDD process for Angular components |
+| docs/architecture/pnpm-config.md | all | pnpm configuration reference |
 
 ## Deliverables
 
@@ -76,9 +80,9 @@ Implement an Angular 22 search interface with keyword input, category filter dro
 | 12 | Add-to-cart button | Verify button present on each product card | MANUAL | Button rendered per item |
 | 13 | Product click | Click product, verify navigation to detail view | MANUAL | Route navigates to /products/:id |
 | 14 | Debounce | Type quickly, verify only one API call after 300ms pause | MANUAL | Single request after debounce |
-| 15 | Unit tests pass | `docker compose run --rm frontend npx vitest run` | EXE | exit 0 |
-| 16 | Lint passes | `docker compose run --rm frontend npx ng lint` | EXE | exit 0 |
-| 17 | Format passes | `docker compose run --rm frontend npx prettier --check .` | EXE | exit 0 |
+| 15 | Unit tests pass | `docker compose run --rm frontend pnpm exec vitest run` | EXE | exit 0 |
+| 16 | Lint passes | `docker compose run --rm frontend pnpm exec ng lint` | EXE | exit 0 |
+| 17 | Format passes | `docker compose run --rm frontend pnpm exec prettier --check .` | EXE | exit 0 |
 
 ## Boundaries
 

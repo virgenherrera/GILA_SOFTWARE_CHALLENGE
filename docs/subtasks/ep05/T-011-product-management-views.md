@@ -36,6 +36,11 @@ Implement Angular 22 product management views: product list with pagination, pro
 | frontend/src/app/shared/validation/product.schema.ts | all | Existing Zod schemas to reuse or extend |
 | src/ecommerce/validation.clj | all | Backend Malli schemas for contract test reference |
 | frontend/angular.json | all | Build/test configuration |
+| docs/architecture/validation-pruning.md | all | Validation rules that Zod schemas must mirror |
+| docs/architecture/error-handling.md | all | API error response shape for form error display |
+| docs/architecture/security-guidelines.md | all | XSS: Angular auto-escapes template bindings, never use innerHTML |
+| docs/architecture/tdd-workflow.md | all | TDD process for Angular components and Zod validators |
+| docs/architecture/pnpm-config.md | all | pnpm configuration for frontend dependencies |
 
 ## Deliverables
 
@@ -74,8 +79,8 @@ Implement Angular 22 product management views: product list with pagination, pro
 | # | Gate | Command/Check | Type | Pass Criteria |
 |---|------|---------------|------|---------------|
 | 1 | Handoff exists | `test -f docs/subtasks/ep05/T-011-product-management-views.md` | EXE | exit 0 |
-| 2 | Frontend tests pass | `docker compose run --rm frontend npx vitest run` | EXE | exit 0 |
-| 3 | Frontend lint | `docker compose run --rm frontend npx ng lint` | EXE | exit 0 |
+| 2 | Frontend tests pass | `docker compose run --rm frontend pnpm exec vitest run` | EXE | exit 0 |
+| 3 | Frontend lint | `docker compose run --rm frontend pnpm exec ng lint` | EXE | exit 0 |
 | 4 | Product list renders | Navigate to /products -> paginated table displayed | MANUAL | Products visible with columns |
 | 5 | Pagination works | Click next/prev -> different page of results | MANUAL | Page changes, data updates |
 | 6 | Create form validates | Submit empty form -> inline Zod errors shown per field | MANUAL | All invalid fields show errors |

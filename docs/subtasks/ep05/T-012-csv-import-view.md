@@ -34,6 +34,10 @@ Implement Angular 22 CSV import interface with file upload triggering POST /api/
 | docs/architecture/tech-stack.md | all | Angular 22 conventions, polling approach |
 | frontend/src/app/app.routes.ts | all | Existing routes to extend |
 | frontend/angular.json | all | Build/test configuration |
+| docs/architecture/error-handling.md | all | API error response shape for import error display |
+| docs/architecture/security-guidelines.md | all | Display of raw_row_data must be safely escaped |
+| docs/architecture/tdd-workflow.md | all | TDD process for Angular components |
+| docs/architecture/pnpm-config.md | all | pnpm configuration reference |
 
 ## Deliverables
 
@@ -68,8 +72,8 @@ Implement Angular 22 CSV import interface with file upload triggering POST /api/
 | # | Gate | Command/Check | Type | Pass Criteria |
 |---|------|---------------|------|---------------|
 | 1 | Handoff exists | `test -f docs/subtasks/ep05/T-012-csv-import-view.md` | EXE | exit 0 |
-| 2 | Frontend tests pass | `docker compose run --rm frontend npx vitest run` | EXE | exit 0 |
-| 3 | Frontend lint | `docker compose run --rm frontend npx ng lint` | EXE | exit 0 |
+| 2 | Frontend tests pass | `docker compose run --rm frontend pnpm exec vitest run` | EXE | exit 0 |
+| 3 | Frontend lint | `docker compose run --rm frontend pnpm exec ng lint` | EXE | exit 0 |
 | 4 | File input accepts CSV | File input only allows .csv files | MANUAL | accept=".csv" attribute |
 | 5 | Upload triggers POST | Select file, click upload -> POST /api/imports multipart | MANUAL | Request sent, import ID returned |
 | 6 | Polls status | After upload -> component polls GET /api/imports/:id | MANUAL | Repeated requests at 1-2s interval |

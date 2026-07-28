@@ -27,11 +27,18 @@ Bootstrap the entire project skeleton: Clojure backend (Ring/Reitit), Angular 22
 | File | Lines | Why Needed |
 |------|-------|------------|
 | docs/architecture/tech-stack.md | all | Exact versions and libraries to use |
-| docs/architecture/database-schema.md | all | All 7 tables and their DDL |
-| docs/architecture/api-contracts.md | all | Health endpoint contract, error envelope shape |
-| docs/architecture/security-guidelines.md | all | Middleware requirements, sanitization approach |
+| docs/architecture/data-model.md | all | All 7 tables and their DDL |
+| docs/architecture/api-contract.md | all | Health endpoint contract, error envelope shape |
+| docs/architecture/security-guidelines.md | all | buddy-sign dependency, security headers middleware, cookie config, sanitization approach |
 | docs/user-stories/US-001-project-scaffolding.md | all | Acceptance criteria for scaffolding |
 | docs/domain-glossary.md | all | Domain terms for naming consistency |
+| docs/architecture/middleware-pipeline.md | all | Middleware stack ordering and assembly |
+| docs/architecture/validation-pruning.md | all | Malli closed schema configuration |
+| docs/architecture/error-handling.md | all | Exception middleware setup |
+| docs/architecture/tdd-workflow.md | all | TDD process for implementation tasks |
+| docs/architecture/api-docs-strategy.md | all | OpenAPI/Swagger UI route setup |
+| docs/architecture/pnpm-config.md | all | pnpm configuration for frontend scaffold |
+| docs/architecture/health-check-strategy.md | all | Health endpoint contract and behavior |
 
 ## Deliverables
 
@@ -75,7 +82,7 @@ Bootstrap the entire project skeleton: Clojure backend (Ring/Reitit), Angular 22
 | 3 | Health endpoint | `curl -sf http://localhost:3000/api/health` | EXE | HTTP 200 with JSON body |
 | 4 | Tables created | `docker compose exec postgres psql -U ecommerce -c "\\dt"` | EXE | 7 tables listed |
 | 5 | No floating versions | `grep -E 'LATEST\|RELEASE' deps.edn` | EXE | No matches (exit 1) |
-| 6 | Angular builds | `docker compose run --rm frontend npx ng build` | EXE | exit 0, zero errors |
+| 6 | Angular builds | `docker compose run --rm frontend pnpm exec ng build` | EXE | exit 0, zero errors |
 | 7 | Backend tests pass | `docker compose run --rm backend clojure -M:test` | EXE | exit 0 |
 | 8 | No side effects | `git diff --stat` | EXE | Only expected files |
 

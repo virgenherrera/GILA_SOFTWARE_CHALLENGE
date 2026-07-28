@@ -28,12 +28,16 @@ Implement an Angular 22 cart view (item list, quantities, totals, adjustment), c
 
 | File | Lines | Why Needed |
 |------|-------|------------|
-| docs/architecture/api-contracts.md | Cart and Checkout sections | Endpoints, request/response shapes, error codes |
+| docs/architecture/api-contract.md | Cart and Checkout sections | Endpoints, request/response shapes, error codes |
 | docs/architecture/tech-stack.md | all | Angular 22, Zod, zoneless config |
 | docs/user-stories/US-014-cart-checkout-views.md | all | Acceptance criteria |
 | frontend/src/app/app.routes.ts | all | Current route config to extend |
 | frontend/src/app/shared/layout/ | all | Header component for cart badge |
 | docs/domain-glossary.md | all | Domain terms for naming consistency |
+| docs/architecture/security-guidelines.md | all | Cookie-based cart identity, SameSite behavior in browser |
+| docs/architecture/error-handling.md | all | INSUFFICIENT_STOCK error display at checkout |
+| docs/architecture/tdd-workflow.md | all | TDD process for Angular components |
+| docs/architecture/pnpm-config.md | all | pnpm configuration reference |
 
 ## Deliverables
 
@@ -84,9 +88,9 @@ Implement an Angular 22 cart view (item list, quantities, totals, adjustment), c
 | 13 | Snapshot prices | Verify cart shows prices from API, not re-fetched | MANUAL | Prices match cart API response |
 | 14 | XSS safety | Product name with HTML tags renders as text | MANUAL | No script execution |
 | 15 | Loading states | Verify loading indicators during API calls | MANUAL | Spinner/skeleton shown |
-| 16 | Unit tests pass | `docker compose run --rm frontend npx vitest run` | EXE | exit 0 |
-| 17 | Lint passes | `docker compose run --rm frontend npx ng lint` | EXE | exit 0 |
-| 18 | Format passes | `docker compose run --rm frontend npx prettier --check .` | EXE | exit 0 |
+| 16 | Unit tests pass | `docker compose run --rm frontend pnpm exec vitest run` | EXE | exit 0 |
+| 17 | Lint passes | `docker compose run --rm frontend pnpm exec ng lint` | EXE | exit 0 |
+| 18 | Format passes | `docker compose run --rm frontend pnpm exec prettier --check .` | EXE | exit 0 |
 
 ## Boundaries
 

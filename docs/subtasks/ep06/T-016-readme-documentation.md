@@ -29,9 +29,16 @@ Write README.md documenting run instructions, prerequisites, architectural decis
 | File | Lines | Why Needed |
 |------|-------|------------|
 | docs/architecture/tech-stack.md | all | Technology choices and versions |
-| docs/architecture/database-schema.md | all | Database design for architecture overview |
-| docs/architecture/api-contracts.md | all | API surface for architecture overview |
+| docs/architecture/data-model.md | all | Database design for architecture overview |
+| docs/architecture/api-contract.md | all | API surface for architecture overview |
 | docs/architecture/security-guidelines.md | all | Security approach for decisions section |
+| docs/architecture/middleware-pipeline.md | all | Request lifecycle and middleware ordering for architecture overview |
+| docs/architecture/validation-pruning.md | all | Validation strategy for decisions section |
+| docs/architecture/error-handling.md | all | Error handling approach for architecture overview |
+| docs/architecture/tdd-workflow.md | all | Testing strategy section |
+| docs/architecture/api-docs-strategy.md | all | API documentation approach for architecture overview |
+| docs/architecture/pnpm-config.md | all | Frontend tooling decisions section |
+| docs/architecture/health-check-strategy.md | all | Health check behavior for architecture overview |
 | docker-compose.yml | all | Actual run configuration to document |
 | Dockerfile.backend | all | Build process for architecture overview |
 | Dockerfile.frontend | all | Build process for architecture overview |

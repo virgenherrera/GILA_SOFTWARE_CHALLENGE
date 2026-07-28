@@ -35,6 +35,11 @@ Implement `POST /api/imports` for CSV file upload with background processing via
 | src/ecommerce/router.clj | all | Current route definitions to extend |
 | src/ecommerce/middleware.clj | all | Error handling middleware patterns |
 | src/ecommerce/db.clj | all | Database connection pool usage |
+| docs/architecture/middleware-pipeline.md | all | Multipart middleware placement (route-level only on POST /api/imports) |
+| docs/architecture/validation-pruning.md | all | Malli validation rules for CSV row fields |
+| docs/architecture/error-handling.md | all | Import error handling and error response shape |
+| docs/architecture/security-guidelines.md | all | XSS/SQL injection handling in CSV rows |
+| docs/architecture/tdd-workflow.md | all | TDD process for CSV parsing |
 
 ## Deliverables
 

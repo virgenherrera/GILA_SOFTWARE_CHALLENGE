@@ -2,8 +2,8 @@
 
 ## Current Phase & State
 
-**Phase**: Plan --- decomposing refined stories into handoff files for implementation.
-**Sub-state**: Refine complete --- 16 stories written, addenda committed, transitioning to Plan.
+**Phase**: Build --- implementing MVP via TDD, following batch-1-plan execution waves.
+**Sub-state**: Wave 0 --- T-001 Project Scaffolding in progress.
 
 To begin: describe the idea, problem, and target audience. The orchestrator guides
 the pipeline from here.

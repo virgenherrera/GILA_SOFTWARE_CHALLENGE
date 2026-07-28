@@ -28,13 +28,18 @@ Implement `POST /api/products` with full validation using shared Malli schemas, 
 | File | Lines | Why Needed |
 |------|-------|------------|
 | docs/user-stories/US-002-create-product.md | all | 13 acceptance criteria to implement |
-| docs/architecture/api-contracts.md | all | Request/response shapes, error envelope |
+| docs/architecture/api-contract.md | all | Request/response shapes, error envelope |
 | docs/architecture/security-guidelines.md | all | XSS sanitization and SQLi prevention rules |
-| docs/architecture/database-schema.md | all | Products table schema, constraints |
+| docs/architecture/data-model.md | all | Products table schema, constraints |
 | src/ecommerce/validation.clj | all | Shared Malli schemas to reuse |
 | src/ecommerce/middleware.clj | all | Error middleware to integrate with |
 | src/ecommerce/router.clj | all | Router to add POST route to |
 | src/ecommerce/db.clj | all | DB connection for repository layer |
+| docs/architecture/middleware-pipeline.md | all | Middleware stack where validation and error handling execute |
+| docs/architecture/validation-pruning.md | all | Malli closed schema, multi-error collection for product fields |
+| docs/architecture/error-handling.md | all | Exception→error code translation (VALIDATION_ERROR, CONFLICT) |
+| docs/architecture/security-guidelines.md | all | Input security (XSS rejection, SQL injection via parameterized queries) |
+| docs/architecture/tdd-workflow.md | all | TDD process for validation rules and API handlers |
 
 ## Deliverables
 

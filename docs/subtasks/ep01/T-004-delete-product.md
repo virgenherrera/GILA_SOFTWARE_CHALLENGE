@@ -28,11 +28,13 @@ Implement `DELETE /api/products/:sku` with hard delete semantics. When a product
 | File | Lines | Why Needed |
 |------|-------|------------|
 | docs/user-stories/US-004-delete-product.md | all | 7 acceptance criteria to implement |
-| docs/architecture/api-contracts.md | all | DELETE response shape, error codes |
-| docs/architecture/database-schema.md | all | FK constraints from cart_items and order_items to products |
+| docs/architecture/api-contract.md | all | DELETE response shape, error codes |
+| docs/architecture/data-model.md | all | FK constraints from cart_items and order_items to products |
 | src/ecommerce/product/handler.clj | all | Existing handler to add DELETE endpoint to |
 | src/ecommerce/product/repository.clj | all | Existing repository to add delete function to |
 | src/ecommerce/middleware.clj | all | Error middleware for exception translation |
+| docs/architecture/error-handling.md | all | PRODUCT_IN_USE error code translation |
+| docs/architecture/tdd-workflow.md | all | TDD process reference |
 
 ## Deliverables
 

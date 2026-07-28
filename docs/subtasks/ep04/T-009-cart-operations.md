@@ -37,6 +37,10 @@ Implement cart API endpoints (GET /api/cart, POST /api/cart/items, PUT /api/cart
 | src/ecommerce/validation.clj | all | Shared Malli schemas |
 | src/ecommerce/middleware.clj | all | Error middleware integration |
 | src/ecommerce/db.clj | all | DB connection for repository layer |
+| docs/architecture/middleware-pipeline.md | all | Cart cookie middleware placement (route-level) |
+| docs/architecture/security-guidelines.md | all | buddy-sign cookie signing, SameSite=Strict, CSRF protection |
+| docs/architecture/error-handling.md | all | INSUFFICIENT_STOCK error code |
+| docs/architecture/tdd-workflow.md | all | TDD process reference |
 
 ## Deliverables
 

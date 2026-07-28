@@ -37,6 +37,11 @@ Implement `GET /api/products` (paginated listing with full-text search, category
 | src/ecommerce/product/handler.clj | all | Existing handler to extend with GET endpoints |
 | src/ecommerce/product/repository.clj | all | Existing repository to add search query functions |
 | src/ecommerce/db.clj | all | Database connection pool usage |
+| docs/architecture/middleware-pipeline.md | all | Query parameter coercion via Reitit middleware |
+| docs/architecture/validation-pruning.md | all | Query parameter validation (priceMin, priceMax, sortBy) |
+| docs/architecture/error-handling.md | all | Exception→error code translation for search errors |
+| docs/architecture/security-guidelines.md | all | Search input security (script content in search queries) |
+| docs/architecture/tdd-workflow.md | all | TDD process reference |
 
 ## Deliverables
 

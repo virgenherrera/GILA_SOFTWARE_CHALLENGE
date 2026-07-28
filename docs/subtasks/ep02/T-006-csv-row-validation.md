@@ -35,6 +35,9 @@ Implement row-level validation for CSV import using shared Malli schemas from th
 | src/ecommerce/validation.clj | all | Shared Malli schemas to reuse (not duplicate) |
 | src/ecommerce/import/worker.clj | all | Go-loop to wire validator into |
 | src/ecommerce/import/repository.clj | all | Import job repository for status updates |
+| docs/architecture/validation-pruning.md | all | Malli validation rules, multi-error collection per row |
+| docs/architecture/security-guidelines.md | all | XSS payload rejection, SQL injection acceptance (parameterized) |
+| docs/architecture/tdd-workflow.md | all | TDD process for each trap type |
 
 ## Deliverables
 

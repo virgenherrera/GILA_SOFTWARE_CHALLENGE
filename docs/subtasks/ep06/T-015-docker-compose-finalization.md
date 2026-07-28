@@ -37,7 +37,11 @@ Finalize Docker multi-stage builds and compose configuration so that `docker com
 | deps.edn | all | Backend dependencies for build stage |
 | frontend/package.json | all | Frontend dependencies for build stage |
 | docs/architecture/tech-stack.md | all | Exact base image versions |
-| docs/architecture/api-contracts.md | health endpoint | Health check endpoint for readiness probe |
+| docs/architecture/api-contract.md | health endpoint | Health check endpoint for readiness probe |
+| docs/architecture/middleware-pipeline.md | all | Verify middleware assembly matches documented stack |
+| docs/architecture/pnpm-config.md | all | Frontend Dockerfile pnpm configuration |
+| docs/architecture/health-check-strategy.md | all | Docker healthcheck configuration |
+| docs/architecture/tdd-workflow.md | all | TDD process reference |
 
 ## Deliverables
 
@@ -72,7 +76,7 @@ Finalize Docker multi-stage builds and compose configuration so that `docker com
 | 10 | No exposed DB | `docker compose port postgres 5432` returns empty | EXE | PostgreSQL not exposed to host |
 | 11 | Exact versions | No `latest` tags in Dockerfiles, no floating versions in deps | REVIEW | All versions pinned |
 | 12 | Backend tests | `docker compose run --rm backend clojure -M:test` | EXE | exit 0 |
-| 13 | Frontend tests | `docker compose run --rm frontend npx vitest run` | EXE | exit 0 |
+| 13 | Frontend tests | `docker compose run --rm frontend pnpm exec vitest run` | EXE | exit 0 |
 | 14 | Smoke test | `bash test/smoke-test.sh` | EXE | exit 0 |
 | 15 | Clean rebuild | `docker compose down -v && docker compose up --build -d` | EXE | Idempotent, no stale state |
 
