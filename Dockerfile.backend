@@ -1,0 +1,16 @@
+# Stage 1: Build
+FROM clojure:temurin-21-tools-deps-1.12.0.1501 AS builder
+WORKDIR /app
+COPY deps.edn build.clj ./
+RUN clojure -P
+COPY src/ src/
+COPY resources/ resources/
+RUN clojure -T:build uber
+
+# Stage 2: Runtime
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+RUN apk add --no-cache curl
+COPY --from=builder /app/target/app.jar app.jar
+EXPOSE 3000
+CMD ["java", "-jar", "app.jar"]

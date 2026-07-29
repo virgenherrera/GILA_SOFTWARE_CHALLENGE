@@ -8,6 +8,7 @@
 
 # Dependencies (language-agnostic)
 node_modules/
+.pnpm-store/
 vendor/
 .venv/
 __pycache__/
@@ -36,6 +37,16 @@ Thumbs.db
 coverage/
 *.lcov
 test-results/
+
+# Clojure
+.cpcache/
+.nrepl-port
+
+# Angular
+.angular/
+
+# Docker
+pgdata/
 
 # Challenge source files
 ignoreThisPath/
