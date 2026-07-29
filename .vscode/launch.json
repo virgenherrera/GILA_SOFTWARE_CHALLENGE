@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Gila Software Challenge: Full Stack",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "docker-compose-up",
+      "postDebugTask": "docker:down",
+      "url": "http://localhost:8080",
+      "webRoot": "${workspaceFolder}/frontend/src"
+    }
+  ]
+}

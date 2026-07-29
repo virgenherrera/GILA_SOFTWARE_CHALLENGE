@@ -1,0 +1,98 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "docker-compose-up",
+      "type": "shell",
+      "command": "DOCKER_CONFIG=/tmp/docker-config docker compose up -d --build",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "docker:down",
+      "type": "shell",
+      "command": "DOCKER_CONFIG=/tmp/docker-config docker compose down",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "docker:down-clean",
+      "type": "shell",
+      "command": "DOCKER_CONFIG=/tmp/docker-config docker compose down -v",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "docker:logs",
+      "type": "shell",
+      "command": "DOCKER_CONFIG=/tmp/docker-config docker compose logs -f",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "test:backend",
+      "type": "shell",
+      "command": "DOCKER_CONFIG=/tmp/docker-config docker compose run --rm backend clojure -M:test",
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "test:frontend",
+      "type": "shell",
+      "command": "cd frontend && pnpm exec ng test --configuration=ci",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "test:e2e",
+      "type": "shell",
+      "command": "DOCKER_CONFIG=/tmp/docker-config docker compose run --rm playwright pnpm exec playwright test",
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "pre-commit-hook:install",
+      "type": "shell",
+      "command": "ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    }
+  ]
+}
