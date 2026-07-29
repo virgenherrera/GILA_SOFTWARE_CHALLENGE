@@ -170,7 +170,7 @@ sequenceDiagram
     Chan->>Worker: Take job from channel
     Worker->>DB: Update status: Processing
     loop Each CSV row
-        Worker->>Worker: Parse and validate row
+        Note over Worker: Parse and validate row
         alt Valid row
             Worker->>DB: Upsert product (ON CONFLICT UPDATE)
             Worker->>DB: Increment accepted_rows
@@ -462,7 +462,6 @@ These are intentional boundaries, not gaps. Each represents a tradeoff made for 
 | Simulated payment | Checkout always succeeds; `orders` table already has `Failed` and `Fulfilled` statuses reserved | Integrate payment provider, implement the full order state machine |
 | No HTTPS/TLS | Localhost-only. TLS termination is an infrastructure concern | Add TLS at the reverse proxy or load balancer layer |
 | No rate limiting | Single-evaluator context. Not a risk for the challenge | Add rate limiting at the nginx layer or via Ring middleware |
-| Polling for import progress | Frontend polls `GET /api/imports/:id` every 2s | Replace with Server-Sent Events for real-time progress |
 | Static cookie secret | `COOKIE_SECRET` is fixed for the application lifetime | Implement key rotation with graceful old-cookie invalidation |
 | Catalog-scale search only | PostgreSQL `tsvector` handles hundreds to low thousands of products | Add Elasticsearch or Meilisearch for large catalogs with faceted search |
 
