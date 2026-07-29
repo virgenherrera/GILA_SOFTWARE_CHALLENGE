@@ -47,3 +47,20 @@
                                         :created_at :updated_at]})]
     (jdbc/execute-one! datasource query
                        {:builder-fn rs/as-unqualified-maps})))
+
+(defn delete-product!
+  "Delete a product by SKU. Returns true if a row was deleted, false if not found.
+   Throws ExceptionInfo with {:status 409 :code \"PRODUCT_IN_USE\"} on FK violation."
+  [datasource sku]
+  (try
+    (let [query (hsql/format {:delete-from :products
+                              :where [:= :sku sku]})
+          result (jdbc/execute-one! datasource query)]
+      (pos? (:next.jdbc/update-count result)))
+    (catch java.sql.SQLException e
+      (if (= "23503" (.getSQLState e))
+        (throw (ex-info (str "Cannot delete product '" sku "': referenced by existing orders or cart items")
+                        {:status 409
+                         :code "PRODUCT_IN_USE"
+                         :message (str "Cannot delete product '" sku "': referenced by existing orders or cart items")}))
+        (throw e)))))

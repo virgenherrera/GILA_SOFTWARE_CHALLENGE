@@ -83,3 +83,19 @@
                  :body (json/write-str
                         {:error {:code "NOT_FOUND"
                                  :message "Product not found"}})}))))))))
+
+(defn delete-product
+  "Delete-product handler. Takes datasource, returns a Ring handler function (closure pattern)."
+  [datasource]
+  (fn [request]
+    (let [sku (-> request :path-params :sku)
+          deleted? (repo/delete-product! datasource sku)]
+      (if deleted?
+        {:status 204
+         :headers {}
+         :body nil}
+        {:status 404
+         :headers {"Content-Type" "application/json"}
+         :body (json/write-str
+                {:error {:code "NOT_FOUND"
+                         :message "Product not found"}})}))))

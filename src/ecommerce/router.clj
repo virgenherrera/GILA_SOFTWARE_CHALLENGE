@@ -40,7 +40,9 @@
       ["/products" {:post {:summary "Create a product"
                            :handler (product-handler/create-product datasource)}}]
       ["/products/:sku" {:put {:summary "Update a product"
-                               :handler (product-handler/update-product datasource)}}]
+                               :handler (product-handler/update-product datasource)}
+                         :delete {:summary "Delete a product"
+                                  :handler (product-handler/delete-product datasource)}}]
       ["/swagger.json" {:get {:no-doc true
                               :swagger {:info {:title "E-Commerce API"
                                                :description "E-Commerce backend API"
