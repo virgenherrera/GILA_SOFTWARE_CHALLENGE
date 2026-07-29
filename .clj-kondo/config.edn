@@ -1,0 +1,1 @@
+{:lint-as {ecommerce.db/with-transaction clojure.core/let}}

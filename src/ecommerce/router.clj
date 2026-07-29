@@ -10,7 +10,8 @@
             [ecommerce.product.handler :as product-handler]
             [ecommerce.import.handler :as import-handler]
             [ecommerce.cart.handler :as cart-handler]
-            [ecommerce.cart.middleware :as cart-mw]))
+            [ecommerce.cart.middleware :as cart-mw]
+            [ecommerce.checkout.handler :as checkout-handler]))
 
 (def ^:private start-time (System/currentTimeMillis))
 
@@ -68,6 +69,11 @@
                               :handler (cart-handler/update-item datasource)}
                         :delete {:summary "Remove item from cart"
                                  :handler (cart-handler/remove-item datasource)}}]]
+       ["/checkout" {:middleware [(cart-mw/wrap-cart-cookie cookie-secret)]
+                     :post {:summary "Checkout current cart"
+                            :handler (checkout-handler/checkout datasource)}}]
+       ["/orders/:id" {:get {:summary "Get order details"
+                             :handler (checkout-handler/get-order datasource)}}]
        ["/imports" {:post {:summary "Upload CSV import"
                            :middleware [multipart/wrap-multipart-params]
                            :handler (import-handler/upload-csv datasource import-channel)}}]
