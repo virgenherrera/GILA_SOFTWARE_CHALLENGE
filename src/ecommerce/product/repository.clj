@@ -33,3 +33,17 @@
                             :where [:= :sku sku]})]
     (jdbc/execute-one! datasource query
                        {:builder-fn rs/as-unqualified-maps})))
+
+(defn update-product!
+  "Update a product by SKU. Returns the updated row, or nil if SKU not found.
+   Sets updated_at to now()."
+  [datasource sku product-map]
+  (let [set-clause (assoc product-map :updated_at [:raw "now()"])
+        query (hsql/format {:update :products
+                            :set set-clause
+                            :where [:= :sku sku]
+                            :returning [:sku :name :description :price
+                                        :category :stock
+                                        :created_at :updated_at]})]
+    (jdbc/execute-one! datasource query
+                       {:builder-fn rs/as-unqualified-maps})))

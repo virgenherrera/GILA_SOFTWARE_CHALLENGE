@@ -15,6 +15,18 @@
    [:category [:string {:min 1 :max 100}]]
    [:stock [:int {:min 0}]]])
 
+(def UpdateProduct
+  "Malli schema for updating a product (no SKU — comes from URL)."
+  [:map {:closed true}
+   [:name [:string {:min 1 :max 256}]]
+   [:description {:optional true} [:string {:max 4096}]]
+   [:price [:and
+            [:double {:min 0.01}]
+            [:fn {:error/message "price must be <= 99999.99"}
+             #(<= % 99999.99)]]]
+   [:category [:string {:min 1 :max 100}]]
+   [:stock [:int {:min 0}]]])
+
 (defn validate
   "Validate data against a Malli schema.
    Returns nil if valid, or a map of humanized errors if invalid."
