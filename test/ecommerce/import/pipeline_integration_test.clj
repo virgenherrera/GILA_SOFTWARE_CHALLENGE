@@ -84,7 +84,7 @@
     (let [csv (str "name,sku,description,category,price,stock,weight_kg\n"
                    "<script>alert(1)</script>,XSS-001,Desc,Electronics,29.99,10,1.5")
           {:keys [result errors]} (run-import-job csv)]
-      (is (= "Failed" (:status result)))
+      (is (= "CompletedWithErrors" (:status result)))
       (is (= 0 (:accepted result)))
       (is (= 1 (:rejected result)))
       (is (= 1 (count errors)))
@@ -229,7 +229,7 @@
                    "Dollar Widget,MP-002,Desc,Electronics,$29.99,10,0.5\n"
                    "Alpha Widget,MP-003,Desc,Electronics,abc,10,0.5")
           {:keys [result errors]} (run-import-job csv)]
-      (is (= "Failed" (:status result)))
+      (is (= "CompletedWithErrors" (:status result)))
       (is (= 0 (:accepted result)))
       (is (= 3 (:rejected result)))
       ;; All errors should be on price field
@@ -242,7 +242,7 @@
     (let [csv (str "name,sku,description,category,price,stock,weight_kg\n"
                    "Widget,NS-001,Desc,Electronics,29.99,-5,0.5")
           {:keys [result errors]} (run-import-job csv)]
-      (is (= "Failed" (:status result)))
+      (is (= "CompletedWithErrors" (:status result)))
       (is (= 0 (:accepted result)))
       (is (= 1 (:rejected result)))
       (is (= "stock" (:field (first errors)))))))

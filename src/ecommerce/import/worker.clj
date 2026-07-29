@@ -134,7 +134,7 @@
             total (+ (:accepted results) (:rejected results))
             status (cond
                      (zero? total)               "Completed"
-                     (zero? (:accepted results)) "Failed"
+                     (zero? (:accepted results)) "CompletedWithErrors"
                      (pos? (:rejected results))  "CompletedWithErrors"
                      :else                       "Completed")]
         (import-repo/update-job-completed!
