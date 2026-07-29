@@ -1,11 +1,13 @@
 (ns ecommerce.import.handler
   "HTTP handlers for CSV import endpoints.
    POST /api/imports — multipart/form-data upload
-   GET  /api/imports/:id — job status lookup"
+   GET  /api/imports/:id — job status lookup
+   GET  /api/imports/:id/errors — paginated error listing"
   (:require [clojure.core.async :as async]
             [clojure.data.json :as json]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
+            [ecommerce.import.error-repository :as error-repo]
             [ecommerce.import.repository :as repo])
   (:import [java.util UUID]))
 
@@ -105,3 +107,90 @@
              :body (json/write-str
                     {:error {:code "NOT_FOUND"
                              :message "Import job not found"}})}))))))
+
+;; --- Import error helpers ---
+
+(def ^:private default-page 1)
+(def ^:private default-per-page 20)
+(def ^:private max-per-page 100)
+
+(defn- parse-int
+  "Parse a string to an integer. Returns nil on failure."
+  [s]
+  (when (and s (string? s) (re-matches #"-?\d+" s))
+    (try (Integer/parseInt s)
+         (catch NumberFormatException _ nil))))
+
+(defn- sanitize-html
+  "HTML-encode angle brackets and ampersands to prevent XSS."
+  [s]
+  (when s
+    (-> s
+        (str/replace "&" "&amp;")
+        (str/replace "<" "&lt;")
+        (str/replace ">" "&gt;"))))
+
+(defn- error->api-item
+  "Map a DB import_errors row to the API response shape."
+  [error]
+  {:row_number   (:row_number error)
+   :raw_row_data (sanitize-html (:value error))
+   :field_name   (:field error)
+   :error_reason (:message error)
+   :product_sku  nil})
+
+(defn- build-error-paging-urls
+  "Build prev/next URLs for the import errors endpoint.
+   Simpler than product search — only page and perPage params."
+  [base-path page per-page total]
+  (let [last-page (max 1 (long (Math/ceil (/ (double total) per-page))))
+        build-url (fn [p]
+                    (str base-path "?page=" p "&perPage=" per-page))]
+    {:prev (when (> page 1) (build-url (dec page)))
+     :next (when (< page last-page) (build-url (inc page)))}))
+
+(defn get-job-errors
+  "Get paginated import errors for a job.
+   Takes datasource, returns a Ring handler."
+  [datasource]
+  (fn [request]
+    (let [id-str (-> request :path-params :id)
+          job-id (try-parse-uuid id-str)]
+      (if (nil? job-id)
+        {:status 400
+         :headers {"Content-Type" "application/json"}
+         :body (json/write-str
+                {:error {:code "VALIDATION_ERROR"
+                         :message "Invalid job ID format"}})}
+        (let [job (repo/find-job-by-id datasource job-id)]
+          (if (nil? job)
+            {:status 404
+             :headers {"Content-Type" "application/json"}
+             :body (json/write-str
+                    {:error {:code "NOT_FOUND"
+                             :message "Import job not found"}})}
+            (let [query-params (:query-params request)
+                  raw-page     (get query-params "page")
+                  raw-per-page (get query-params "perPage")
+                  page         (if raw-page (parse-int raw-page) default-page)
+                  per-page     (if raw-per-page (parse-int raw-per-page) default-per-page)]
+              (if (or (nil? page) (< page 1)
+                      (nil? per-page) (< per-page 1) (> per-page max-per-page))
+                {:status 400
+                 :headers {"Content-Type" "application/json"}
+                 :body (json/write-str
+                        {:error {:code "VALIDATION_ERROR"
+                                 :message "Invalid pagination parameters"}})}
+                (let [errors (error-repo/list-errors-by-job datasource job-id page per-page)
+                      total  (error-repo/count-errors-by-job datasource job-id)
+                      base-path (str "/api/imports/" job-id "/errors")
+                      paging-urls (build-error-paging-urls base-path page per-page total)]
+                  {:status 200
+                   :headers {"Content-Type" "application/json"}
+                   :body (json/write-str
+                          {:items (mapv error->api-item errors)
+                           :paging (merge {:page    page
+                                           :perPage per-page
+                                           :total   total}
+                                          paging-urls)}
+                          :value-fn json-value-fn)})))))))))

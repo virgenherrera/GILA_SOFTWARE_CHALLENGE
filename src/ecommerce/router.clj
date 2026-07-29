@@ -71,8 +71,11 @@
        ["/imports" {:post {:summary "Upload CSV import"
                            :middleware [multipart/wrap-multipart-params]
                            :handler (import-handler/upload-csv datasource import-channel)}}]
-       ["/imports/:id" {:get {:summary "Get import job status"
-                              :handler (import-handler/get-job-status datasource)}}]
+       ["/imports/:id"
+        ["" {:get {:summary "Get import job status"
+                   :handler (import-handler/get-job-status datasource)}}]
+        ["/errors" {:get {:summary "Get import errors"
+                          :handler (import-handler/get-job-errors datasource)}}]]
        ["/swagger.json" {:get {:no-doc true
                                :swagger {:info {:title "E-Commerce API"
                                                 :description "E-Commerce backend API"
