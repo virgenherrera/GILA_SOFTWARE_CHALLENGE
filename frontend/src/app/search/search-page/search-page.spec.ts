@@ -1,11 +1,14 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
+import { of, throwError } from 'rxjs';
 import { SearchPage } from './search-page';
+import { CartService } from '../../cart/cart.service';
 import { findButtonByText } from '../../shared/testing/dom-test-utils';
 import type { PagedResponse } from '../../products/product.service';
 import type { ProductResponse } from '../../shared/validation/product.schema';
+import type { Cart } from '../../cart/cart.service';
 
 const mockProduct: ProductResponse = {
   sku: 'RS-001',
@@ -34,13 +37,23 @@ function setSelectValue(select: HTMLSelectElement, value: string): void {
   select.dispatchEvent(new Event('change'));
 }
 
+const mockCart: Cart = { items: [], total: 0 };
+
 describe('SearchPage', () => {
   let httpMock: HttpTestingController;
   let navigateSpy: ReturnType<typeof vi.fn>;
+  let cartServiceMock: { addItem: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
+    cartServiceMock = { addItem: vi.fn().mockReturnValue(of(mockCart)) };
+
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: CartService, useValue: cartServiceMock },
+      ],
     });
 
     httpMock = TestBed.inject(HttpTestingController);
@@ -228,14 +241,38 @@ describe('SearchPage', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['/products', 'RS-001']);
   });
 
-  it('should show a placeholder acknowledgment when Add to Cart is clicked', () => {
+  it('should add the item to the cart when Add to Cart is clicked', () => {
     const fixture = createAndFlush();
+
+    findButtonByText(fixture.nativeElement as HTMLElement, 'Add to Cart')?.click();
+    fixture.detectChanges();
+
+    expect(cartServiceMock.addItem).toHaveBeenCalledWith('RS-001', 1);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.textContent).toContain('Added to cart successfully');
+  });
+
+  it('should show an error message when adding to cart fails', () => {
+    const fixture = createAndFlush();
+
+    cartServiceMock.addItem.mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            error: { error: { code: 'INTERNAL_ERROR', message: 'Unable to add item to cart' } },
+            status: 500,
+            statusText: 'Internal Server Error',
+          }),
+      ),
+    );
 
     findButtonByText(fixture.nativeElement as HTMLElement, 'Add to Cart')?.click();
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.textContent).toContain('Added RS-001 to cart');
+    expect(compiled.textContent).toContain('Unable to add item to cart');
   });
 });

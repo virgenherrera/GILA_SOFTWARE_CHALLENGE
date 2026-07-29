@@ -1,5 +1,6 @@
 (ns ecommerce.cart.handler
   (:require [ecommerce.cart.repository :as repo]
+            [ecommerce.db :as db]
             [clojure.data.json :as json]))
 
 (defn- json-value-fn
@@ -106,35 +107,36 @@
                           [{:field "quantity" :reason "quantity is required and must be a positive integer"}])
 
         :else
-        (let [product (repo/find-product-by-sku datasource product-sku)]
-          (if-not product
-            (not-found-error (str "Product not found: " product-sku))
-            ;; Determine cart-id (existing or new)
-            (let [existing-cart-id (:cart-id request)
-                  new-cart? (nil? existing-cart-id)
-                  cart (if new-cart?
-                         (repo/create-cart! datasource)
-                         (repo/find-cart-by-id datasource existing-cart-id))
-                  cart-id (:id cart)
-                  ;; Check existing quantity in cart for this product
-                  existing-item (when-not new-cart?
-                                  (repo/find-cart-item datasource cart-id product-sku))
-                  existing-qty (or (:quantity existing-item) 0)
-                  total-qty (+ existing-qty quantity)
-                  stock (:stock product)]
-              (if (> total-qty stock)
-                (insufficient-stock-error product-sku stock)
-                (do
-                  ;; Upsert cart item with price snapshot
-                  (repo/add-cart-item! datasource cart-id product-sku quantity
-                                       (:price product))
-                  (repo/update-cart-timestamp! datasource cart-id)
-                  (let [items (repo/get-cart-items datasource cart-id)
-                        updated-cart (repo/find-cart-by-id datasource cart-id)
-                        response (cart-json-response updated-cart items)]
-                    (if new-cart?
-                      (with-meta response {:set-cart-cookie cart-id})
-                      response)))))))))))
+        (db/with-transaction [tx datasource]
+          (let [product (repo/find-product-by-sku tx product-sku)]
+            (if-not product
+              (not-found-error (str "Product not found: " product-sku))
+              ;; Determine cart-id (existing or new)
+              (let [existing-cart-id (:cart-id request)
+                    new-cart? (nil? existing-cart-id)
+                    cart (if new-cart?
+                           (repo/create-cart! tx)
+                           (repo/find-cart-by-id tx existing-cart-id))
+                    cart-id (:id cart)
+                    ;; Check existing quantity in cart for this product
+                    existing-item (when-not new-cart?
+                                    (repo/find-cart-item tx cart-id product-sku))
+                    existing-qty (or (:quantity existing-item) 0)
+                    total-qty (+ existing-qty quantity)
+                    stock (:stock product)]
+                (if (> total-qty stock)
+                  (insufficient-stock-error product-sku stock)
+                  (do
+                    ;; Upsert cart item with price snapshot
+                    (repo/add-cart-item! tx cart-id product-sku quantity
+                                         (:price product))
+                    (repo/update-cart-timestamp! tx cart-id)
+                    (let [items (repo/get-cart-items tx cart-id)
+                          updated-cart (repo/find-cart-by-id tx cart-id)
+                          response (cart-json-response updated-cart items)]
+                      (if new-cart?
+                        (with-meta response {:set-cart-cookie cart-id})
+                        response))))))))))))
 
 (defn update-item
   "PUT /api/cart/items/:sku handler. Updates the quantity of an item (absolute set)."
@@ -157,19 +159,20 @@
                           [{:field "quantity" :reason "quantity must be greater than zero. Use DELETE to remove items"}])
 
         :else
-        (let [existing-item (repo/find-cart-item datasource cart-id sku)]
-          (if-not existing-item
-            (not-found-error "Item not in cart")
-            (let [product (repo/find-product-by-sku datasource sku)
-                  stock (:stock product)]
-              (if (> quantity stock)
-                (insufficient-stock-error sku stock)
-                (do
-                  (repo/update-cart-item-quantity! datasource cart-id sku quantity)
-                  (repo/update-cart-timestamp! datasource cart-id)
-                  (let [items (repo/get-cart-items datasource cart-id)
-                        updated-cart (repo/find-cart-by-id datasource cart-id)]
-                    (cart-json-response updated-cart items)))))))))))
+        (db/with-transaction [tx datasource]
+          (let [existing-item (repo/find-cart-item tx cart-id sku)]
+            (if-not existing-item
+              (not-found-error "Item not in cart")
+              (let [product (repo/find-product-by-sku tx sku)
+                    stock (:stock product)]
+                (if (> quantity stock)
+                  (insufficient-stock-error sku stock)
+                  (do
+                    (repo/update-cart-item-quantity! tx cart-id sku quantity)
+                    (repo/update-cart-timestamp! tx cart-id)
+                    (let [items (repo/get-cart-items tx cart-id)
+                          updated-cart (repo/find-cart-by-id tx cart-id)]
+                      (cart-json-response updated-cart items))))))))))))
 
 (defn remove-item
   "DELETE /api/cart/items/:sku handler. Removes an item from the cart."

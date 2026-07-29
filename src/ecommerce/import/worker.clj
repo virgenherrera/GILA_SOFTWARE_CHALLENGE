@@ -132,9 +132,11 @@
                      {:accepted 0 :rejected 0 :skipped 0}
                      (map-indexed vector rows))
             total (+ (:accepted results) (:rejected results))
-            status (if (and (pos? total) (zero? (:accepted results)))
-                     "Failed"
-                     "Completed")]
+            status (cond
+                     (zero? total)               "Completed"
+                     (zero? (:accepted results)) "Failed"
+                     (pos? (:rejected results))  "CompletedWithErrors"
+                     :else                       "Completed")]
         (import-repo/update-job-completed!
          datasource job-id status
          total (:accepted results) (:rejected results) (:skipped results))
@@ -144,21 +146,25 @@
                   "skipped=" (:skipped results))))))
 
 (defn start-worker
-  "Start a background go-loop that takes jobs from `channel` and processes them.
+  "Start a background thread that takes jobs from `channel` and processes them.
    Each job is a map with :job-id and :csv-content keys.
+   Uses a real thread (not go-loop) because `process-job` performs synchronous
+   JDBC calls — running that on the fixed-size go-block thread pool can starve
+   it and deadlock when multiple imports run concurrently.
    Returns the channel (caller closes it to stop the worker)."
   [datasource channel]
-  (async/go-loop []
-    (when-let [job (async/<! channel)]
-      (try
-        (process-job datasource job)
-        (catch Exception e
-          (log/error e "Unhandled error processing import job" (:job-id job))
-          ;; Try to mark the job as Failed
-          (try
-            (import-repo/update-job-completed!
-             datasource (:job-id job) "Failed" 0 0 0 0)
-            (catch Exception inner
-              (log/error inner "Failed to mark job as Failed" (:job-id job))))))
-      (recur)))
+  (async/thread
+    (loop []
+      (when-let [job (async/<!! channel)]
+        (try
+          (process-job datasource job)
+          (catch Exception e
+            (log/error e "Unhandled error processing import job" (:job-id job))
+            ;; Try to mark the job as Failed
+            (try
+              (import-repo/update-job-completed!
+               datasource (:job-id job) "Failed" 0 0 0 0)
+              (catch Exception inner
+                (log/error inner "Failed to mark job as Failed" (:job-id job))))))
+        (recur))))
   channel)

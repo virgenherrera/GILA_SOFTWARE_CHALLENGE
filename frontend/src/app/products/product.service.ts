@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { map } from 'rxjs';
 import type { Observable } from 'rxjs';
 import type {
   CreateProduct,
@@ -50,7 +51,9 @@ export class ProductService {
   }
 
   getCategories(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.baseUrl}/categories`);
+    return this.http
+      .get<{ categories: string[] }>(`${this.baseUrl}/categories`)
+      .pipe(map((response) => response.categories));
   }
 
   getProduct(sku: string): Observable<ProductResponse> {

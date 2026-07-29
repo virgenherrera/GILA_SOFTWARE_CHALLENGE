@@ -23,6 +23,19 @@
     (jdbc/execute-one! datasource query
                        {:builder-fn rs/as-unqualified-maps})))
 
+(defn find-cart-by-id-for-update
+  "Find a cart by its UUID, locking the row with SELECT FOR UPDATE.
+   Must be called within a transaction. Prevents concurrent checkouts
+   of the same cart from both observing an 'Active' status.
+   Returns nil if not found."
+  [datasource cart-id]
+  (let [query (hsql/format {:select [:id :status :created_at :updated_at]
+                            :from [:carts]
+                            :where [:= :id cart-id]
+                            :for :update})]
+    (jdbc/execute-one! datasource query
+                       {:builder-fn rs/as-unqualified-maps})))
+
 (defn find-cart-item
   "Find a single cart item by cart-id and product-sku. Returns nil if not found."
   [datasource cart-id product-sku]

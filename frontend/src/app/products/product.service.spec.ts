@@ -81,7 +81,7 @@ describe('ProductService', () => {
     const req = httpMock.expectOne('/api/products/categories');
 
     expect(req.request.method).toBe('GET');
-    req.flush(['Footwear', 'Electronics']);
+    req.flush({ categories: ['Footwear', 'Electronics'] });
 
     expect(result).toEqual(['Footwear', 'Electronics']);
   });

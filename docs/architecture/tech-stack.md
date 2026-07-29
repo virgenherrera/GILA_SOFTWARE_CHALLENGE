@@ -63,7 +63,7 @@ has no JVM, no Clojure CLI, no Leiningen.
 | `org.clojure/tools.logging` | 1.3.0 | Logging facade |
 | `ch.qos.logback/logback-classic` | 1.5.16 | Logging implementation |
 | `metosin/muuntaja` | 0.6.11 | Content negotiation (JSON-only, see [Middleware Pipeline](middleware-pipeline.md)) |
-| `buddy/buddy-sign` | 3.4.0 | HMAC-SHA256 cookie signing for cart identity (see [Security Guidelines](security-guidelines.md)) |
+| `buddy/buddy-sign` | 3.4.0 | JWT-based cookie signing for cart identity (see [Security Guidelines](security-guidelines.md)) |
 | `metosin/ring-swagger-ui` | 5.9.0 | Swagger UI 5.x static assets for API docs (see [API Docs Strategy](api-docs-strategy.md)) |
 
 > **Logging configuration** (`logback-classic`): configuration via

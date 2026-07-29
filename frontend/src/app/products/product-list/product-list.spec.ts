@@ -46,7 +46,9 @@ describe('ProductList', () => {
 
     fixture.detectChanges();
 
-    httpMock.expectOne((req) => req.url === '/api/products/categories').flush(['Footwear']);
+    httpMock
+      .expectOne((req) => req.url === '/api/products/categories')
+      .flush({ categories: ['Footwear'] });
     httpMock.expectOne((req) => req.url === '/api/products').flush(mockPage);
     fixture.detectChanges();
 
@@ -70,7 +72,7 @@ describe('ProductList', () => {
     const fixture = TestBed.createComponent(ProductList);
 
     fixture.detectChanges();
-    httpMock.expectOne((req) => req.url === '/api/products/categories').flush([]);
+    httpMock.expectOne((req) => req.url === '/api/products/categories').flush({ categories: [] });
     httpMock
       .expectOne((req) => req.url === '/api/products')
       .flush({ items: [], paging: { page: 1, perPage: 20, total: 0, prev: null, next: null } });
@@ -85,7 +87,7 @@ describe('ProductList', () => {
     const fixture = TestBed.createComponent(ProductList);
 
     fixture.detectChanges();
-    httpMock.expectOne((req) => req.url === '/api/products/categories').flush([]);
+    httpMock.expectOne((req) => req.url === '/api/products/categories').flush({ categories: [] });
     httpMock
       .expectOne((req) => req.url === '/api/products')
       .flush(
@@ -103,7 +105,9 @@ describe('ProductList', () => {
     const fixture = TestBed.createComponent(ProductList);
 
     fixture.detectChanges();
-    httpMock.expectOne((req) => req.url === '/api/products/categories').flush(['Footwear']);
+    httpMock
+      .expectOne((req) => req.url === '/api/products/categories')
+      .flush({ categories: ['Footwear'] });
     httpMock
       .expectOne((req) => req.url === '/api/products')
       .flush({

@@ -36,7 +36,14 @@
             (if (:items data)
               (error-response (:status data) (:code data) (:message data)
                               :items (:items data))
-              (error-response (:status data) (:code data) (:message data)))))))))
+              (error-response (:status data) (:code data) (:message data)))))
+        (catch java.sql.SQLException _
+          ;; Two concurrent checkout requests raced past the cart-status
+          ;; check before the FOR UPDATE lock was in place, or the
+          ;; UNIQUE constraint on orders.cart_id fired — either way this
+          ;; cart has already been (or is being) checked out.
+          (error-response 409 "CART_NOT_ACTIVE"
+                          "Cart has already been checked out."))))))
 
 (defn get-order
   "GET /api/orders/:id handler. Returns order details by UUID."

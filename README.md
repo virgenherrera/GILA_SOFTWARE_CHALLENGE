@@ -29,6 +29,7 @@ docker compose down -v
 | http://localhost:8080 | Angular frontend (Products, Search, Import, Cart, Checkout) |
 | http://localhost:8080/api/health | Backend health check (200 = healthy, 503 = degraded) |
 | http://localhost:8080/api/products | Products API (paginated, searchable, filterable) |
+| http://localhost:8080/api/docs | Swagger UI — interactive API documentation |
 
 All API routes are proxied through nginx — there are no separately exposed backend or database ports.
 
@@ -46,7 +47,7 @@ All configuration is via environment variables. Docker Compose provides sensible
 | `DB_PASSWORD` | No | `devpassword` | PostgreSQL password |
 | `DB_NAME` | No | `ecommerce` | PostgreSQL database name |
 | `LOG_LEVEL` | No | `INFO` | Backend log level (DEBUG, INFO, WARN, ERROR) |
-| `COOKIE_SECRET` | No | `dev-secret-change-in-production-min-32-chars` | HMAC-SHA256 secret for cart cookie signing (min 32 chars) |
+| `COOKIE_SECRET` | No | `dev-secret-change-in-production-min-32-chars` | Secret for cart JWT signing (min 32 chars) |
 
 The backend validates all required environment variables at startup and exits with code 1 if any are missing or invalid.
 
@@ -67,9 +68,9 @@ Browser → nginx (:8080) → Clojure/Ring (:3000) → PostgreSQL (:5432)
 **Infrastructure**: Multi-stage Docker builds (build tools excluded from production images). nginx serves static files and reverse-proxies `/api/*` to the backend. The backend runs as a non-root user. Services start in dependency order via health checks: db → backend → frontend.
 
 **Key patterns**:
-- Middleware pipeline: JSON parsing → error handling → security headers → cart session → routing
+- Middleware pipeline: error handling → security headers → content-type negotiation → params → cart session → routing
 - Health check returns 503 (not crash) when DB is down; HikariCP auto-reconnects
-- Cart identity via HMAC-SHA256 signed cookie (HttpOnly, SameSite=Strict)
+- Cart identity via JWT-signed cookie (buddy.sign.jwt, HttpOnly, SameSite=Strict)
 - Checkout uses `SELECT FOR UPDATE` for atomic stock validation and decrement
 
 See `docs/architecture/` for detailed documentation on each subsystem.
@@ -139,7 +140,7 @@ See `docs/architecture/` for detailed documentation on each subsystem.
 - **Elasticsearch**: A separate search cluster is unjustified at catalog scale (hundreds to low thousands of products).
 - **Application-level filtering (ILIKE)**: No ranking, no stemming, no prefix matching. Degrades with catalog growth.
 
-**Rationale**: `tsvector` provides ranked full-text search with stemming and prefix matching at zero operational cost. A database trigger keeps the search vector in sync with product name, description, and SKU.
+**Rationale**: `tsvector` provides ranked full-text search with stemming and prefix matching at zero operational cost. A database trigger keeps the search vector in sync with product name, description, and category.
 
 ### 7. Duplicate SKU Strategy: Upsert for Catalog, Reject for In-File
 
@@ -161,16 +162,15 @@ See `docs/architecture/` for detailed documentation on each subsystem.
 
 **Rationale**: Simple and safe. Products referenced by orders cannot be deleted (FK constraint returns 409). Unreferenced products are permanently removed. No ghost data accumulates.
 
-### 9. Cart Identity: Signed Cookie
+### 9. Cart Identity: JWT-Signed Cookie
 
-**Chosen**: HMAC-SHA256 signed cookie via buddy-sign (HttpOnly, SameSite=Strict, Path=/api)
+**Chosen**: JWT-signed cookie via buddy-sign (buddy.sign.jwt), HMAC-SHA256 as the signing algorithm, HttpOnly, SameSite=Strict, Path=/api
 
 **Alternatives considered**:
-- **JWT**: Heavier than needed for a simple cart ID. JWTs carry claims and require parsing overhead for what is essentially a session identifier.
 - **Database session**: Requires session cleanup and storage management. The cookie approach is stateless on the server side (cart data lives in PostgreSQL, the cookie is just the cart ID).
 - **localStorage**: Not sent automatically with API requests. Requires JavaScript to attach to every request. Vulnerable to XSS.
 
-**Rationale**: The browser sends the cookie automatically with every `/api` request. HMAC signing prevents tampering (cart ID forgery). No authentication system exists, so the signed cookie is the identity mechanism.
+**Rationale**: The browser sends the cookie automatically with every `/api` request. The JWT is signed with HMAC-SHA256, preventing tampering (cart ID forgery). No authentication system exists, so the signed cookie is the identity mechanism.
 
 ### 10. Checkout Concurrency: SELECT FOR UPDATE
 
@@ -193,7 +193,7 @@ See `docs/architecture/` for detailed documentation on each subsystem.
 
 **Security testing**: Error responses are verified to never leak stack traces, SQL statements, file paths, or raw user input. XSS payloads and SQL injection attempts are tested in product creation, CSV import, and search queries.
 
-**Coverage**: Backend and frontend enforce 80% line coverage thresholds. Coverage is tracked per build but is not a merge gate — acceptance-criteria-mapped tests are the gate.
+**Coverage**: Frontend enforces 80% line coverage thresholds (configured in angular.json). Backend coverage is tracked via kaocha-cloverage but not enforced as a gate. Acceptance-criteria-mapped tests are the actual merge gate.
 
 See [docs/architecture/testing-strategy.md](docs/architecture/testing-strategy.md) for the full testing strategy, test naming conventions, and per-epic test matrix.
 

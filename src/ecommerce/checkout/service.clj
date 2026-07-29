@@ -24,8 +24,11 @@
                     {:status 400 :code "EMPTY_CART"
                      :message "No cart found. Add items before checkout."})))
   (db/with-transaction [tx datasource]
-    ;; 1. Verify cart exists and is Active
-    (let [cart (cart-repo/find-cart-by-id tx cart-id)]
+    ;; 1. Verify cart exists and is Active.
+    ;; Locks the cart row (SELECT FOR UPDATE) so a second, concurrent
+    ;; checkout for the same cart blocks until this transaction commits
+    ;; and then observes the cart as no longer "Active".
+    (let [cart (cart-repo/find-cart-by-id-for-update tx cart-id)]
       (when-not cart
         (throw (ex-info "Cart not found"
                         {:status 400 :code "EMPTY_CART"

@@ -7,6 +7,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { SearchFiltersPanel } from '../search-filters/search-filters';
 import { SearchResults } from '../search-results/search-results';
 import { ProductService } from '../../products/product.service';
+import { CartService } from '../../cart/cart.service';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import type { NonKeywordSearchFilters, SearchFilters } from '../search.types';
 import type { Paging, ProductResponse } from '../../shared/validation/product.schema';
@@ -31,6 +32,7 @@ const DEFAULT_FILTERS: SearchFilters = {
 })
 export class SearchPage {
   private readonly productService = inject(ProductService);
+  private readonly cartService = inject(CartService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly keyword$ = new Subject<string>();
@@ -95,8 +97,18 @@ export class SearchPage {
   }
 
   protected onAddToCart(sku: string): void {
-    // Cart integration is out of scope for this task (T-014); acknowledge the intent for now.
-    this.cartMessage.set(`Added ${sku} to cart (cart integration coming soon).`);
+    this.cartService
+      .addItem(sku, 1)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.cartMessage.set('Added to cart successfully.');
+          setTimeout(() => this.cartMessage.set(null), 3000);
+        },
+        error: (err: HttpErrorResponse) => {
+          this.cartMessage.set(extractApiErrorMessage(err));
+        },
+      });
   }
 
   private loadCategories(): void {
@@ -104,7 +116,7 @@ export class SearchPage {
       .getCategories()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (response) => this.categories.set(this.normalizeCategories(response)),
+        next: (categories) => this.categories.set(categories),
         error: () => this.categories.set([]),
       });
   }
@@ -138,17 +150,5 @@ export class SearchPage {
           this.loading.set(false);
         },
       });
-  }
-
-  /**
-   * `ProductService.getCategories()` is typed as `Observable<string[]>`, but the backend's
-   * documented and actual response envelope is `{ categories: string[] }`
-   * (see `docs/architecture/api-contract.md#get-apiproductscategories` and
-   * `src/ecommerce/product/handler.clj`). That mismatch predates this task and lives in
-   * `product.service.ts` (owned by T-011), which is out of scope here — so this normalizes
-   * defensively at the call site instead of silently trusting the declared type.
-   */
-  private normalizeCategories(response: string[] | { categories: string[] }): string[] {
-    return Array.isArray(response) ? response : response.categories;
   }
 }
