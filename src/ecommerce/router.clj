@@ -5,8 +5,10 @@
             [reitit.swagger-ui :as swagger-ui]
             [next.jdbc :as jdbc]
             [clojure.data.json :as json]
+            [ring.middleware.multipart-params :as multipart]
             [ecommerce.middleware :as mw]
-            [ecommerce.product.handler :as product-handler]))
+            [ecommerce.product.handler :as product-handler]
+            [ecommerce.import.handler :as import-handler]))
 
 (def ^:private start-time (System/currentTimeMillis))
 
@@ -30,39 +32,48 @@
                               :db db-status})})))
 
 (defn create-router
-  "Create the reitit ring router with all routes and middleware."
-  [datasource]
-  (ring/ring-handler
-   (ring/router
-    [["/api"
-      ["/health" {:get {:summary "Health check"
-                        :handler (health-handler datasource)}}]
-      ["/products" {:get {:summary "List products"
-                          :handler (product-handler/list-products datasource)}
-                    :post {:summary "Create a product"
-                           :handler (product-handler/create-product datasource)}}]
-      ["/products/categories" {:get {:summary "List product categories"
-                                     :handler (product-handler/list-categories datasource)}}]
-      ["/products/:sku" {:get {:summary "Get a product by SKU"
-                               :handler (product-handler/get-product datasource)}
-                         :put {:summary "Update a product"
-                               :handler (product-handler/update-product datasource)}
-                         :delete {:summary "Delete a product"
-                                  :handler (product-handler/delete-product datasource)}}]
-      ["/swagger.json" {:get {:no-doc true
-                              :swagger {:info {:title "E-Commerce API"
-                                               :description "E-Commerce backend API"
-                                               :version "1.0.0"}}
-                              :handler (swagger/create-swagger-handler)}}]]]
-    {:data {:coercion reitit.coercion.malli/coercion
-            :middleware [mw/wrap-middleware]}
-     :conflicts nil})
-   (ring/routes
-    (swagger-ui/create-swagger-ui-handler
-     {:path "/api/docs"
-      :url "/api/swagger.json"})
-    (ring/create-default-handler
-     {:not-found (constantly {:status 404
-                              :headers {"Content-Type" "application/json"}
-                              :body (json/write-str {:error {:code "NOT_FOUND"
-                                                             :message "Resource not found"}})})}))))
+  "Create the reitit ring router with all routes and middleware.
+   Accepts an optional import-channel for CSV import background processing."
+  ([datasource]
+   (create-router datasource nil))
+  ([datasource import-channel]
+   (ring/ring-handler
+    (ring/router
+     [["/api"
+       ["/health" {:get {:summary "Health check"
+                         :handler (health-handler datasource)}}]
+       ["/products" {:get {:summary "List products"
+                           :handler (product-handler/list-products datasource)}
+                     :post {:summary "Create a product"
+                            :handler (product-handler/create-product datasource)}}]
+       ["/products/categories" {:get {:summary "List product categories"
+                                      :handler (product-handler/list-categories datasource)}}]
+       ["/products/:sku" {:get {:summary "Get a product by SKU"
+                                :handler (product-handler/get-product datasource)}
+                          :put {:summary "Update a product"
+                                :handler (product-handler/update-product datasource)}
+                          :delete {:summary "Delete a product"
+                                   :handler (product-handler/delete-product datasource)}}]
+       ["/imports" {:post {:summary "Upload CSV import"
+                           :middleware [multipart/wrap-multipart-params]
+                           :handler (import-handler/upload-csv datasource import-channel)}}]
+       ["/imports/:id" {:get {:summary "Get import job status"
+                              :handler (import-handler/get-job-status datasource)}}]
+       ["/swagger.json" {:get {:no-doc true
+                               :swagger {:info {:title "E-Commerce API"
+                                                :description "E-Commerce backend API"
+                                                :version "1.0.0"}}
+                               :handler (swagger/create-swagger-handler)}}]]]
+     {:data {:coercion reitit.coercion.malli/coercion
+             :middleware [mw/wrap-middleware]}
+      :conflicts nil})
+    (ring/routes
+     (swagger-ui/create-swagger-ui-handler
+      {:path "/api/docs"
+       :url "/api/swagger.json"})
+     (ring/create-default-handler
+      {:not-found (constantly {:status 404
+                               :headers {"Content-Type" "application/json"}
+                               :body (json/write-str {:error {:code "NOT_FOUND"
+                                                              :message "Resource not found"}})})})))))
+
