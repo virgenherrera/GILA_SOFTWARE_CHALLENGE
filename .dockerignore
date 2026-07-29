@@ -1,7 +1,7 @@
 .git
 .github
 .angular
-node_modules
+**/node_modules
 dist
 docs
 *.md

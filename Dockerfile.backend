@@ -1,4 +1,4 @@
-# Stage 1: Build
+# Stage 1: Build uberjar
 FROM clojure:temurin-21-tools-deps-1.12.0.1501 AS builder
 WORKDIR /app
 COPY deps.edn build.clj ./
@@ -7,10 +7,14 @@ COPY src/ src/
 COPY resources/ resources/
 RUN clojure -T:build uber
 
-# Stage 2: Runtime
+# Stage 2: Production runtime (JRE only, non-root)
 FROM eclipse-temurin:21-jre-alpine
+RUN apk add --no-cache curl && \
+    addgroup -S app && adduser -S app -G app
 WORKDIR /app
-RUN apk add --no-cache curl
 COPY --from=builder /app/target/app.jar app.jar
+COPY resources/migrations/ resources/migrations/
+RUN chown -R app:app /app
+USER app
 EXPOSE 3000
 CMD ["java", "-jar", "app.jar"]

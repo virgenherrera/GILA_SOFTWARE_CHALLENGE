@@ -5,8 +5,6 @@ services:
       POSTGRES_USER: ${DB_USER:-app}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-devpassword}
       POSTGRES_DB: ${DB_NAME:-ecommerce}
-    ports:
-      - "${DB_PORT_HOST:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./resources/migrations:/docker-entrypoint-initdb.d:ro
@@ -15,6 +13,9 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    restart: unless-stopped
+    networks:
+      - internal
 
   backend:
     build:
@@ -29,8 +30,6 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-devpassword}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       COOKIE_SECRET: ${COOKIE_SECRET:-dev-secret-change-in-production-min-32-chars}
-    ports:
-      - "3000:3000"
     depends_on:
       db:
         condition: service_healthy
@@ -40,16 +39,26 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+    restart: unless-stopped
+    stop_grace_period: 15s
+    networks:
+      - internal
 
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
     ports:
-      - "4200:80"
+      - "8080:80"
     depends_on:
       backend:
         condition: service_healthy
+    networks:
+      - internal
 
 volumes:
   pgdata:
+
+networks:
+  internal:
+    driver: bridge
