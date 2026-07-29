@@ -2,7 +2,8 @@
   (:require [clojure.tools.logging :as log]
             [clojure.data.json :as json]
             [muuntaja.core :as m]
-            [muuntaja.middleware :as middleware]))
+            [muuntaja.middleware :as middleware]
+            [ring.middleware.params :as params]))
 
 (defn wrap-error-handling
   "Catches all exceptions and returns a JSON error response."
@@ -52,9 +53,10 @@
 
 (defn wrap-middleware
   "Apply the full middleware stack to a handler.
-   Order (outermost first): error-handling -> security-headers -> content-type."
+   Order (outermost first): error-handling -> security-headers -> params -> content-type."
   [handler]
   (-> handler
+      params/wrap-params
       wrap-content-type
       wrap-security-headers
       wrap-error-handling))

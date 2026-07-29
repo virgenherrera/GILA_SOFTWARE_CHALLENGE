@@ -1,7 +1,8 @@
 (ns ecommerce.product.repository
   (:require [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]
-            [honey.sql :as hsql]))
+            [honey.sql :as hsql]
+            [ecommerce.product.search :as search]))
 
 (defn insert-product!
   "Insert a product into the database. Returns the inserted row.
@@ -64,3 +65,31 @@
                          :code "PRODUCT_IN_USE"
                          :message (str "Cannot delete product '" sku "': referenced by existing orders or cart items")}))
         (throw e)))))
+
+(defn search-products
+  "Search products with filters, sort, and pagination.
+   Takes validated search params, returns a vector of product maps."
+  [datasource params]
+  (let [query (hsql/format (search/build-search-query params))]
+    (jdbc/execute! datasource query
+                   {:builder-fn rs/as-unqualified-maps})))
+
+(defn count-products
+  "Count products matching the same filters as search-products.
+   Takes validated search params, returns total count as a long."
+  [datasource params]
+  (let [query (hsql/format (search/build-count-query params))
+        result (jdbc/execute-one! datasource query
+                                  {:builder-fn rs/as-unqualified-maps})]
+    (or (:total result) 0)))
+
+(defn list-categories
+  "List all distinct product categories, sorted alphabetically."
+  [datasource]
+  (let [query (hsql/format {:select-distinct [:category]
+                            :from [:products]
+                            :where [:<> :category nil]
+                            :order-by [[:category :asc]]})]
+    (mapv :category
+          (jdbc/execute! datasource query
+                         {:builder-fn rs/as-unqualified-maps}))))

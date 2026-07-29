@@ -1,5 +1,6 @@
 (ns ecommerce.product.handler
   (:require [ecommerce.product.repository :as repo]
+            [ecommerce.product.search :as search]
             [ecommerce.validation :as v]
             [clojure.data.json :as json]
             [clojure.string :as str]))
@@ -99,3 +100,60 @@
          :body (json/write-str
                 {:error {:code "NOT_FOUND"
                          :message "Product not found"}})}))))
+
+(defn list-products
+  "List-products handler with search, filters, sort, and pagination.
+   Takes datasource, returns a Ring handler function (closure pattern)."
+  [datasource]
+  (fn [request]
+    (let [query-params (:query-params request)
+          parsed (search/parse-search-params query-params)
+          result (search/validate-search-params parsed)]
+      (if (:errors result)
+        {:status 400
+         :headers {"Content-Type" "application/json"}
+         :body (json/write-str
+                {:error {:code "VALIDATION_ERROR"
+                         :message "Invalid search parameters"
+                         :details (:errors result)}})}
+        (let [params (:params result)
+              items (repo/search-products datasource params)
+              total (repo/count-products datasource params)
+              paging-urls (search/build-paging-urls
+                           "/api/products" params total)]
+          {:status 200
+           :headers {"Content-Type" "application/json"}
+           :body (json/write-str
+                  {:items items
+                   :paging (merge {:page (:page params)
+                                   :perPage (:per-page params)
+                                   :total total}
+                                  paging-urls)}
+                  :value-fn json-value-fn)})))))
+
+(defn get-product
+  "Get-product handler. Returns a single product by SKU.
+   Takes datasource, returns a Ring handler function (closure pattern)."
+  [datasource]
+  (fn [request]
+    (let [sku (-> request :path-params :sku)
+          product (repo/find-by-sku datasource sku)]
+      (if product
+        {:status 200
+         :headers {"Content-Type" "application/json"}
+         :body (json/write-str product :value-fn json-value-fn)}
+        {:status 404
+         :headers {"Content-Type" "application/json"}
+         :body (json/write-str
+                {:error {:code "NOT_FOUND"
+                         :message "Product not found"}})}))))
+
+(defn list-categories
+  "List-categories handler. Returns all distinct product categories.
+   Takes datasource, returns a Ring handler function (closure pattern)."
+  [datasource]
+  (fn [_request]
+    (let [categories (repo/list-categories datasource)]
+      {:status 200
+       :headers {"Content-Type" "application/json"}
+       :body (json/write-str {:categories categories})})))

@@ -37,9 +37,15 @@
     [["/api"
       ["/health" {:get {:summary "Health check"
                         :handler (health-handler datasource)}}]
-      ["/products" {:post {:summary "Create a product"
+      ["/products" {:get {:summary "List products"
+                          :handler (product-handler/list-products datasource)}
+                    :post {:summary "Create a product"
                            :handler (product-handler/create-product datasource)}}]
-      ["/products/:sku" {:put {:summary "Update a product"
+      ["/products/categories" {:get {:summary "List product categories"
+                                     :handler (product-handler/list-categories datasource)}}]
+      ["/products/:sku" {:get {:summary "Get a product by SKU"
+                               :handler (product-handler/get-product datasource)}
+                         :put {:summary "Update a product"
                                :handler (product-handler/update-product datasource)}
                          :delete {:summary "Delete a product"
                                   :handler (product-handler/delete-product datasource)}}]
@@ -49,7 +55,8 @@
                                                :version "1.0.0"}}
                               :handler (swagger/create-swagger-handler)}}]]]
     {:data {:coercion reitit.coercion.malli/coercion
-            :middleware [mw/wrap-middleware]}})
+            :middleware [mw/wrap-middleware]}
+     :conflicts nil})
    (ring/routes
     (swagger-ui/create-swagger-ui-handler
      {:path "/api/docs"
