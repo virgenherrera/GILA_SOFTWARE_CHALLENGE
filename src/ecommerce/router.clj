@@ -8,7 +8,9 @@
             [ring.middleware.multipart-params :as multipart]
             [ecommerce.middleware :as mw]
             [ecommerce.product.handler :as product-handler]
-            [ecommerce.import.handler :as import-handler]))
+            [ecommerce.import.handler :as import-handler]
+            [ecommerce.cart.handler :as cart-handler]
+            [ecommerce.cart.middleware :as cart-mw]))
 
 (def ^:private start-time (System/currentTimeMillis))
 
@@ -33,10 +35,13 @@
 
 (defn create-router
   "Create the reitit ring router with all routes and middleware.
-   Accepts an optional import-channel for CSV import background processing."
+   Accepts an optional import-channel for CSV import background processing
+   and an optional cookie-secret for cart session management."
   ([datasource]
    (create-router datasource nil))
   ([datasource import-channel]
+   (create-router datasource import-channel nil))
+  ([datasource import-channel cookie-secret]
    (ring/ring-handler
     (ring/router
      [["/api"
@@ -54,6 +59,15 @@
                                 :handler (product-handler/update-product datasource)}
                           :delete {:summary "Delete a product"
                                    :handler (product-handler/delete-product datasource)}}]
+       ["/cart" {:middleware [(cart-mw/wrap-cart-cookie cookie-secret)]}
+        ["" {:get {:summary "Get cart"
+                   :handler (cart-handler/get-cart datasource)}}]
+        ["/items" {:post {:summary "Add item to cart"
+                          :handler (cart-handler/add-item datasource)}}]
+        ["/items/:sku" {:put {:summary "Update item quantity"
+                              :handler (cart-handler/update-item datasource)}
+                        :delete {:summary "Remove item from cart"
+                                 :handler (cart-handler/remove-item datasource)}}]]
        ["/imports" {:post {:summary "Upload CSV import"
                            :middleware [multipart/wrap-multipart-params]
                            :handler (import-handler/upload-csv datasource import-channel)}}]

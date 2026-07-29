@@ -17,7 +17,8 @@
         datasource     (db/create-datasource cfg)
         import-channel (async/chan 10)
         _              (import-worker/start-worker datasource import-channel)
-        handler        (router/create-router datasource import-channel)
+        cookie-secret  (:cookie-secret cfg)
+        handler        (router/create-router datasource import-channel cookie-secret)
         port           (get-in cfg [:server :port])
         server         (jetty/run-jetty handler
                                         {:port  port
