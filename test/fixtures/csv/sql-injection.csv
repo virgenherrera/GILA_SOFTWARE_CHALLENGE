@@ -1,0 +1,2 @@
+name,sku,description,category,price,stock,weight_kg
+"'; DROP TABLE products; --",SQL-001,SQL injection attempt,Electronics,29.99,10,0.5

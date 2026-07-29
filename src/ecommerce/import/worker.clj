@@ -1,10 +1,12 @@
 (ns ecommerce.import.worker
   "Background worker that processes CSV import jobs from a core.async channel.
-   Reads jobs, parses CSV content, validates rows, and upserts products."
+   Reads jobs, parses CSV content, validates rows via the import validator,
+   and upserts products."
   (:require [clojure.core.async :as async]
             [clojure.tools.logging :as log]
             [clojure.string :as str]
             [ecommerce.import.parser :as parser]
+            [ecommerce.import.validator :as validator]
             [ecommerce.import.repository :as import-repo]
             [ecommerce.product.repository :as product-repo]))
 
@@ -22,6 +24,20 @@
           :value      raw-row-str
           :error_code "VALIDATION_ERROR"
           :message    (str message)})))))
+
+(defn- record-rejection!
+  "Record import_errors entries for a rejected row (XSS or duplicate SKU)."
+  [datasource job-id row-number raw-row errors error-code]
+  (let [raw-row-str (str/join "," raw-row)]
+    (doseq [[field message] errors]
+      (import-repo/record-import-error!
+       datasource
+       {:job_id     job-id
+        :row_number row-number
+        :field      (if (keyword? field) (name field) (str field))
+        :value      raw-row-str
+        :error_code error-code
+        :message    (str message)}))))
 
 (defn- record-insert-error!
   "Record an import_errors entry for a row that failed during DB insertion."
@@ -71,26 +87,41 @@
           :message    (:error parse-result)})
         (import-repo/update-job-completed!
          datasource job-id "Failed" 0 0 1 0))
-      ;; Parse succeeded — process rows
+      ;; Parse succeeded — process rows with validator
       (let [rows (:rows parse-result)
+            seen-skus (atom #{})
             results (reduce
                      (fn [acc [idx raw-row]]
                        ;; row-number is 1-indexed, header is row 1, first data row is row 2
                        (let [row-number (+ idx 2)
-                             classified (parser/classify-row raw-row)]
-                         (case (:classification classified)
+                             result (validator/validate-row raw-row seen-skus)]
+                         (case (:status result)
                            :blank
                            (update acc :skipped inc)
+
+                           :xss
+                           (do
+                             (record-rejection!
+                              datasource job-id row-number raw-row
+                              (:errors result) "XSS_ERROR")
+                             (update acc :rejected inc))
+
+                           :duplicate
+                           (do
+                             (record-rejection!
+                              datasource job-id row-number raw-row
+                              (:errors result) "DUPLICATE_SKU")
+                             (update acc :rejected inc))
 
                            :invalid
                            (do
                              (record-validation-errors!
-                              datasource job-id row-number raw-row (:errors classified))
+                              datasource job-id row-number raw-row (:errors result))
                              (update acc :rejected inc))
 
                            :valid
                            (try
-                             (upsert-product! datasource (:product-map classified))
+                             (upsert-product! datasource (:product-map result))
                              (update acc :accepted inc)
                              (catch Exception e
                                (log/warn e "Failed to insert row" row-number "in job" job-id)

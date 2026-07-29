@@ -1,0 +1,4 @@
+name,sku,description,category,price,stock,weight_kg
+<script>alert(1)</script>,XSS-001,Script tag attack,Electronics,29.99,10,0.5
+"Widget onerror=alert(1)",XSS-002,Event handler attack,Electronics,19.99,5,0.3
+"javascript:alert(document.cookie)",XSS-003,JavaScript URI attack,Electronics,9.99,20,0.2
