@@ -13,3 +13,26 @@ export type Product = z.infer<typeof ProductSchema>;
 
 export const CreateProductSchema = ProductSchema.omit({ sku: true });
 export type CreateProduct = z.infer<typeof CreateProductSchema>;
+
+// The backend's UpdateProduct contract (Malli) has the exact same shape as CreateProductSchema
+// above (every field except `sku`, since PUT never accepts sku in the body). Reuse it instead
+// of duplicating the shape.
+export const UpdateProductSchema = CreateProductSchema;
+export type UpdateProduct = CreateProduct;
+
+// Full product record as returned by the API (GET/POST/PUT responses).
+export const ProductResponseSchema = ProductSchema.extend({
+  weight_kg: z.number().nonnegative(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+export type ProductResponse = z.infer<typeof ProductResponseSchema>;
+
+export const PagingSchema = z.object({
+  page: z.number().int().positive(),
+  perPage: z.number().int().positive(),
+  total: z.number().int().nonnegative(),
+  prev: z.string().nullable(),
+  next: z.string().nullable(),
+});
+export type Paging = z.infer<typeof PagingSchema>;

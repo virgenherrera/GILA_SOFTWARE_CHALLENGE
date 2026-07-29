@@ -1,0 +1,81 @@
+<section class="flex flex-col gap-4">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h2 class="text-xl font-semibold text-gray-900">Products</h2>
+    <a
+      routerLink="/products/new"
+      class="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+    >
+      New Product
+    </a>
+  </div>
+
+  <div class="flex flex-wrap gap-3">
+    <input
+      type="search"
+      placeholder="Search products…"
+      class="flex-1 min-w-[200px] rounded-md border border-gray-300 px-3 py-2 text-sm"
+      [value]="searchTerm()"
+      (change)="onSearchTermChange($any($event.target).value)"
+    />
+    <select
+      class="rounded-md border border-gray-300 px-3 py-2 text-sm"
+      [value]="selectedCategory()"
+      (change)="onCategoryChange($any($event.target).value)"
+    >
+      <option value="">All categories</option>
+      @for (category of categories(); track category) {
+        <option [value]="category">{{ category }}</option>
+      }
+    </select>
+  </div>
+
+  @if (loading()) {
+    <p class="py-8 text-center text-sm text-gray-500" role="status">Loading products…</p>
+  } @else if (error()) {
+    <p
+      class="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700"
+      role="alert"
+    >
+      {{ error() }}
+    </p>
+  } @else if (products().length === 0) {
+    <p class="py-8 text-center text-sm text-gray-500">No products found.</p>
+  } @else {
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      @for (product of products(); track product.sku) {
+        <app-product-card
+          [product]="product"
+          (view)="onView($event)"
+          (edit)="onEdit($event)"
+          (delete)="onDelete($event)"
+        />
+      }
+    </div>
+
+    @if (paging(); as currentPaging) {
+      <div class="flex items-center justify-between pt-2">
+        <span class="text-sm text-gray-500">
+          Page {{ currentPaging.page }} · {{ currentPaging.total }} total products
+        </span>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+            [disabled]="!currentPaging.prev"
+            (click)="onPrevPage()"
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            class="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+            [disabled]="!currentPaging.next"
+            (click)="onNextPage()"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    }
+  }
+</section>
