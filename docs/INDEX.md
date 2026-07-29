@@ -48,6 +48,7 @@ Legend: green = complete, blue = current, gray = pending.
 - [ ] **EP05 --- User Interface**: Web UI for all product and purchase flows ([docs/epics/EP05-user-interface.md](epics/EP05-user-interface.md))
 - [ ] **EP06 --- Containerization & Documentation**: Docker packaging and README ([docs/epics/EP06-containerization-docs.md](epics/EP06-containerization-docs.md))
 - [ ] **EP07 --- Angular 22 Modernization**: Zod consistency + rxResource migration ([docs/epics/EP07-angular-22-modernization.md](epics/EP07-angular-22-modernization.md))
+- [ ] **EP08 --- UI/UX Overhaul**: Design system, accessibility, responsive, visual polish ([docs/epics/EP08-ux-overhaul.md](epics/EP08-ux-overhaul.md))
 
 ## Architecture
 
@@ -118,7 +119,7 @@ Legend: green = complete, blue = current, gray = pending.
 | Export/download skipped rows | EP02 | Should Have --- API errors endpoint covers |
 | Search suggestions | EP03 | Could Have |
 | Session-remembered filters | EP03 | Could Have |
-| Responsive layout | EP05 | Should Have --- Low UX weight |
+| ~~Responsive layout~~ | ~~EP05~~ | ~~Promoted to EP08~~ |
 | Cart Abandoned transition | EP04 | Not required |
 | Order Fulfilled transition | EP04 | Not required |
 
@@ -131,12 +132,19 @@ Legend: green = complete, blue = current, gray = pending.
 
 - [ ] [US-019 --- Import Status Accuracy & Upload UX](user-stories/US-019-import-status-ux.md)
 
+### EP08 --- UI/UX Overhaul
+
+- [ ] [US-020 --- Design System & App Shell](user-stories/US-020-design-system-shell.md)
+- [ ] [US-021 --- Component-Level UX](user-stories/US-021-component-ux.md)
+
 ## Sprint Planning
 
 - [x] [Batch 1 --- MVP Implementation Plan](subtasks/batch-1-plan.md) --- 7 execution waves, 16 tasks, dependency graph
 - Handoff files: [T-001](subtasks/ep06/T-001-project-scaffolding.md) through [T-016](subtasks/ep06/T-016-readme-documentation.md)
 - [T-018](subtasks/ep07/T-018-product-rxresource.md), [T-019](subtasks/ep07/T-019-import-rxresource.md), [T-020](subtasks/ep07/T-020-checkout-rxresource.md) --- EP07 rxResource migration
 - [T-021](subtasks/ep02/T-021-import-status-fix.md), [T-022](subtasks/ep02/T-022-import-upload-ux.md) --- US-019 import status + upload UX
+- [T-023](subtasks/ep08/T-023-design-system-shell.md) --- EP08 design system + app shell (Wave 1)
+- [T-024](subtasks/ep08/T-024-product-views-ux.md), [T-025](subtasks/ep08/T-025-search-import-views-ux.md), [T-026](subtasks/ep08/T-026-cart-checkout-views-ux.md) --- EP08 component UX (Wave 2, parallel)
 
 ## Navigation Notes
 
