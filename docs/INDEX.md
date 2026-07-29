@@ -47,6 +47,7 @@ Legend: green = complete, blue = current, gray = pending.
 - [ ] **EP04 --- Purchase Workflow**: Cart and simulated payment ([docs/epics/EP04-purchase-workflow.md](epics/EP04-purchase-workflow.md))
 - [ ] **EP05 --- User Interface**: Web UI for all product and purchase flows ([docs/epics/EP05-user-interface.md](epics/EP05-user-interface.md))
 - [ ] **EP06 --- Containerization & Documentation**: Docker packaging and README ([docs/epics/EP06-containerization-docs.md](epics/EP06-containerization-docs.md))
+- [ ] **EP07 --- Angular 22 Modernization**: Zod consistency + rxResource migration ([docs/epics/EP07-angular-22-modernization.md](epics/EP07-angular-22-modernization.md))
 
 ## Architecture
 
@@ -121,10 +122,16 @@ Legend: green = complete, blue = current, gray = pending.
 | Cart Abandoned transition | EP04 | Not required |
 | Order Fulfilled transition | EP04 | Not required |
 
+### EP07 --- Angular 22 Modernization
+
+- [x] [US-017 --- Zod Schema Consistency](user-stories/US-017-zod-schema-consistency.md)
+- [ ] [US-018 --- rxResource Signal-Based Data Loading](user-stories/US-018-rxresource-migration.md)
+
 ## Sprint Planning
 
 - [x] [Batch 1 --- MVP Implementation Plan](subtasks/batch-1-plan.md) --- 7 execution waves, 16 tasks, dependency graph
 - Handoff files: [T-001](subtasks/ep06/T-001-project-scaffolding.md) through [T-016](subtasks/ep06/T-016-readme-documentation.md)
+- [T-018](subtasks/ep07/T-018-product-rxresource.md), [T-019](subtasks/ep07/T-019-import-rxresource.md), [T-020](subtasks/ep07/T-020-checkout-rxresource.md) --- EP07 rxResource migration
 
 ## Navigation Notes
 
