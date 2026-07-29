@@ -1,0 +1,77 @@
+<section class="flex flex-col gap-4">
+  @if (loading()) {
+    <p class="py-8 text-center text-sm text-gray-500" role="status">Loading order…</p>
+  } @else if (notFound()) {
+    <p
+      class="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700"
+      role="alert"
+    >
+      Order not found.
+    </p>
+    <a
+      routerLink="/products"
+      class="self-start text-sm font-medium text-blue-600 hover:text-blue-800"
+      >Back to Products</a
+    >
+  } @else if (error()) {
+    <p
+      class="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700"
+      role="alert"
+    >
+      {{ error() }}
+    </p>
+    <a
+      routerLink="/products"
+      class="self-start text-sm font-medium text-blue-600 hover:text-blue-800"
+      >Back to Products</a
+    >
+  } @else if (order(); as currentOrder) {
+    <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+      <p class="text-sm font-medium text-green-800">Order placed successfully!</p>
+    </div>
+
+    <dl class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:w-1/2">
+      <dt class="font-medium text-gray-500">Order ID</dt>
+      <dd class="font-mono text-gray-900">{{ currentOrder.id }}</dd>
+      <dt class="font-medium text-gray-500">Status</dt>
+      <dd class="text-gray-900">{{ currentOrder.status }}</dd>
+      <dt class="font-medium text-gray-500">Placed At</dt>
+      <dd class="text-gray-900">{{ currentOrder.placed_at }}</dd>
+    </dl>
+
+    <div class="overflow-x-auto rounded-lg border border-gray-200">
+      <table class="w-full text-left">
+        <thead class="bg-gray-50 text-xs font-medium uppercase text-gray-500">
+          <tr>
+            <th class="px-4 py-2">SKU</th>
+            <th class="px-4 py-2">Name</th>
+            <th class="px-4 py-2">Quantity</th>
+            <th class="px-4 py-2">Unit Price</th>
+            <th class="px-4 py-2">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of currentOrder.items; track item.product_sku) {
+            <tr class="border-t border-gray-100">
+              <td class="px-4 py-2 font-mono text-xs text-gray-500">{{ item.product_sku }}</td>
+              <td class="px-4 py-2 text-sm text-gray-900">{{ item.name }}</td>
+              <td class="px-4 py-2 text-sm text-gray-700">{{ item.quantity }}</td>
+              <td class="px-4 py-2 text-sm text-gray-700">${{ item.unit_price.toFixed(2) }}</td>
+              <td class="px-4 py-2 text-sm font-semibold text-gray-900">
+                ${{ item.line_subtotal.toFixed(2) }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <p class="text-right text-lg font-bold text-gray-900">Total: ${{ formattedTotal() }}</p>
+
+    <a
+      routerLink="/products"
+      class="self-start text-sm font-medium text-blue-600 hover:text-blue-800"
+      >Back to Products</a
+    >
+  }
+</section>

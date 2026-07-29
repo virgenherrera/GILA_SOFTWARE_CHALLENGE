@@ -11,6 +11,16 @@
       <a routerLink="/imports" class="text-sm font-medium text-blue-600 hover:text-blue-800"
         >Imports</a
       >
+      <a routerLink="/cart" class="relative text-sm font-medium text-blue-600 hover:text-blue-800">
+        Cart
+        @if (cartItemCount() > 0) {
+          <span
+            class="absolute -right-3 -top-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white"
+          >
+            {{ cartItemCount() }}
+          </span>
+        }
+      </a>
     </div>
   </nav>
 </header>

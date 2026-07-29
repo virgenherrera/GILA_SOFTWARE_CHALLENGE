@@ -1,5 +1,6 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
+import { CartService } from './cart/cart.service';
 
 @Component({
   selector: 'app-root',
@@ -9,4 +10,7 @@ import { RouterLink, RouterOutlet } from '@angular/router';
 })
 export class App {
   protected readonly title = signal('E-Commerce');
+
+  private readonly cartService = inject(CartService);
+  protected readonly cartItemCount = this.cartService.cartItemCount;
 }

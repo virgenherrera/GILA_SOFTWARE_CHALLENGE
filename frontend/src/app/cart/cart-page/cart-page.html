@@ -1,0 +1,68 @@
+<section class="flex flex-col gap-4">
+  <h2 class="text-xl font-semibold text-gray-900">Your Cart</h2>
+
+  @if (loading()) {
+    <p class="py-8 text-center text-sm text-gray-500" role="status">Loading cart…</p>
+  } @else if (error()) {
+    <p
+      class="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700"
+      role="alert"
+    >
+      {{ error() }}
+    </p>
+  } @else if (cart().items.length === 0) {
+    <div class="flex flex-col items-center gap-3 py-8 text-center">
+      <p class="text-sm text-gray-500">Your cart is empty</p>
+      <a routerLink="/products" class="text-sm font-medium text-blue-600 hover:text-blue-800"
+        >Browse products</a
+      >
+    </div>
+  } @else {
+    <div class="overflow-x-auto rounded-lg border border-gray-200">
+      <table class="w-full text-left">
+        <thead class="bg-gray-50 text-xs font-medium uppercase text-gray-500">
+          <tr>
+            <th class="px-4 py-2">Product</th>
+            <th class="px-4 py-2">Unit Price</th>
+            <th class="px-4 py-2">Quantity</th>
+            <th class="px-4 py-2">Subtotal</th>
+            <th class="px-4 py-2"></th>
+          </tr>
+        </thead>
+        <tbody class="px-4">
+          @for (item of cart().items; track item.product_sku) {
+            <app-cart-item
+              [item]="item"
+              [stockError]="itemErrors()[item.product_sku] ?? null"
+              [updating]="updatingSku() === item.product_sku"
+              (quantityChange)="onQuantityChange($event)"
+              (remove)="onRemove($event)"
+            />
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex flex-col items-end gap-3 border-t border-gray-200 pt-4">
+      <p class="text-lg font-bold text-gray-900">Total: ${{ formattedTotal() }}</p>
+
+      @if (checkoutError()) {
+        <p
+          class="w-full rounded-md border border-red-300 bg-red-50 px-4 py-3 text-right text-sm text-red-700"
+          role="alert"
+        >
+          {{ checkoutError() }}
+        </p>
+      }
+
+      <button
+        type="button"
+        class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        [disabled]="checkingOut()"
+        (click)="onCheckout()"
+      >
+        {{ checkingOut() ? 'Processing…' : 'Proceed to Checkout' }}
+      </button>
+    </div>
+  }
+</section>
