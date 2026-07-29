@@ -1,0 +1,38 @@
+# ============================================================================
+# E2E test environment override
+# ============================================================================
+# Usage: docker compose -f docker-compose.yml -f docker-compose.test.yml up
+#
+# Overrides only `db` and `backend`. `frontend`/nginx are untouched, and no
+# new services are added (the Playwright runner service, if any, is owned by
+# a different piece of work).
+# ============================================================================
+
+services:
+  db:
+    # --- No volume persistence -------------------------------------------
+    # docker-compose.yml mounts a NAMED volume ("pgdata") at
+    # /var/lib/postgresql/data. Compose merges `volumes:` entries by target
+    # path, so simply re-listing this service's `volumes:` would only ADD
+    # to the base list, not remove the pgdata mount for that target.
+    # `!reset` clears the inherited list first so we can rebuild it with
+    # only what this test environment needs (the migrations + seed mounts),
+    # and `tmpfs` gives Postgres's data directory memory-backed, non-
+    # persistent storage instead — wiped every time the container is
+    # recreated, guaranteeing a clean, deterministic DB per test run.
+    volumes: !reset
+      - ./resources/migrations:/docker-entrypoint-initdb.d:ro
+      # "02-" sorts after "001".."012" (all migration filenames), so the
+      # seed data always loads AFTER every migration has run.
+      - ./test/fixtures/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  backend:
+    environment:
+      # Deterministic, fixed secret so cookie-signed cart IDs are stable
+      # and reproducible across E2E test runs (33 chars, well over the
+      # documented 32-char minimum convention used in docker-compose.yml).
+      COOKIE_SECRET: test-secret-for-e2e-deterministic
+      # Reduce log noise during the E2E suite; still surfaces warnings/errors.
+      LOG_LEVEL: WARN

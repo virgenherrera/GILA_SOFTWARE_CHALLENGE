@@ -207,6 +207,19 @@ docker compose run --rm backend clojure -M:test
 cd frontend && CI=true pnpm exec ng test --configuration=ci
 ```
 
+### Pre-Commit Hook (Echo System)
+
+The project includes a pre-commit hook that runs the Echo System before every commit.
+One-time setup per clone:
+
+```bash
+ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
+
+The hook runs Stages 1 (Build), 2 (Test), and 4 (Audit) inside Docker containers.
+Stage 3 (E2E) is excluded — it requires the full composed application.
+
 ## Known Limitations
 
 1. **No user authentication**: Carts are identified by a signed cookie, not a user account. There is no login, registration, or user-scoped data. This is a deliberate scope decision for the challenge — the cart cookie provides tamper-evident identity without an auth system.

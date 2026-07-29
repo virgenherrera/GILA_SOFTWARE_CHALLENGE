@@ -8,7 +8,16 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs', '.angular/**', '.vscode/**', 'coverage/**', 'dist/**'],
+    ignores: [
+      'eslint.config.mjs',
+      '.angular/**',
+      '.vscode/**',
+      'coverage/**',
+      'dist/**',
+      'e2e/**',
+      'playwright.config.ts',
+      'test-results/**',
+    ],
   },
 
   // ── TypeScript ─────────────────────────────────────────────────────────────

@@ -1,0 +1,20 @@
+name,sku,description,category,price,stock,weight_kg
+Wireless Charging Pad,IMPORT-ELEC-001,Fast wireless charging pad for phones,Electronics,24.99,80,0.15
+Bamboo Cutting Board,IMPORT-HOME-001,Eco-friendly bamboo cutting board,Home,15.50,120,0.90
+Kids Puzzle 100pc,IMPORT-TOY-001,100-piece wooden puzzle for kids,Toys,9.99,200,0.40
+Trail Mix Snack Pack,IMPORT-FOOD-001,Resealable trail mix snack pack,Food,4.25,300,0.25
+Ceramic Coffee Mug,IMPORT-HOME-002,12oz ceramic coffee mug dishwasher safe,Home,7.99,150,0.35
+Unbranded Phone Case,IMPORT-TRAP-CAT-001,Basic phone case with no listed category - category is optional and this row must be accepted,,11.99,75,0.08
+Digital Kitchen Scale,IMPORT-TRAP-WEIGHT-001,Compact digital kitchen scale with no weight given - weight_kg is optional and this row must be accepted,Home,13.49,90,
+,,,,,,
+Broken Price Widget,IMPORT-TRAP-PRICE-001,Price field is non-numeric text - row must be rejected,Electronics,abc,10,0.5
+Negative Stock Widget,IMPORT-TRAP-STOCK-NEG-001,Stock field is negative - row must be rejected,Electronics,29.99,-5,0.5
+,IMPORT-TRAP-NAME-EMPTY-001,Name field is blank - row must be rejected,Electronics,29.99,10,0.5
+Duplicate Widget Original,IMPORT-TRAP-DUP-001,First occurrence of this SKU in the file - this row must be accepted,Electronics,29.99,10,0.5
+Duplicate Widget Repeat,IMPORT-TRAP-DUP-001,Second occurrence of the same SKU in the file - this row must be rejected as an in-file duplicate,Electronics,19.99,5,0.3
+Overpriced Widget,IMPORT-TRAP-PRICE-RANGE-001,Price exceeds the application-level 99999.99 cap - row must be rejected,Electronics,999999.99,10,0.5
+Fractional Stock Widget,IMPORT-TRAP-STOCK-DEC-001,Stock field is a decimal not an integer - row must be rejected,Electronics,29.99,10.5,0.5
+"Premium Industrial-Grade Extra-Heavy-Duty Stainless-Steel Adjustable Multi-Purpose Workbench with Reinforced Corners, Locking Caster Wheels, a Weather-Resistant Powder-Coated Finish, and Modular Shelving for Home, Garage, Warehouse, and Workshop Daily Uses",IMPORT-TRAP-NAME-LONG-001,Name is 256 characters - one over the VARCHAR(255) limit - row must be rejected,Electronics,29.99,10,0.5
+<script>alert(1)</script>,IMPORT-TRAP-XSS-001,Script tag in the name field - row must be rejected as unsafe content,Electronics,29.99,10,0.5
+"'; DROP TABLE products; --",IMPORT-TRAP-SQLI-001,SQL injection payload in the name field - must never alter query structure,Electronics,29.99,10,0.5
+Updated Running Shoes,SHOE-001,Targets a SKU that already exists in the seeded catalog (see test/fixtures/seed.sql) - row must be accepted and update the existing product rather than being rejected,Footwear,64.99,140,0.45
