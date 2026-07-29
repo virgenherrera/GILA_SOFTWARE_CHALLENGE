@@ -53,6 +53,35 @@ describe('ImportUpload', () => {
     expect(input?.getAttribute('accept')).toBe('.csv');
   });
 
+  it('should hide the native file input and render a styled drop zone', () => {
+    const fixture = TestBed.createComponent(ImportUpload);
+
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const input = compiled.querySelector('input[type="file"]');
+    const dropZone = compiled.querySelector('[role="button"]');
+
+    expect(input?.classList.contains('hidden')).toBe(true);
+    expect(dropZone).toBeTruthy();
+    expect(compiled.textContent).toContain('Click to select a CSV file');
+  });
+
+  it('should trigger the hidden file input when the drop zone is clicked', () => {
+    const fixture = TestBed.createComponent(ImportUpload);
+
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const input = compiled.querySelector('input[type="file"]') as HTMLInputElement;
+    const clickSpy = vi.spyOn(input, 'click');
+    const dropZone = compiled.querySelector('[role="button"]') as HTMLElement;
+
+    dropZone.click();
+
+    expect(clickSpy).toHaveBeenCalled();
+  });
+
   it('should disable the upload button until a file is selected', () => {
     const fixture = TestBed.createComponent(ImportUpload);
 

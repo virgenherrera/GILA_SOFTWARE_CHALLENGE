@@ -154,6 +154,35 @@ describe('ImportResults', () => {
     expect(compiled.textContent).toContain('Rejected Rows');
   });
 
+  it('should show stats and the error table when the job fails with rejected rows', async () => {
+    const fixture = setup();
+
+    fixture.detectChanges();
+    httpMock.expectOne('/api/imports/job-1').flush(
+      mockJob({
+        status: 'Failed',
+        total_rows: 100,
+        accepted_rows: 0,
+        rejected_rows: 100,
+      }),
+    );
+    await settle(fixture);
+
+    httpMock
+      .expectOne((r) => r.url === '/api/imports/job-1/errors')
+      .flush({
+        items: [],
+        paging: { page: 1, perPage: 20, total: 100, prev: null, next: null },
+      });
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.textContent).toContain('The import job failed to process.');
+    expect(compiled.textContent).toContain('100');
+    expect(compiled.textContent).toContain('Rejected Rows');
+  });
+
   it('should show an error state when the request fails', async () => {
     const fixture = setup();
 

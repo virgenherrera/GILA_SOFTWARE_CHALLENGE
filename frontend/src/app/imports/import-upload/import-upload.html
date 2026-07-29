@@ -5,11 +5,43 @@
     <label for="csv-file" class="text-sm font-medium text-gray-700">CSV file</label>
     <input
       id="csv-file"
+      #fileInputRef
       type="file"
       accept=".csv"
-      class="text-sm text-gray-700"
+      class="hidden"
       (change)="onFileSelected($event)"
     />
+
+    <div
+      class="drop-zone flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-gray-300 bg-gray-50 px-6 py-10 text-center transition-colors hover:border-blue-400 hover:bg-blue-50"
+      [class.drop-zone--active]="dragActive()"
+      role="button"
+      tabindex="0"
+      (click)="onDropZoneClick()"
+      (keydown.enter)="onDropZoneClick()"
+      (keydown.space)="onDropZoneClick()"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onDrop($event)"
+    >
+      <svg
+        class="h-10 w-10 text-gray-400"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
+        />
+      </svg>
+      <p class="text-sm font-medium text-gray-700">Click to select a CSV file</p>
+      <p class="text-xs text-gray-500">or drag and drop</p>
+    </div>
 
     @if (selectedFile(); as file) {
       <p class="text-sm text-gray-500">Selected: {{ file.name }}</p>

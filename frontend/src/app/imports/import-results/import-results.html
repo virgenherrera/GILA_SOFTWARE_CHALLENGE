@@ -27,7 +27,11 @@
         </span>
       </div>
 
-      @if (currentJob.status === 'Completed' || currentJob.status === 'CompletedWithErrors') {
+      @if (currentJob.status === 'Failed') {
+        <p class="text-sm text-red-700">The import job failed to process.</p>
+      }
+
+      @if (currentJob.total_rows > 0 || currentJob.rejected_rows > 0) {
         <dl class="grid grid-cols-3 gap-3 text-sm">
           <div>
             <dt class="text-gray-500">Total rows</dt>
@@ -42,10 +46,6 @@
             <dd class="font-semibold text-red-700">{{ currentJob.rejected_rows }}</dd>
           </div>
         </dl>
-      }
-
-      @if (currentJob.status === 'Failed') {
-        <p class="text-sm text-red-700">The import job failed to process.</p>
       }
 
       <a routerLink="/products" class="text-sm font-medium text-blue-600 hover:text-blue-800">

@@ -1,0 +1,8 @@
+.drop-zone {
+  cursor: pointer;
+}
+
+.drop-zone--active {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+}
