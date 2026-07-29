@@ -125,13 +125,18 @@ Legend: green = complete, blue = current, gray = pending.
 ### EP07 --- Angular 22 Modernization
 
 - [x] [US-017 --- Zod Schema Consistency](user-stories/US-017-zod-schema-consistency.md)
-- [ ] [US-018 --- rxResource Signal-Based Data Loading](user-stories/US-018-rxresource-migration.md)
+- [x] [US-018 --- rxResource Signal-Based Data Loading](user-stories/US-018-rxresource-migration.md)
+
+### EP02 --- CSV Import (Bug Fix)
+
+- [ ] [US-019 --- Import Status Accuracy & Upload UX](user-stories/US-019-import-status-ux.md)
 
 ## Sprint Planning
 
 - [x] [Batch 1 --- MVP Implementation Plan](subtasks/batch-1-plan.md) --- 7 execution waves, 16 tasks, dependency graph
 - Handoff files: [T-001](subtasks/ep06/T-001-project-scaffolding.md) through [T-016](subtasks/ep06/T-016-readme-documentation.md)
 - [T-018](subtasks/ep07/T-018-product-rxresource.md), [T-019](subtasks/ep07/T-019-import-rxresource.md), [T-020](subtasks/ep07/T-020-checkout-rxresource.md) --- EP07 rxResource migration
+- [T-021](subtasks/ep02/T-021-import-status-fix.md), [T-022](subtasks/ep02/T-022-import-upload-ux.md) --- US-019 import status + upload UX
 
 ## Navigation Notes
 
