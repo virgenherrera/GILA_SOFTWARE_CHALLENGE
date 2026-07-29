@@ -14,11 +14,11 @@ inside Docker containers --- nothing is installed on the developer's host machin
 | Backend runtime | JDK (Eclipse Temurin) | 21 LTS | JVM runtime for Clojure |
 | Web server | Ring + Reitit | Ring 1.12.2, Reitit 0.7.2 | HTTP handling, data-driven routing |
 | Validation (BE) | Malli | 0.16.4 | Data-driven schema validation |
-| Database access | next.jdbc + HoneySQL | next.jdbc 1.3.955, HoneySQL 2.6.1235 | SQL-first data access, no ORM |
-| Async processing | core.async | 1.7.790 | Background job queue for CSV import |
-| Build tool | tools.build | 0.10.7 | Clojure compilation, uberjar packaging |
+| Database access | next.jdbc + HoneySQL | next.jdbc 1.3.955, HoneySQL 2.6.1243 | SQL-first data access, no ORM |
+| Async processing | core.async | 1.7.701 | Background job queue for CSV import |
+| Build tool | tools.build | 0.9.2 | Clojure compilation, uberjar packaging |
 | Frontend framework | Angular | 22.0.0 | User interface (zoneless, strict, signals) |
-| Frontend runtime | Node.js | 22 LTS | Build tooling (in container only) |
+| Frontend runtime | Node.js | 24 | Build tooling (in container only) |
 | Bundler | Angular CLI (esbuild) | 22.0.0 | Frontend build and dev server |
 | Validation (FE) | Zod | 3.24.4 | Client-side schema validation |
 | Database | PostgreSQL | 17.5 | Relational data store |
@@ -57,7 +57,7 @@ has no JVM, no Clojure CLI, no Leiningen.
 | `com.github.seancorfield/honeysql` | 2.6.1235 | SQL generation from Clojure data structures |
 | `org.postgresql/postgresql` | 42.7.5 | PostgreSQL JDBC driver |
 | `com.zaxxer/HikariCP` | 6.2.1 | Connection pool |
-| `org.clojure/core.async` | 1.7.790 | Async channels for background processing |
+| `org.clojure/core.async` | 1.7.701 | Async channels for background processing |
 | `org.clojure/data.csv` | 1.1.0 | CSV parsing |
 | `org.clojure/data.json` | 2.5.1 | JSON serialization |
 | `org.clojure/tools.logging` | 1.3.0 | Logging facade |
@@ -95,7 +95,7 @@ All versions are pinned exactly in `deps.edn` --- no floating ranges, no `RELEAS
 
 ### Framework and Runtime
 
-**Angular 22.0.0** (zoneless, strict mode, signals, resources) on **Node.js 22 LTS**.
+**Angular 22.0.0** (zoneless, strict mode, signals, resources) on **Node.js 24**.
 
 Angular is chosen over ClojureScript and other JavaScript frameworks because:
 

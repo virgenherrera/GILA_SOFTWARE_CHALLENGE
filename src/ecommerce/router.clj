@@ -5,7 +5,8 @@
             [reitit.swagger-ui :as swagger-ui]
             [next.jdbc :as jdbc]
             [clojure.data.json :as json]
-            [ecommerce.middleware :as mw]))
+            [ecommerce.middleware :as mw]
+            [ecommerce.product.handler :as product-handler]))
 
 (def ^:private start-time (System/currentTimeMillis))
 
@@ -36,6 +37,8 @@
     [["/api"
       ["/health" {:get {:summary "Health check"
                         :handler (health-handler datasource)}}]
+      ["/products" {:post {:summary "Create a product"
+                           :handler (product-handler/create-product datasource)}}]
       ["/swagger.json" {:get {:no-doc true
                               :swagger {:info {:title "E-Commerce API"
                                                :description "E-Commerce backend API"

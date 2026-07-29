@@ -5,7 +5,7 @@
 (def Product
   "Malli schema for a product entity."
   [:map {:closed true}
-   [:sku [:string {:min 1}]]
+   [:sku [:string {:min 1 :max 50}]]
    [:name [:string {:min 1 :max 256}]]
    [:description {:optional true} [:string {:max 4096}]]
    [:price [:and
