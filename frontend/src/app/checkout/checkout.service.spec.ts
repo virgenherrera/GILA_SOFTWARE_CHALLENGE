@@ -1,8 +1,9 @@
+import { ApplicationRef, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { CheckoutService } from './checkout.service';
-import type { Order } from './checkout.service';
+import type { Order } from '../shared/validation/checkout.schema';
 
 const mockOrder: Order = {
   id: 'order-1',
@@ -55,16 +56,18 @@ describe('CheckoutService', () => {
     expect(result).toEqual(mockOrder);
   });
 
-  it('getOrder should GET the order by id', () => {
-    let result: Order | undefined;
+  it('getOrder should GET the order by id', async () => {
+    const resource = TestBed.runInInjectionContext(() => service.getOrder(signal('order-1')));
 
-    service.getOrder('order-1').subscribe((res) => (result = res));
+    TestBed.tick();
 
     const req = httpMock.expectOne('/api/orders/order-1');
 
     expect(req.request.method).toBe('GET');
     req.flush(mockOrder);
 
-    expect(result).toEqual(mockOrder);
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(resource.hasValue() ? resource.value() : undefined).toEqual(mockOrder);
   });
 });

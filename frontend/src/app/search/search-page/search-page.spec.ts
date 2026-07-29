@@ -8,7 +8,7 @@ import { CartService } from '../../cart/cart.service';
 import { findButtonByText } from '../../shared/testing/dom-test-utils';
 import type { PagedResponse } from '../../products/product.service';
 import type { ProductResponse } from '../../shared/validation/product.schema';
-import type { Cart } from '../../cart/cart.service';
+import type { Cart } from '../../shared/validation/cart.schema';
 
 const mockProduct: ProductResponse = {
   sku: 'RS-001',
@@ -65,7 +65,7 @@ describe('SearchPage', () => {
     vi.useRealTimers();
   });
 
-  function createAndFlush() {
+  async function createAndFlush() {
     const fixture = TestBed.createComponent(SearchPage);
 
     fixture.detectChanges();
@@ -74,26 +74,26 @@ describe('SearchPage', () => {
       .expectOne((req) => req.url === '/api/products/categories')
       .flush({ categories: ['Footwear', 'Electronics'] });
     httpMock.expectOne((req) => req.url === '/api/products').flush(mockPage);
-    fixture.detectChanges();
+    await fixture.whenStable();
 
     return fixture;
   }
 
-  it('should create', () => {
-    const fixture = createAndFlush();
+  it('should create', async () => {
+    const fixture = await createAndFlush();
 
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render the fetched products', () => {
-    const fixture = createAndFlush();
+  it('should render the fetched products', async () => {
+    const fixture = await createAndFlush();
     const compiled = fixture.nativeElement as HTMLElement;
 
     expect(compiled.textContent).toContain('Running Shoes');
   });
 
-  it('should normalize the { categories: [...] } envelope into the category dropdown', () => {
-    const fixture = createAndFlush();
+  it('should normalize the { categories: [...] } envelope into the category dropdown', async () => {
+    const fixture = await createAndFlush();
     const compiled = fixture.nativeElement as HTMLElement;
     const options = Array.from(compiled.querySelectorAll('#category option')).map((option) =>
       option.textContent?.trim(),
@@ -115,7 +115,7 @@ describe('SearchPage', () => {
     httpMock.expectOne((req) => req.url === '/api/products').flush(mockPage);
   });
 
-  it('should show an error state when the request fails', () => {
+  it('should show an error state when the request fails', async () => {
     const fixture = TestBed.createComponent(SearchPage);
 
     fixture.detectChanges();
@@ -126,14 +126,14 @@ describe('SearchPage', () => {
         { error: { code: 'INTERNAL_ERROR', message: 'Something went wrong' } },
         { status: 500, statusText: 'Internal Server Error' },
       );
-    fixture.detectChanges();
+    await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
 
     expect(compiled.textContent).toContain('Something went wrong');
   });
 
-  it('should show an empty state when there are no results', () => {
+  it('should show an empty state when there are no results', async () => {
     const fixture = TestBed.createComponent(SearchPage);
 
     fixture.detectChanges();
@@ -141,15 +141,15 @@ describe('SearchPage', () => {
     httpMock
       .expectOne((req) => req.url === '/api/products')
       .flush({ items: [], paging: { page: 1, perPage: 20, total: 0, prev: null, next: null } });
-    fixture.detectChanges();
+    await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
 
     expect(compiled.textContent).toContain('No products found');
   });
 
-  it('should debounce keyword input by 300ms before searching', () => {
-    const fixture = createAndFlush();
+  it('should debounce keyword input by 300ms before searching', async () => {
+    const fixture = await createAndFlush();
     const compiled = fixture.nativeElement as HTMLElement;
 
     vi.useFakeTimers();
@@ -158,6 +158,8 @@ describe('SearchPage', () => {
     httpMock.expectNone((req) => req.url === '/api/products');
 
     vi.advanceTimersByTime(300);
+    await Promise.resolve();
+    fixture.detectChanges();
 
     const req = httpMock.expectOne((r) => r.url === '/api/products');
 
@@ -166,11 +168,12 @@ describe('SearchPage', () => {
     req.flush(mockPage);
   });
 
-  it('should request the category filter immediately without debouncing', () => {
-    const fixture = createAndFlush();
+  it('should request the category filter immediately without debouncing', async () => {
+    const fixture = await createAndFlush();
     const compiled = fixture.nativeElement as HTMLElement;
 
     setSelectValue(compiled.querySelector('#category') as HTMLSelectElement, 'Footwear');
+    fixture.detectChanges();
 
     const req = httpMock.expectOne((r) => r.url === '/api/products');
 
@@ -178,17 +181,20 @@ describe('SearchPage', () => {
     req.flush(mockPage);
   });
 
-  it('should combine keyword, category, price, and sort filters cumulatively', () => {
-    const fixture = createAndFlush();
+  it('should combine keyword, category, price, and sort filters cumulatively', async () => {
+    const fixture = await createAndFlush();
     const compiled = fixture.nativeElement as HTMLElement;
 
     setSelectValue(compiled.querySelector('#category') as HTMLSelectElement, 'Footwear');
+    fixture.detectChanges();
     httpMock.expectOne((r) => r.url === '/api/products').flush(mockPage);
 
     setInputValue(compiled.querySelector('#price-min') as HTMLInputElement, '10');
+    fixture.detectChanges();
     httpMock.expectOne((r) => r.url === '/api/products').flush(mockPage);
 
     setSelectValue(compiled.querySelector('#sort-by') as HTMLSelectElement, 'price');
+    fixture.detectChanges();
 
     const req = httpMock.expectOne((r) => r.url === '/api/products');
 
@@ -198,21 +204,23 @@ describe('SearchPage', () => {
     req.flush(mockPage);
   });
 
-  it('should not request when the price range is invalid', () => {
-    const fixture = createAndFlush();
+  it('should not request when the price range is invalid', async () => {
+    const fixture = await createAndFlush();
     const compiled = fixture.nativeElement as HTMLElement;
 
     // Max alone is a valid range and triggers one request; consume it first.
     setInputValue(compiled.querySelector('#price-max') as HTMLInputElement, '10');
+    fixture.detectChanges();
     httpMock.expectOne((req) => req.url === '/api/products').flush(mockPage);
 
     // Min now exceeds max: invalid, must not trigger a further request.
     setInputValue(compiled.querySelector('#price-min') as HTMLInputElement, '100');
+    fixture.detectChanges();
 
     httpMock.expectNone((req) => req.url === '/api/products');
   });
 
-  it('should request the next page when Next is clicked', () => {
+  it('should request the next page when Next is clicked', async () => {
     const fixture = TestBed.createComponent(SearchPage);
 
     fixture.detectChanges();
@@ -223,9 +231,10 @@ describe('SearchPage', () => {
         items: [mockProduct],
         paging: { page: 1, perPage: 20, total: 40, prev: null, next: '/api/products?page=2' },
       });
-    fixture.detectChanges();
+    await fixture.whenStable();
 
     findButtonByText(fixture.nativeElement as HTMLElement, 'Next')?.click();
+    fixture.detectChanges();
 
     const req = httpMock.expectOne((r) => r.url === '/api/products');
 
@@ -233,18 +242,19 @@ describe('SearchPage', () => {
     req.flush(mockPage);
   });
 
-  it('should navigate to the detail page when View is clicked', () => {
-    const fixture = createAndFlush();
+  it('should navigate to the detail page when View is clicked', async () => {
+    const fixture = await createAndFlush();
 
     findButtonByText(fixture.nativeElement as HTMLElement, 'View')?.click();
 
     expect(navigateSpy).toHaveBeenCalledWith(['/products', 'RS-001']);
   });
 
-  it('should add the item to the cart when Add to Cart is clicked', () => {
-    const fixture = createAndFlush();
+  it('should add the item to the cart when Add to Cart is clicked', async () => {
+    const fixture = await createAndFlush();
 
     findButtonByText(fixture.nativeElement as HTMLElement, 'Add to Cart')?.click();
+    await Promise.resolve();
     fixture.detectChanges();
 
     expect(cartServiceMock.addItem).toHaveBeenCalledWith('RS-001', 1);
@@ -254,8 +264,8 @@ describe('SearchPage', () => {
     expect(compiled.textContent).toContain('Added to cart successfully');
   });
 
-  it('should show an error message when adding to cart fails', () => {
-    const fixture = createAndFlush();
+  it('should show an error message when adding to cart fails', async () => {
+    const fixture = await createAndFlush();
 
     cartServiceMock.addItem.mockReturnValue(
       throwError(
@@ -269,6 +279,7 @@ describe('SearchPage', () => {
     );
 
     findButtonByText(fixture.nativeElement as HTMLElement, 'Add to Cart')?.click();
+    await Promise.resolve();
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;

@@ -2,8 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { CartService } from './cart.service';
-import type { Cart } from './cart.service';
-import type { Order } from '../checkout/checkout.service';
+import type { Cart } from '../shared/validation/cart.schema';
+import type { Order } from '../shared/validation/checkout.schema';
 
 const mockCart: Cart = {
   id: 'cart-1',

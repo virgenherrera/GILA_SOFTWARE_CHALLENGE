@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { CartItemRow } from './cart-item';
 import type { QuantityChangeEvent } from './cart-item';
 import { findButtonByText } from '../../shared/testing/dom-test-utils';
-import type { CartItem } from '../cart.service';
+import type { CartItem } from '../../shared/validation/cart.schema';
 
 const mockItem: CartItem = {
   product_sku: 'RS-001',

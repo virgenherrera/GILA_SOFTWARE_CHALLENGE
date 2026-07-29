@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import type { Observable } from 'rxjs';
 import type {
@@ -32,32 +33,49 @@ export interface ProductQueryParams {
  */
 export type CreateProductPayload = CreateProduct & { sku: string };
 
+function toHttpParams(params: ProductQueryParams): HttpParams {
+  let httpParams = new HttpParams();
+  const entries = Object.entries(params) as [string, string | number | undefined][];
+
+  for (const [key, value] of entries) {
+    if (value !== undefined && value !== null && value !== '') {
+      httpParams = httpParams.set(key, value);
+    }
+  }
+
+  return httpParams;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ProductService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = '/api/products';
 
-  getProducts(params: ProductQueryParams = {}): Observable<PagedResponse<ProductResponse>> {
-    let httpParams = new HttpParams();
-    const entries = Object.entries(params) as [string, string | number | undefined][];
-
-    for (const [key, value] of entries) {
-      if (value !== undefined && value !== null && value !== '') {
-        httpParams = httpParams.set(key, value);
-      }
-    }
-
-    return this.http.get<PagedResponse<ProductResponse>>(this.baseUrl, { params: httpParams });
+  getProducts(queryParams: () => ProductQueryParams) {
+    return rxResource({
+      params: queryParams,
+      stream: ({ params }) =>
+        this.http.get<PagedResponse<ProductResponse>>(this.baseUrl, {
+          params: toHttpParams(params),
+        }),
+    });
   }
 
-  getCategories(): Observable<string[]> {
-    return this.http
-      .get<{ categories: string[] }>(`${this.baseUrl}/categories`)
-      .pipe(map((response) => response.categories));
+  getCategories() {
+    return rxResource({
+      stream: () =>
+        this.http
+          .get<{ categories: string[] }>(`${this.baseUrl}/categories`)
+          .pipe(map((response) => response.categories)),
+    });
   }
 
-  getProduct(sku: string): Observable<ProductResponse> {
-    return this.http.get<ProductResponse>(`${this.baseUrl}/${sku}`);
+  getProduct(sku: () => string | undefined) {
+    return rxResource({
+      params: sku,
+      stream: ({ params: skuValue }) =>
+        this.http.get<ProductResponse>(`${this.baseUrl}/${skuValue}`),
+    });
   }
 
   createProduct(data: CreateProductPayload): Observable<ProductResponse> {

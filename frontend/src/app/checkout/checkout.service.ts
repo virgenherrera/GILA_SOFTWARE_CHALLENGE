@@ -1,22 +1,9 @@
 import { Injectable, inject } from '@angular/core';
+import type { ResourceRef, Signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import type { Observable } from 'rxjs';
-
-export interface OrderItem {
-  product_sku: string;
-  name: string;
-  quantity: number;
-  unit_price: number;
-  line_subtotal: number;
-}
-
-export interface Order {
-  id: string;
-  status: string;
-  placed_at: string;
-  items: OrderItem[];
-  total_amount: number;
-}
+import type { Order } from '../shared/validation/checkout.schema';
 
 @Injectable({ providedIn: 'root' })
 export class CheckoutService {
@@ -27,7 +14,10 @@ export class CheckoutService {
     return this.http.post<Order>(`${this.baseUrl}/checkout`, {});
   }
 
-  getOrder(id: string): Observable<Order> {
-    return this.http.get<Order>(`${this.baseUrl}/orders/${id}`);
+  getOrder(id: Signal<string | undefined>): ResourceRef<Order | undefined> {
+    return rxResource({
+      params: id,
+      stream: ({ params }) => this.http.get<Order>(`${this.baseUrl}/orders/${params}`),
+    });
   }
 }

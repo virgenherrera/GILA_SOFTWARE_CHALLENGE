@@ -46,21 +46,22 @@ describe('ProductDetail', () => {
     httpMock.verify();
   });
 
-  it('should create', () => {
+  it('should create', async () => {
     const fixture = setup();
 
     fixture.detectChanges();
     httpMock.expectOne('/api/products/RS-001').flush(mockProduct);
+    await fixture.whenStable();
 
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render the product once loaded', () => {
+  it('should render the product once loaded', async () => {
     const fixture = setup();
 
     fixture.detectChanges();
     httpMock.expectOne('/api/products/RS-001').flush(mockProduct);
-    fixture.detectChanges();
+    await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
 
@@ -68,7 +69,7 @@ describe('ProductDetail', () => {
     expect(compiled.textContent).toContain('Footwear');
   });
 
-  it('should show a not-found state on 404', () => {
+  it('should show a not-found state on 404', async () => {
     const fixture = setup();
 
     fixture.detectChanges();
@@ -78,14 +79,14 @@ describe('ProductDetail', () => {
         { error: { code: 'NOT_FOUND', message: 'Product not found' } },
         { status: 404, statusText: 'Not Found' },
       );
-    fixture.detectChanges();
+    await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
 
     expect(compiled.textContent).toContain('Product not found.');
   });
 
-  it('should show an error state on other failures', () => {
+  it('should show an error state on other failures', async () => {
     const fixture = setup();
 
     fixture.detectChanges();
@@ -95,36 +96,37 @@ describe('ProductDetail', () => {
         { error: { code: 'INTERNAL_ERROR', message: 'Server exploded' } },
         { status: 500, statusText: 'Error' },
       );
-    fixture.detectChanges();
+    await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
 
     expect(compiled.textContent).toContain('Server exploded');
   });
 
-  it('should navigate to edit when the Edit button is clicked', () => {
+  it('should navigate to edit when the Edit button is clicked', async () => {
     const fixture = setup();
 
     fixture.detectChanges();
     httpMock.expectOne('/api/products/RS-001').flush(mockProduct);
-    fixture.detectChanges();
+    await fixture.whenStable();
 
     findButtonByText(fixture.nativeElement as HTMLElement, 'Edit')?.click();
 
     expect(navigateSpy).toHaveBeenCalledWith(['/products', 'RS-001', 'edit']);
   });
 
-  it('should delete and navigate back to the list after confirmation', () => {
+  it('should delete and navigate back to the list after confirmation', async () => {
     const fixture = setup();
 
     fixture.detectChanges();
     httpMock.expectOne('/api/products/RS-001').flush(mockProduct);
-    fixture.detectChanges();
+    await fixture.whenStable();
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     findButtonByText(fixture.nativeElement as HTMLElement, 'Delete')?.click();
 
     httpMock.expectOne('/api/products/RS-001').flush(null);
+    await Promise.resolve();
 
     expect(navigateSpy).toHaveBeenCalledWith(['/products']);
   });

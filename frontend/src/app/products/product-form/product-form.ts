@@ -1,8 +1,9 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import type { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import type { ZodError } from 'zod';
 import { ProductService } from '../product.service';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
@@ -19,11 +20,11 @@ export class ProductForm {
   private readonly router = inject(Router);
   private readonly productService = inject(ProductService);
   private readonly fb = inject(FormBuilder);
-  private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly isEditMode = signal(false);
-  protected readonly sku = signal<string | null>(null);
-  protected readonly loading = signal(false);
+  private readonly paramMap = toSignal(this.route.paramMap);
+  protected readonly sku = computed(() => this.paramMap()?.get('sku') ?? undefined);
+  protected readonly isEditMode = computed(() => this.sku() !== undefined);
+
   protected readonly submitting = signal(false);
   protected readonly apiError = signal<string | null>(null);
 
@@ -42,28 +43,53 @@ export class ProductForm {
   });
   /* eslint-enable @typescript-eslint/unbound-method */
 
-  constructor() {
-    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      const sku = params.get('sku');
+  protected readonly productResource = this.productService.getProduct(() => this.sku());
+  protected readonly loading = computed(() => this.productResource.isLoading());
 
-      if (sku) {
-        this.isEditMode.set(true);
-        this.sku.set(sku);
-        this.form.controls.sku.setValue(sku);
-        this.form.controls.sku.disable();
-        this.loadProduct(sku);
+  constructor() {
+    effect(() => {
+      const sku = this.sku();
+
+      if (sku === undefined) {
+        this.form.reset({ sku: '', name: '', description: '', price: 0, category: '', stock: 0 });
+        this.form.controls.sku.enable();
 
         return;
       }
 
-      this.isEditMode.set(false);
-      this.sku.set(null);
-      this.form.reset({ sku: '', name: '', description: '', price: 0, category: '', stock: 0 });
-      this.form.controls.sku.enable();
+      this.form.controls.sku.setValue(sku);
+      this.form.controls.sku.disable();
+    });
+
+    effect(() => {
+      if (this.productResource.error()) {
+        return;
+      }
+
+      const product = this.productResource.value();
+
+      if (!product) {
+        return;
+      }
+
+      this.form.patchValue({
+        sku: product.sku,
+        name: product.name,
+        description: product.description ?? '',
+        price: product.price,
+        category: product.category,
+        stock: product.stock,
+      });
+    });
+
+    effect(() => {
+      const err = this.productResource.error();
+
+      this.apiError.set(err ? extractApiErrorMessage(err as HttpErrorResponse) : null);
     });
   }
 
-  protected onSubmit(): void {
+  protected async onSubmit(): Promise<void> {
     this.apiError.set(null);
     this.form.markAllAsTouched();
 
@@ -92,25 +118,27 @@ export class ProductForm {
     this.submitting.set(true);
 
     if (this.isEditMode()) {
-      this.submitEdit(result.data);
+      await this.submitEdit(result.data);
 
       return;
     }
 
-    this.submitCreate(raw.sku, result.data);
+    await this.submitCreate(raw.sku, result.data);
   }
 
-  private submitCreate(sku: string, data: ReturnType<typeof CreateProductSchema.parse>): void {
-    this.productService
-      .createProduct({ sku, ...data })
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => void this.router.navigate(['/products']),
-        error: (err: HttpErrorResponse) => this.handleApiError(err),
-      });
+  private async submitCreate(
+    sku: string,
+    data: ReturnType<typeof CreateProductSchema.parse>,
+  ): Promise<void> {
+    try {
+      await firstValueFrom(this.productService.createProduct({ sku, ...data }));
+      void this.router.navigate(['/products']);
+    } catch (err) {
+      this.handleApiError(err as HttpErrorResponse);
+    }
   }
 
-  private submitEdit(data: ReturnType<typeof UpdateProductSchema.parse>): void {
+  private async submitEdit(data: ReturnType<typeof UpdateProductSchema.parse>): Promise<void> {
     const sku = this.sku();
 
     if (!sku) {
@@ -119,13 +147,12 @@ export class ProductForm {
       return;
     }
 
-    this.productService
-      .updateProduct(sku, data)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (updated) => void this.router.navigate(['/products', updated.sku]),
-        error: (err: HttpErrorResponse) => this.handleApiError(err),
-      });
+    try {
+      const updated = await firstValueFrom(this.productService.updateProduct(sku, data));
+      void this.router.navigate(['/products', updated.sku]);
+    } catch (err) {
+      this.handleApiError(err as HttpErrorResponse);
+    }
   }
 
   private handleApiError(err: HttpErrorResponse): void {
@@ -153,31 +180,5 @@ export class ProductForm {
         control?.setErrors({ ...(control.errors ?? {}), zod: issue.message });
       }
     }
-  }
-
-  private loadProduct(sku: string): void {
-    this.loading.set(true);
-    this.apiError.set(null);
-
-    this.productService
-      .getProduct(sku)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (product) => {
-          this.form.patchValue({
-            sku: product.sku,
-            name: product.name,
-            description: product.description ?? '',
-            price: product.price,
-            category: product.category,
-            stock: product.stock,
-          });
-          this.loading.set(false);
-        },
-        error: (err: HttpErrorResponse) => {
-          this.loading.set(false);
-          this.apiError.set(extractApiErrorMessage(err));
-        },
-      });
   }
 }

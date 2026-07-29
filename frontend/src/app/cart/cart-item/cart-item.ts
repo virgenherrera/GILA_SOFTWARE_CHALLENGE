@@ -1,5 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
-import type { CartItem } from '../cart.service';
+import type { CartItem } from '../../shared/validation/cart.schema';
 
 export interface QuantityChangeEvent {
   sku: string;

@@ -3,28 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import type { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { CheckoutService } from '../checkout/checkout.service';
-import type { Order } from '../checkout/checkout.service';
-
-export interface CartItem {
-  product_sku: string;
-  name: string;
-  quantity: number;
-  unit_price_snapshot: number;
-  subtotal: number;
-}
-
-/**
- * The backend returns a minimal `{ items: [], total: 0 }` shape when no cart cookie is present
- * yet (see api-contract), so the identity/status/timestamp fields are optional here.
- */
-export interface Cart {
-  id?: string;
-  status?: string;
-  items: CartItem[];
-  total: number;
-  created_at?: string;
-  updated_at?: string;
-}
+import type { Order } from '../shared/validation/checkout.schema';
+import type { Cart } from '../shared/validation/cart.schema';
 
 const EMPTY_CART: Cart = { items: [], total: 0 };
 

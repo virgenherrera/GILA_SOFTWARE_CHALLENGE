@@ -1,10 +1,11 @@
+import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ImportResults } from './import-results';
-import type { ImportJob } from '../import.service';
+import type { ImportJob } from '../../shared/validation/import.schema';
 
 function mockJob(overrides: Partial<ImportJob> = {}): ImportJob {
   return {
@@ -18,6 +19,12 @@ function mockJob(overrides: Partial<ImportJob> = {}): ImportJob {
     rejected_rows: 0,
     ...overrides,
   };
+}
+
+async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
+  fixture.detectChanges();
+  await Promise.resolve();
+  fixture.detectChanges();
 }
 
 describe('ImportResults', () => {
@@ -46,56 +53,63 @@ describe('ImportResults', () => {
     vi.useRealTimers();
   });
 
-  it('should create and fetch the job status', () => {
+  it('should create and fetch the job status', async () => {
     const fixture = setup();
 
     fixture.detectChanges();
     httpMock.expectOne('/api/imports/job-1').flush(mockJob({ status: 'Processing' }));
+    await settle(fixture);
 
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render a status indicator for the current status', () => {
+  it('should render a status indicator for the current status', async () => {
     const fixture = setup();
 
     fixture.detectChanges();
     httpMock.expectOne('/api/imports/job-1').flush(mockJob({ status: 'Processing' }));
-    fixture.detectChanges();
+    await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
 
     expect(compiled.textContent).toContain('Processing');
   });
 
-  it('should poll again after the interval while the job is still processing', () => {
+  it('should poll again while the job is still processing', async () => {
+    vi.useFakeTimers();
+
     const fixture = setup();
 
     fixture.detectChanges();
-    vi.useFakeTimers();
     httpMock.expectOne('/api/imports/job-1').flush(mockJob({ status: 'Processing' }));
+    await settle(fixture);
 
     vi.advanceTimersByTime(2000);
+    await settle(fixture);
 
     const req = httpMock.expectOne('/api/imports/job-1');
 
     req.flush(mockJob({ status: 'Processing' }));
   });
 
-  it('should stop polling once the job reaches a terminal status', () => {
+  it('should stop polling once the job reaches a terminal status', async () => {
+    vi.useFakeTimers();
+
     const fixture = setup();
 
     fixture.detectChanges();
-    vi.useFakeTimers();
     httpMock
       .expectOne('/api/imports/job-1')
       .flush(mockJob({ status: 'Completed', total_rows: 10, accepted_rows: 10, rejected_rows: 0 }));
+    await settle(fixture);
 
     vi.advanceTimersByTime(10000);
+    await settle(fixture);
 
     httpMock.expectNone('/api/imports/job-1');
   });
 
-  it('should show the results summary when the job completes', () => {
+  it('should show the results summary when the job completes', async () => {
     const fixture = setup();
 
     fixture.detectChanges();
@@ -104,7 +118,7 @@ describe('ImportResults', () => {
       .flush(
         mockJob({ status: 'Completed', total_rows: 100, accepted_rows: 100, rejected_rows: 0 }),
       );
-    fixture.detectChanges();
+    await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
 
@@ -112,7 +126,7 @@ describe('ImportResults', () => {
     expect(compiled.textContent).not.toContain('Rejected Rows');
   });
 
-  it('should show the import-errors table when there are rejected rows', () => {
+  it('should show the import-errors table when there are rejected rows', async () => {
     const fixture = setup();
 
     fixture.detectChanges();
@@ -124,7 +138,7 @@ describe('ImportResults', () => {
         rejected_rows: 8,
       }),
     );
-    fixture.detectChanges();
+    await settle(fixture);
 
     httpMock
       .expectOne((r) => r.url === '/api/imports/job-1/errors')
@@ -132,7 +146,7 @@ describe('ImportResults', () => {
         items: [],
         paging: { page: 1, perPage: 20, total: 8, prev: null, next: null },
       });
-    fixture.detectChanges();
+    await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
 
@@ -140,7 +154,7 @@ describe('ImportResults', () => {
     expect(compiled.textContent).toContain('Rejected Rows');
   });
 
-  it('should show an error state when the request fails', () => {
+  it('should show an error state when the request fails', async () => {
     const fixture = setup();
 
     fixture.detectChanges();
@@ -150,21 +164,21 @@ describe('ImportResults', () => {
         { error: { code: 'INTERNAL_ERROR', message: 'Something went wrong' } },
         { status: 500, statusText: 'Internal Server Error' },
       );
-    fixture.detectChanges();
+    await settle(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
 
     expect(compiled.textContent).toContain('Something went wrong');
   });
 
-  it('should render a link back to the products list', () => {
+  it('should render a link back to the products list', async () => {
     const fixture = setup();
 
     fixture.detectChanges();
     httpMock
       .expectOne('/api/imports/job-1')
       .flush(mockJob({ status: 'Completed', total_rows: 10, accepted_rows: 10, rejected_rows: 0 }));
-    fixture.detectChanges();
+    await settle(fixture);
 
     const link = (fixture.nativeElement as HTMLElement).querySelector('a[href="/products"]');
 

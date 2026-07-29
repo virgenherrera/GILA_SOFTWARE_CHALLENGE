@@ -4,7 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { OrderConfirmation } from './order-confirmation';
-import type { Order } from '../checkout.service';
+import type { Order } from '../../shared/validation/checkout.schema';
 
 const mockOrder: Order = {
   id: 'order-1',
@@ -44,11 +44,12 @@ describe('OrderConfirmation', () => {
     httpMock.verify();
   });
 
-  it('should create', () => {
+  it('should create', async () => {
     const fixture = setup();
 
     fixture.detectChanges();
     httpMock.expectOne('/api/orders/order-1').flush(mockOrder);
+    await fixture.whenStable();
 
     expect(fixture.componentInstance).toBeTruthy();
   });
@@ -63,12 +64,12 @@ describe('OrderConfirmation', () => {
     httpMock.expectOne('/api/orders/order-1').flush(mockOrder);
   });
 
-  it('should render order id, status, items, and total once loaded', () => {
+  it('should render order id, status, items, and total once loaded', async () => {
     const fixture = setup();
 
     fixture.detectChanges();
     httpMock.expectOne('/api/orders/order-1').flush(mockOrder);
-    fixture.detectChanges();
+    await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
 
@@ -79,7 +80,7 @@ describe('OrderConfirmation', () => {
     expect(compiled.textContent).toContain('179.98');
   });
 
-  it('should show a not-found state on 404', () => {
+  it('should show a not-found state on 404', async () => {
     const fixture = setup();
 
     fixture.detectChanges();
@@ -89,14 +90,15 @@ describe('OrderConfirmation', () => {
         { error: { code: 'NOT_FOUND', message: 'Order not found' } },
         { status: 404, statusText: 'Not Found' },
       );
-    fixture.detectChanges();
+    await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
 
     expect(compiled.textContent).toContain('Order not found.');
+    expect(compiled.textContent).not.toContain('Server exploded');
   });
 
-  it('should show an error state on other failures', () => {
+  it('should show an error state on other failures', async () => {
     const fixture = setup();
 
     fixture.detectChanges();
@@ -106,19 +108,20 @@ describe('OrderConfirmation', () => {
         { error: { code: 'INTERNAL_ERROR', message: 'Server exploded' } },
         { status: 500, statusText: 'Error' },
       );
-    fixture.detectChanges();
+    await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
 
     expect(compiled.textContent).toContain('Server exploded');
+    expect(compiled.textContent).not.toContain('Order not found.');
   });
 
-  it('should render a link back to products', () => {
+  it('should render a link back to products', async () => {
     const fixture = setup();
 
     fixture.detectChanges();
     httpMock.expectOne('/api/orders/order-1').flush(mockOrder);
-    fixture.detectChanges();
+    await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
     const link = compiled.querySelector('a[href="/products"]');

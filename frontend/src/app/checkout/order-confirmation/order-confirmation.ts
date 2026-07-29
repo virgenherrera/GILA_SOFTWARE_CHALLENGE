@@ -1,9 +1,10 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import type { HttpErrorResponse } from '@angular/common/http';
+import { Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { map } from 'rxjs';
 import { CheckoutService } from '../checkout.service';
-import type { Order } from '../checkout.service';
+import type { Order } from '../../shared/validation/checkout.schema';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 
 @Component({
@@ -15,51 +16,36 @@ import { extractApiErrorMessage } from '../../shared/utils/api-error';
 export class OrderConfirmation {
   private readonly route = inject(ActivatedRoute);
   private readonly checkoutService = inject(CheckoutService);
-  private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly order = signal<Order | null>(null);
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
-  protected readonly notFound = signal(false);
-
-  protected readonly formattedTotal = computed(
-    () => this.order()?.total_amount.toFixed(2) ?? '0.00',
+  private readonly orderId = toSignal(
+    this.route.paramMap.pipe(map((params) => params.get('id') ?? undefined)),
   );
 
-  constructor() {
-    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      const id = params.get('id');
+  private readonly orderResource = this.checkoutService.getOrder(this.orderId);
 
-      if (id) {
-        this.loadOrder(id);
-      }
-    });
-  }
+  protected readonly loading = computed(() => this.orderResource.isLoading());
 
-  private loadOrder(id: string): void {
-    this.loading.set(true);
-    this.error.set(null);
-    this.notFound.set(false);
+  protected readonly order = computed<Order | null>(() =>
+    this.orderResource.hasValue() ? this.orderResource.value() : null,
+  );
 
-    this.checkoutService
-      .getOrder(id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (order) => {
-          this.order.set(order);
-          this.loading.set(false);
-        },
-        error: (err: HttpErrorResponse) => {
-          this.loading.set(false);
+  protected readonly formattedTotal = computed(() =>
+    this.orderResource.hasValue() ? this.orderResource.value().total_amount.toFixed(2) : '0.00',
+  );
 
-          if (err.status === 404) {
-            this.notFound.set(true);
+  protected readonly notFound = computed(() => {
+    const err = this.orderResource.error();
 
-            return;
-          }
+    return err instanceof HttpErrorResponse && err.status === 404;
+  });
 
-          this.error.set(extractApiErrorMessage(err));
-        },
-      });
-  }
+  protected readonly error = computed(() => {
+    const err = this.orderResource.error();
+
+    if (err instanceof HttpErrorResponse && err.status !== 404) {
+      return extractApiErrorMessage(err);
+    }
+
+    return null;
+  });
 }

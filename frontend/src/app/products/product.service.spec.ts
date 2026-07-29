@@ -38,18 +38,17 @@ describe('ProductService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('getProducts should GET the paged list with query params', () => {
+  it('getProducts should GET the paged list with query params', async () => {
     const mockResponse: PagedResponse<ProductResponse> = {
       items: [mockProduct],
       paging: { page: 1, perPage: 20, total: 1, prev: null, next: null },
     };
-    let result: PagedResponse<ProductResponse> | undefined;
 
-    service
-      .getProducts({ page: 1, perPage: 20, q: 'shoes', category: 'Footwear' })
-      .subscribe((res) => {
-        result = res;
-      });
+    const resource = TestBed.runInInjectionContext(() =>
+      service.getProducts(() => ({ page: 1, perPage: 20, q: 'shoes', category: 'Footwear' })),
+    );
+
+    TestBed.tick();
 
     const req = httpMock.expectOne(
       (r) => r.url === '/api/products' && r.method === 'GET' && r.params.get('q') === 'shoes',
@@ -59,12 +58,16 @@ describe('ProductService', () => {
     expect(req.request.params.get('perPage')).toBe('20');
     expect(req.request.params.get('category')).toBe('Footwear');
     req.flush(mockResponse);
+    await Promise.resolve();
+    TestBed.tick();
 
-    expect(result).toEqual(mockResponse);
+    expect(resource.value()).toEqual(mockResponse);
   });
 
   it('getProducts should omit undefined and empty params', () => {
-    service.getProducts({ page: 1 }).subscribe();
+    TestBed.runInInjectionContext(() => service.getProducts(() => ({ page: 1 })));
+
+    TestBed.tick();
 
     const req = httpMock.expectOne((r) => r.url === '/api/products');
 
@@ -73,30 +76,43 @@ describe('ProductService', () => {
     req.flush({ items: [], paging: { page: 1, perPage: 20, total: 0, prev: null, next: null } });
   });
 
-  it('getCategories should GET the category list', () => {
-    let result: string[] | undefined;
+  it('getCategories should GET the category list', async () => {
+    const resource = TestBed.runInInjectionContext(() => service.getCategories());
 
-    service.getCategories().subscribe((res) => (result = res));
+    TestBed.tick();
 
     const req = httpMock.expectOne('/api/products/categories');
 
     expect(req.request.method).toBe('GET');
     req.flush({ categories: ['Footwear', 'Electronics'] });
+    await Promise.resolve();
+    TestBed.tick();
 
-    expect(result).toEqual(['Footwear', 'Electronics']);
+    expect(resource.value()).toEqual(['Footwear', 'Electronics']);
   });
 
-  it('getProduct should GET a single product by sku', () => {
-    let result: ProductResponse | undefined;
+  it('getProduct should GET a single product by sku', async () => {
+    const resource = TestBed.runInInjectionContext(() => service.getProduct(() => 'RS-001'));
 
-    service.getProduct('RS-001').subscribe((res) => (result = res));
+    TestBed.tick();
 
     const req = httpMock.expectOne('/api/products/RS-001');
 
     expect(req.request.method).toBe('GET');
     req.flush(mockProduct);
+    await Promise.resolve();
+    TestBed.tick();
 
-    expect(result).toEqual(mockProduct);
+    expect(resource.value()).toEqual(mockProduct);
+  });
+
+  it('getProduct should stay idle when sku is undefined', () => {
+    const resource = TestBed.runInInjectionContext(() => service.getProduct(() => undefined));
+
+    TestBed.tick();
+
+    httpMock.expectNone(() => true);
+    expect(resource.value()).toBeUndefined();
   });
 
   it('createProduct should POST the new product', () => {

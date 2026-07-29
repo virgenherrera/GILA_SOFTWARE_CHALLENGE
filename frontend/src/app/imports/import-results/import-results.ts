@@ -1,10 +1,10 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { interval, switchMap, takeWhile } from 'rxjs';
+import { Component, computed, effect, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 import type { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ImportService, TERMINAL_IMPORT_STATUSES } from '../import.service';
-import type { ImportJob } from '../import.service';
+import type { ImportJob } from '../../shared/validation/import.schema';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { ImportErrors } from '../import-errors/import-errors';
 
@@ -27,59 +27,54 @@ const STATUS_CLASSES: Record<ImportJob['status'], string> = {
 export class ImportResults {
   private readonly route = inject(ActivatedRoute);
   private readonly importService = inject(ImportService);
-  private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly job = signal<ImportJob | null>(null);
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
+  private readonly jobId = toSignal(
+    this.route.paramMap.pipe(map((params) => params.get('id') ?? undefined)),
+    { initialValue: undefined },
+  );
+
+  private readonly jobResource = this.importService.jobStatusResource(this.jobId);
+
+  protected readonly job = computed<ImportJob | null>(() =>
+    this.jobResource.hasValue() ? this.jobResource.value() : null,
+  );
+  protected readonly loading = computed(() => this.jobResource.isLoading());
+  protected readonly error = computed<string | null>(() => {
+    const err = this.jobResource.error();
+
+    return err ? extractApiErrorMessage(err as HttpErrorResponse) : null;
+  });
+
+  private readonly refetchDelayMs = computed<number | undefined>(() => {
+    const job = this.job();
+
+    if (!job || TERMINAL_IMPORT_STATUSES.has(job.status)) {
+      return undefined;
+    }
+
+    return POLL_INTERVAL_MS;
+  });
 
   constructor() {
-    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      const id = params.get('id');
-
-      if (id) {
-        this.fetchInitialStatus(id);
+    effect((onCleanup) => {
+      if (this.jobResource.status() === 'error') {
+        return;
       }
+
+      this.jobResource.value();
+      const delayMs = this.refetchDelayMs();
+
+      if (delayMs === undefined) {
+        return;
+      }
+
+      const timeoutId = setTimeout(() => this.jobResource.reload(), delayMs);
+
+      onCleanup(() => clearTimeout(timeoutId));
     });
   }
 
   protected statusClasses(status: ImportJob['status']): string {
     return STATUS_CLASSES[status];
-  }
-
-  private fetchInitialStatus(id: string): void {
-    this.loading.set(true);
-    this.error.set(null);
-
-    this.importService
-      .getJobStatus(id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (job) => {
-          this.job.set(job);
-          this.loading.set(false);
-
-          if (!TERMINAL_IMPORT_STATUSES.has(job.status)) {
-            this.startPolling(id);
-          }
-        },
-        error: (err: HttpErrorResponse) => {
-          this.loading.set(false);
-          this.error.set(extractApiErrorMessage(err));
-        },
-      });
-  }
-
-  private startPolling(id: string): void {
-    interval(POLL_INTERVAL_MS)
-      .pipe(
-        switchMap(() => this.importService.getJobStatus(id)),
-        takeWhile((job) => !TERMINAL_IMPORT_STATUSES.has(job.status), true),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: (job) => this.job.set(job),
-        error: (err: HttpErrorResponse) => this.error.set(extractApiErrorMessage(err)),
-      });
   }
 }

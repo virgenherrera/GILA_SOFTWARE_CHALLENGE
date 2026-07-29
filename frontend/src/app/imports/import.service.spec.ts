@@ -1,8 +1,10 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ImportService } from './import.service';
-import type { ImportJob, PagedErrors, UploadResponse } from './import.service';
+import type { JobErrorsRequest, PagedErrors, UploadResponse } from './import.service';
+import type { ImportJob } from '../shared/validation/import.schema';
 
 describe('ImportService', () => {
   let service: ImportService;
@@ -46,7 +48,7 @@ describe('ImportService', () => {
     expect(result).toEqual(mockResponse);
   });
 
-  it('getJobStatus should GET the job by id', () => {
+  it('jobStatusResource should GET the job by id', async () => {
     const mockJob: ImportJob = {
       id: 'job-1',
       source_filename: 'products.csv',
@@ -57,19 +59,43 @@ describe('ImportService', () => {
       accepted_rows: 92,
       rejected_rows: 8,
     };
-    let result: ImportJob | undefined;
+    const jobId = signal<string | undefined>('job-1');
+    const resource = TestBed.runInInjectionContext(() => service.jobStatusResource(jobId));
 
-    service.getJobStatus('job-1').subscribe((res) => (result = res));
+    TestBed.tick();
 
     const req = httpMock.expectOne('/api/imports/job-1');
 
     expect(req.request.method).toBe('GET');
     req.flush(mockJob);
+    await Promise.resolve();
+    TestBed.tick();
 
-    expect(result).toEqual(mockJob);
+    expect(resource.value()).toEqual(mockJob);
   });
 
-  it('getJobErrors should GET the paged errors with query params', () => {
+  it('jobStatusResource should reload when the id signal changes', async () => {
+    const jobId = signal('job-1');
+    const resource = TestBed.runInInjectionContext(() => service.jobStatusResource(jobId));
+
+    TestBed.tick();
+    httpMock.expectOne('/api/imports/job-1').flush({ id: 'job-1' });
+    await Promise.resolve();
+
+    jobId.set('job-2');
+    TestBed.tick();
+
+    const req = httpMock.expectOne('/api/imports/job-2');
+
+    expect(req.request.method).toBe('GET');
+    req.flush({ id: 'job-2' });
+    await Promise.resolve();
+    TestBed.tick();
+
+    expect(resource.value()).toEqual({ id: 'job-2' });
+  });
+
+  it('jobErrorsResource should GET the paged errors with query params', async () => {
     const mockResponse: PagedErrors = {
       items: [
         {
@@ -82,9 +108,10 @@ describe('ImportService', () => {
       ],
       paging: { page: 1, perPage: 20, total: 8, prev: null, next: null },
     };
-    let result: PagedErrors | undefined;
+    const request = signal<JobErrorsRequest | undefined>({ id: 'job-1', page: 1, perPage: 20 });
+    const resource = TestBed.runInInjectionContext(() => service.jobErrorsResource(request));
 
-    service.getJobErrors('job-1', 1, 20).subscribe((res) => (result = res));
+    TestBed.tick();
 
     const req = httpMock.expectOne(
       (r) => r.url === '/api/imports/job-1/errors' && r.method === 'GET',
@@ -93,17 +120,19 @@ describe('ImportService', () => {
     expect(req.request.params.get('page')).toBe('1');
     expect(req.request.params.get('perPage')).toBe('20');
     req.flush(mockResponse);
+    await Promise.resolve();
+    TestBed.tick();
 
-    expect(result).toEqual(mockResponse);
+    expect(resource.value()).toEqual(mockResponse);
   });
 
-  it('getJobErrors should default to page 1 and perPage 20', () => {
-    service.getJobErrors('job-1').subscribe();
+  it('jobErrorsResource should not request when the params signal returns undefined', () => {
+    const request = signal<JobErrorsRequest | undefined>(undefined);
+    const resource = TestBed.runInInjectionContext(() => service.jobErrorsResource(request));
 
-    const req = httpMock.expectOne((r) => r.url === '/api/imports/job-1/errors');
+    TestBed.tick();
 
-    expect(req.request.params.get('page')).toBe('1');
-    expect(req.request.params.get('perPage')).toBe('20');
-    req.flush({ items: [], paging: { page: 1, perPage: 20, total: 0, prev: null, next: null } });
+    httpMock.expectNone((r) => r.url.includes('/errors'));
+    expect(resource.value()).toBeUndefined();
   });
 });

@@ -1,10 +1,10 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import type { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { ProductService } from '../product.service';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
-import type { ProductResponse } from '../../shared/validation/product.schema';
 
 @Component({
   selector: 'app-product-detail',
@@ -16,20 +16,31 @@ export class ProductDetail {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly productService = inject(ProductService);
-  private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly product = signal<ProductResponse | null>(null);
-  protected readonly loading = signal(true);
+  private readonly paramMap = toSignal(this.route.paramMap);
+  private readonly sku = computed(() => this.paramMap()?.get('sku') ?? undefined);
+
   protected readonly error = signal<string | null>(null);
-  protected readonly notFound = signal(false);
+
+  protected readonly productResource = this.productService.getProduct(() => this.sku());
+
+  protected readonly product = computed(() => this.productResource.value() ?? null);
+  protected readonly loading = computed(() => this.productResource.isLoading());
+  protected readonly notFound = computed(
+    () => (this.productResource.error() as HttpErrorResponse | undefined)?.status === 404,
+  );
 
   constructor() {
-    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      const sku = params.get('sku');
+    effect(() => {
+      const err = this.productResource.error() as HttpErrorResponse | undefined;
 
-      if (sku) {
-        this.loadProduct(sku);
+      if (!err || err.status === 404) {
+        this.error.set(null);
+
+        return;
       }
+
+      this.error.set(extractApiErrorMessage(err));
     });
   }
 
@@ -43,46 +54,18 @@ export class ProductDetail {
     void this.router.navigate(['/products', sku, 'edit']);
   }
 
-  protected onDelete(): void {
+  protected async onDelete(): Promise<void> {
     const sku = this.product()?.sku;
 
     if (!sku || !window.confirm(`Delete product "${sku}"? This action cannot be undone.`)) {
       return;
     }
 
-    this.productService
-      .deleteProduct(sku)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => void this.router.navigate(['/products']),
-        error: (err: HttpErrorResponse) => this.error.set(extractApiErrorMessage(err)),
-      });
-  }
-
-  private loadProduct(sku: string): void {
-    this.loading.set(true);
-    this.error.set(null);
-    this.notFound.set(false);
-
-    this.productService
-      .getProduct(sku)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (product) => {
-          this.product.set(product);
-          this.loading.set(false);
-        },
-        error: (err: HttpErrorResponse) => {
-          this.loading.set(false);
-
-          if (err.status === 404) {
-            this.notFound.set(true);
-
-            return;
-          }
-
-          this.error.set(extractApiErrorMessage(err));
-        },
-      });
+    try {
+      await firstValueFrom(this.productService.deleteProduct(sku));
+      void this.router.navigate(['/products']);
+    } catch (err) {
+      this.error.set(extractApiErrorMessage(err as HttpErrorResponse));
+    }
   }
 }

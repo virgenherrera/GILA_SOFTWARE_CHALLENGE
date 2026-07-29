@@ -1,10 +1,8 @@
-import type { OnInit } from '@angular/core';
-import { Component, DestroyRef, inject, input, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import type { HttpErrorResponse } from '@angular/common/http';
 import { ImportService } from '../import.service';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
-import type { ImportError } from '../import.service';
+import type { ImportError } from '../../shared/validation/import.schema';
 import type { Paging } from '../../shared/validation/product.schema';
 
 const DEFAULT_PER_PAGE = 20;
@@ -15,22 +13,31 @@ const RAW_ROW_TRUNCATE_LENGTH = 60;
   templateUrl: './import-errors.html',
   styleUrl: './import-errors.css',
 })
-export class ImportErrors implements OnInit {
+export class ImportErrors {
   readonly jobId = input.required<string>();
 
   private readonly importService = inject(ImportService);
-  private readonly destroyRef = inject(DestroyRef);
-
-  protected readonly errors = signal<ImportError[]>([]);
-  protected readonly paging = signal<Paging | null>(null);
-  protected readonly loading = signal(false);
-  protected readonly error = signal<string | null>(null);
 
   private readonly page = signal(1);
 
-  ngOnInit(): void {
-    this.loadErrors();
-  }
+  private readonly errorsResource = this.importService.jobErrorsResource(() => ({
+    id: this.jobId(),
+    page: this.page(),
+    perPage: DEFAULT_PER_PAGE,
+  }));
+
+  protected readonly errors = computed<ImportError[]>(() =>
+    this.errorsResource.hasValue() ? this.errorsResource.value().items : [],
+  );
+  protected readonly paging = computed<Paging | null>(() =>
+    this.errorsResource.hasValue() ? this.errorsResource.value().paging : null,
+  );
+  protected readonly loading = computed(() => this.errorsResource.isLoading());
+  protected readonly error = computed<string | null>(() => {
+    const err = this.errorsResource.error();
+
+    return err ? extractApiErrorMessage(err as HttpErrorResponse) : null;
+  });
 
   protected truncateRow(row: string): string {
     if (row.length <= RAW_ROW_TRUNCATE_LENGTH) {
@@ -46,7 +53,6 @@ export class ImportErrors implements OnInit {
     }
 
     this.page.update((current) => Math.max(1, current - 1));
-    this.loadErrors();
   }
 
   protected onNextPage(): void {
@@ -55,26 +61,5 @@ export class ImportErrors implements OnInit {
     }
 
     this.page.update((current) => current + 1);
-    this.loadErrors();
-  }
-
-  private loadErrors(): void {
-    this.loading.set(true);
-    this.error.set(null);
-
-    this.importService
-      .getJobErrors(this.jobId(), this.page(), DEFAULT_PER_PAGE)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (response) => {
-          this.errors.set(response.items);
-          this.paging.set(response.paging);
-          this.loading.set(false);
-        },
-        error: (err: HttpErrorResponse) => {
-          this.error.set(extractApiErrorMessage(err));
-          this.loading.set(false);
-        },
-      });
   }
 }

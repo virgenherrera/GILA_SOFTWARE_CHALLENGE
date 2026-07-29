@@ -1,14 +1,10 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
+import type { ResourceRef } from '@angular/core';
 import { Injectable, inject } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import type { Observable } from 'rxjs';
 import type { Paging } from '../shared/validation/product.schema';
-
-export type ImportStatus =
-  | 'Pending'
-  | 'Processing'
-  | 'Completed'
-  | 'CompletedWithErrors'
-  | 'Failed';
+import type { ImportError, ImportJob, ImportStatus } from '../shared/validation/import.schema';
 
 /** Statuses after which the job no longer changes — polling must stop here. */
 export const TERMINAL_IMPORT_STATUSES: ReadonlySet<ImportStatus> = new Set([
@@ -23,28 +19,15 @@ export interface UploadResponse {
   message: string;
 }
 
-export interface ImportJob {
-  id: string;
-  source_filename: string;
-  status: ImportStatus;
-  started_at: string;
-  completed_at: string | null;
-  total_rows: number;
-  accepted_rows: number;
-  rejected_rows: number;
-}
-
-export interface ImportError {
-  row_number: number;
-  raw_row_data: string;
-  field_name: string;
-  error_reason: string;
-  product_sku: string | null;
-}
-
 export interface PagedErrors {
   items: ImportError[];
   paging: Paging;
+}
+
+export interface JobErrorsRequest {
+  id: string;
+  page: number;
+  perPage: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -60,13 +43,25 @@ export class ImportService {
     return this.http.post<UploadResponse>(this.baseUrl, formData);
   }
 
-  getJobStatus(id: string): Observable<ImportJob> {
-    return this.http.get<ImportJob>(`${this.baseUrl}/${id}`);
+  jobStatusResource(id: () => string | undefined): ResourceRef<ImportJob | undefined> {
+    return rxResource({
+      params: id,
+      stream: ({ params: jobId }) => this.http.get<ImportJob>(`${this.baseUrl}/${jobId}`),
+    });
   }
 
-  getJobErrors(id: string, page = 1, perPage = 20): Observable<PagedErrors> {
-    const params = new HttpParams().set('page', page).set('perPage', perPage);
+  jobErrorsResource(
+    request: () => JobErrorsRequest | undefined,
+  ): ResourceRef<PagedErrors | undefined> {
+    return rxResource({
+      params: request,
+      stream: ({ params: { id, page, perPage } }) => {
+        const httpParams = new HttpParams().set('page', page).set('perPage', perPage);
 
-    return this.http.get<PagedErrors>(`${this.baseUrl}/${id}/errors`, { params });
+        return this.http.get<PagedErrors>(`${this.baseUrl}/${id}/errors`, {
+          params: httpParams,
+        });
+      },
+    });
   }
 }

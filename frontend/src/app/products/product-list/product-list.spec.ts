@@ -41,7 +41,7 @@ describe('ProductList', () => {
     httpMock.verify();
   });
 
-  function createAndFlush() {
+  async function createAndFlush() {
     const fixture = TestBed.createComponent(ProductList);
 
     fixture.detectChanges();
@@ -50,25 +50,25 @@ describe('ProductList', () => {
       .expectOne((req) => req.url === '/api/products/categories')
       .flush({ categories: ['Footwear'] });
     httpMock.expectOne((req) => req.url === '/api/products').flush(mockPage);
-    fixture.detectChanges();
+    await fixture.whenStable();
 
     return fixture;
   }
 
-  it('should create', () => {
-    const fixture = createAndFlush();
+  it('should create', async () => {
+    const fixture = await createAndFlush();
 
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render the fetched products', () => {
-    const fixture = createAndFlush();
+  it('should render the fetched products', async () => {
+    const fixture = await createAndFlush();
     const compiled = fixture.nativeElement as HTMLElement;
 
     expect(compiled.textContent).toContain('Running Shoes');
   });
 
-  it('should show an empty state when there are no products', () => {
+  it('should show an empty state when there are no products', async () => {
     const fixture = TestBed.createComponent(ProductList);
 
     fixture.detectChanges();
@@ -76,14 +76,14 @@ describe('ProductList', () => {
     httpMock
       .expectOne((req) => req.url === '/api/products')
       .flush({ items: [], paging: { page: 1, perPage: 20, total: 0, prev: null, next: null } });
-    fixture.detectChanges();
+    await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
 
     expect(compiled.textContent).toContain('No products found.');
   });
 
-  it('should show an error state when the request fails', () => {
+  it('should show an error state when the request fails', async () => {
     const fixture = TestBed.createComponent(ProductList);
 
     fixture.detectChanges();
@@ -94,14 +94,14 @@ describe('ProductList', () => {
         { error: { code: 'INTERNAL_ERROR', message: 'Something went wrong' } },
         { status: 500, statusText: 'Internal Server Error' },
       );
-    fixture.detectChanges();
+    await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
 
     expect(compiled.textContent).toContain('Something went wrong');
   });
 
-  it('should request the next page when Next is clicked', () => {
+  it('should request the next page when Next is clicked', async () => {
     const fixture = TestBed.createComponent(ProductList);
 
     fixture.detectChanges();
@@ -114,9 +114,10 @@ describe('ProductList', () => {
         items: [mockProduct],
         paging: { page: 1, perPage: 20, total: 40, prev: null, next: '/api/products?page=2' },
       });
-    fixture.detectChanges();
+    await fixture.whenStable();
 
     findButtonByText(fixture.nativeElement as HTMLElement, 'Next')?.click();
+    fixture.detectChanges();
 
     const req = httpMock.expectOne((r) => r.url === '/api/products');
 
@@ -124,8 +125,9 @@ describe('ProductList', () => {
     req.flush(mockPage);
   });
 
-  it('should confirm and delete a product', () => {
-    const fixture = createAndFlush();
+  it('should confirm and delete a product', async () => {
+    const fixture = await createAndFlush();
+
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     findButtonByText(fixture.nativeElement as HTMLElement, 'Delete')?.click();
@@ -135,12 +137,15 @@ describe('ProductList', () => {
     );
 
     deleteReq.flush(null);
+    await Promise.resolve();
+    fixture.detectChanges();
 
     httpMock.expectOne((req) => req.url === '/api/products').flush(mockPage);
   });
 
-  it('should not delete when the confirmation is declined', () => {
-    const fixture = createAndFlush();
+  it('should not delete when the confirmation is declined', async () => {
+    const fixture = await createAndFlush();
+
     vi.spyOn(window, 'confirm').mockReturnValue(false);
 
     findButtonByText(fixture.nativeElement as HTMLElement, 'Delete')?.click();
@@ -148,29 +153,30 @@ describe('ProductList', () => {
     httpMock.expectNone((r) => r.method === 'DELETE');
   });
 
-  it('should navigate to the detail page when View is clicked', () => {
-    const fixture = createAndFlush();
+  it('should navigate to the detail page when View is clicked', async () => {
+    const fixture = await createAndFlush();
 
     findButtonByText(fixture.nativeElement as HTMLElement, 'View')?.click();
 
     expect(navigateSpy).toHaveBeenCalledWith(['/products', 'RS-001']);
   });
 
-  it('should navigate to the edit page when Edit is clicked', () => {
-    const fixture = createAndFlush();
+  it('should navigate to the edit page when Edit is clicked', async () => {
+    const fixture = await createAndFlush();
 
     findButtonByText(fixture.nativeElement as HTMLElement, 'Edit')?.click();
 
     expect(navigateSpy).toHaveBeenCalledWith(['/products', 'RS-001', 'edit']);
   });
 
-  it('should re-fetch with the search term when the search input changes', () => {
-    const fixture = createAndFlush();
+  it('should re-fetch with the search term when the search input changes', async () => {
+    const fixture = await createAndFlush();
     const compiled = fixture.nativeElement as HTMLElement;
     const searchInput = compiled.querySelector('input[type="search"]') as HTMLInputElement;
 
     searchInput.value = 'shoes';
     searchInput.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
 
     const req = httpMock.expectOne((r) => r.url === '/api/products');
 
@@ -179,13 +185,14 @@ describe('ProductList', () => {
     req.flush(mockPage);
   });
 
-  it('should re-fetch with the selected category when the category select changes', () => {
-    const fixture = createAndFlush();
+  it('should re-fetch with the selected category when the category select changes', async () => {
+    const fixture = await createAndFlush();
     const compiled = fixture.nativeElement as HTMLElement;
     const select = compiled.querySelector('select') as HTMLSelectElement;
 
     select.value = 'Footwear';
     select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
 
     const req = httpMock.expectOne((r) => r.url === '/api/products');
 

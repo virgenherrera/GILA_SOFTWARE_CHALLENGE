@@ -87,7 +87,7 @@ describe('ProductForm', () => {
       expect(compiled.textContent).toContain('SKU is required');
     });
 
-    it('should submit a valid form and navigate to the product list', () => {
+    it('should submit a valid form and navigate to the product list', async () => {
       const fixture = setup(null);
 
       fixture.detectChanges();
@@ -110,6 +110,7 @@ describe('ProductForm', () => {
 
       expect(body.sku).toBe('RS-002');
       req.flush({ ...mockProduct, sku: 'RS-002', name: 'Trail Shoes', price: 120, stock: 10 });
+      await Promise.resolve();
 
       expect(navigateSpy).toHaveBeenCalledWith(['/products']);
     });
@@ -135,7 +136,7 @@ describe('ProductForm', () => {
       httpMock.expectNone((r) => r.method === 'POST');
     });
 
-    it('should mark sku as conflicted on a 409 response', () => {
+    it('should mark sku as conflicted on a 409 response', async () => {
       const fixture = setup(null);
 
       fixture.detectChanges();
@@ -159,6 +160,7 @@ describe('ProductForm', () => {
         { error: { code: 'CONFLICT', message: 'SKU already exists' } },
         { status: 409, statusText: 'Conflict' },
       );
+      await Promise.resolve();
       fixture.detectChanges();
 
       expect(compiled.textContent).toContain('SKU already exists');
@@ -166,12 +168,12 @@ describe('ProductForm', () => {
   });
 
   describe('edit mode', () => {
-    it('should prefill the form and disable the sku field', () => {
+    it('should prefill the form and disable the sku field', async () => {
       const fixture = setup('RS-001');
 
       fixture.detectChanges();
       httpMock.expectOne('/api/products/RS-001').flush(mockProduct);
-      fixture.detectChanges();
+      await fixture.whenStable();
 
       const compiled = fixture.nativeElement as HTMLElement;
       const skuInput = compiled.querySelector('#sku') as HTMLInputElement;
@@ -181,12 +183,12 @@ describe('ProductForm', () => {
       expect(skuInput.disabled).toBe(true);
     });
 
-    it('should submit updates via PUT without sku and navigate to the detail page', () => {
+    it('should submit updates via PUT without sku and navigate to the detail page', async () => {
       const fixture = setup('RS-001');
 
       fixture.detectChanges();
       httpMock.expectOne('/api/products/RS-001').flush(mockProduct);
-      fixture.detectChanges();
+      await fixture.whenStable();
 
       const compiled = fixture.nativeElement as HTMLElement;
 
@@ -203,11 +205,12 @@ describe('ProductForm', () => {
       expect(body.sku).toBeUndefined();
       expect(body.name).toBe('Updated Shoes');
       req.flush({ ...mockProduct, name: 'Updated Shoes' });
+      await Promise.resolve();
 
       expect(navigateSpy).toHaveBeenCalledWith(['/products', 'RS-001']);
     });
 
-    it('should show an error banner when the product fails to load', () => {
+    it('should show an error banner when the product fails to load', async () => {
       const fixture = setup('RS-001');
 
       fixture.detectChanges();
@@ -217,7 +220,7 @@ describe('ProductForm', () => {
           { error: { code: 'INTERNAL_ERROR', message: 'Failed to load' } },
           { status: 500, statusText: 'Error' },
         );
-      fixture.detectChanges();
+      await fixture.whenStable();
 
       const compiled = fixture.nativeElement as HTMLElement;
 
