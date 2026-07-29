@@ -41,6 +41,7 @@ test-results/
 # Clojure
 .cpcache/
 .nrepl-port
+.clj-kondo/.cache/
 
 # Angular
 .angular/
