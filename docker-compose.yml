@@ -74,7 +74,9 @@ services:
     depends_on:
       frontend:
         condition: service_healthy
-    command: pnpm exec playwright test
+    command: sh -c "corepack enable pnpm && pnpm exec playwright test"
+    profiles:
+      - test
     networks:
       - internal
 

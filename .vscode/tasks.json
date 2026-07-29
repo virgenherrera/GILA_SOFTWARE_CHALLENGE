@@ -1,10 +1,15 @@
 {
   "version": "2.0.0",
+  "options": {
+    "env": {
+      "DOCKER_CONFIG": "/tmp/docker-config"
+    }
+  },
   "tasks": [
     {
       "label": "docker-compose-up",
       "type": "shell",
-      "command": "DOCKER_CONFIG=/tmp/docker-config docker compose up -d --build",
+      "command": "docker compose up -d --build",
       "problemMatcher": [],
       "presentation": {
         "reveal": "always",
@@ -14,7 +19,7 @@
     {
       "label": "docker:down",
       "type": "shell",
-      "command": "DOCKER_CONFIG=/tmp/docker-config docker compose down",
+      "command": "docker compose down",
       "problemMatcher": [],
       "presentation": {
         "reveal": "always",
@@ -24,7 +29,7 @@
     {
       "label": "docker:down-clean",
       "type": "shell",
-      "command": "DOCKER_CONFIG=/tmp/docker-config docker compose down -v",
+      "command": "docker compose down -v",
       "problemMatcher": [],
       "presentation": {
         "reveal": "always",
@@ -34,7 +39,7 @@
     {
       "label": "docker:logs",
       "type": "shell",
-      "command": "DOCKER_CONFIG=/tmp/docker-config docker compose logs -f",
+      "command": "docker compose logs -f",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -45,7 +50,7 @@
     {
       "label": "test:backend",
       "type": "shell",
-      "command": "DOCKER_CONFIG=/tmp/docker-config docker compose run --rm backend clojure -M:test",
+      "command": "docker compose run --rm backend clojure -M:test",
       "group": {
         "kind": "test",
         "isDefault": false
@@ -59,7 +64,10 @@
     {
       "label": "test:frontend",
       "type": "shell",
-      "command": "cd frontend && pnpm exec ng test --configuration=ci",
+      "command": "pnpm exec ng test --configuration=ci",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
       "group": {
         "kind": "test",
         "isDefault": true
@@ -73,7 +81,7 @@
     {
       "label": "test:e2e",
       "type": "shell",
-      "command": "DOCKER_CONFIG=/tmp/docker-config docker compose run --rm playwright pnpm exec playwright test",
+      "command": "docker compose --profile test run --rm playwright",
       "group": {
         "kind": "test",
         "isDefault": false
