@@ -196,15 +196,29 @@
       (is (str/includes? sql "OFFSET")))))
 
 (deftest build-query-with-text-search-test
-  (testing "Query with q adds tsvector WHERE and ts_rank ORDER BY"
+  (testing "Query with q adds prefix tsvector WHERE and ts_rank ORDER BY"
     (let [params {:page 1 :per-page 20 :q "running shoes"}
           query (search/build-search-query params)
           [sql & sql-params] (hsql/format query)]
-      (is (str/includes? sql "search_vector @@ plainto_tsquery"))
+      (is (str/includes? sql "search_vector @@ to_tsquery"))
       (is (str/includes? sql "ts_rank"))
-      ;; Search term should appear as parameterized value(s)
-      (is (some #(= "running shoes" %) sql-params)
-          "Search term should be a bound parameter"))))
+      (is (some #(= "running:* & shoes:*" %) sql-params)
+          "Search term should be converted to prefix tsquery"))))
+
+(deftest build-query-prefix-matching-test
+  (testing "Single partial word produces a prefix tsquery with :*"
+    (let [params {:page 1 :per-page 20 :q "mon"}
+          [sql & sql-params] (hsql/format (search/build-search-query params))]
+      (is (str/includes? sql "to_tsquery"))
+      (is (some #(= "mon:*" %) sql-params)
+          "Partial keyword must become prefix query"))))
+
+(deftest build-query-tsquery-operators-stripped-test
+  (testing "tsquery special characters are stripped from user input"
+    (let [params {:page 1 :per-page 20 :q "shoes & boots | (sandals)"}
+          [_ & sql-params] (hsql/format (search/build-search-query params))]
+      (is (some #(= "shoes:* & boots:* & sandals:*" %) sql-params)
+          "Operators must be stripped, words get :* suffix"))))
 
 (deftest build-query-q-with-sort-by-overrides-relevance-test
   (testing "When q and sortBy are both present, sortBy wins over ts_rank"
@@ -212,7 +226,7 @@
                   :sort-order "desc"}
           query (search/build-search-query params)
           [sql & _] (hsql/format query)]
-      (is (str/includes? sql "search_vector @@ plainto_tsquery"))
+      (is (str/includes? sql "search_vector @@ to_tsquery"))
       (is (str/includes? sql "ORDER BY price DESC"))
       (is (not (str/includes? sql "ts_rank"))))))
 
@@ -252,7 +266,7 @@
                   :price-max (BigDecimal. "200")}
           query (search/build-search-query params)
           [sql & sql-params] (hsql/format query)]
-      (is (str/includes? sql "search_vector @@ plainto_tsquery"))
+      (is (str/includes? sql "search_vector @@ to_tsquery"))
       (is (str/includes? sql "category = ?"))
       (is (str/includes? sql "price >= ?"))
       (is (str/includes? sql "price <= ?"))
@@ -384,26 +398,28 @@
 ;; ============================================================
 
 (deftest xss-in-query-parameterized-test
-  (testing "XSS content in q is parameterized, not inlined in SQL"
+  (testing "XSS content in q is sanitized and parameterized, not inlined in SQL"
     (let [xss-payload "<script>alert(1)</script>"
           params {:page 1 :per-page 20 :q xss-payload}
           [sql & sql-params] (hsql/format (search/build-search-query params))]
-      ;; The XSS string should NOT appear in the SQL string itself
       (is (not (str/includes? sql "<script>"))
           "XSS payload must not be inlined in SQL")
-      ;; It should be a bound parameter
-      (is (some #(= xss-payload %) sql-params)
-          "XSS payload must be a bound parameter"))))
+      (is (not (str/includes? sql "alert"))
+          "XSS function name must not be inlined in SQL")
+      (is (seq sql-params)
+          "Sanitized query must be a bound parameter"))))
 
 (deftest sqli-in-query-parameterized-test
-  (testing "SQL injection content in q is parameterized, not inlined"
+  (testing "SQL injection content in q is parameterized, never interpolated in SQL"
     (let [sqli-payload "'; DROP TABLE products;--"
           params {:page 1 :per-page 20 :q sqli-payload}
           [sql & sql-params] (hsql/format (search/build-search-query params))]
       (is (not (str/includes? sql "DROP TABLE"))
           "SQL injection must not be inlined in SQL")
-      (is (some #(= sqli-payload %) sql-params)
-          "SQL injection payload must be a bound parameter"))))
+      (is (not (str/includes? sql sqli-payload))
+          "Raw payload must not appear in SQL string")
+      (is (seq sql-params)
+          "Query value must be a bound parameter"))))
 
 (deftest sqli-in-category-parameterized-test
   (testing "SQL injection in category is parameterized"

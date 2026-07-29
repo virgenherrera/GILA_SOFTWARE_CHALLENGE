@@ -1,45 +1,72 @@
 <section class="flex flex-col gap-4">
   <div class="flex flex-wrap items-center justify-between gap-3">
-    <h2 class="text-xl font-semibold text-gray-900">Products</h2>
+    <h2 class="text-xl font-semibold text-surface-900">Products</h2>
     <a
       routerLink="/products/new"
-      class="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+      class="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
     >
       New Product
     </a>
   </div>
 
   <div class="flex flex-wrap gap-3">
-    <input
-      type="search"
-      placeholder="Search products…"
-      class="flex-1 min-w-[200px] rounded-md border border-gray-300 px-3 py-2 text-sm"
-      [value]="searchTerm()"
-      (change)="onSearchTermChange($any($event.target).value)"
-    />
-    <select
-      class="rounded-md border border-gray-300 px-3 py-2 text-sm"
-      [value]="selectedCategory()"
-      (change)="onCategoryChange($any($event.target).value)"
-    >
-      <option value="">All categories</option>
-      @for (category of categories(); track category) {
-        <option [value]="category">{{ category }}</option>
-      }
-    </select>
+    <div class="flex min-w-[200px] flex-1 flex-col gap-1">
+      <label for="product-search" class="sr-only">Search products</label>
+      <input
+        id="product-search"
+        type="search"
+        placeholder="Search products…"
+        class="w-full rounded-md border border-surface-300 px-3 py-2.5 sm:py-2 text-sm"
+        [value]="searchTerm()"
+        (change)="onSearchTermChange($any($event.target).value)"
+      />
+    </div>
+    <div class="flex flex-col gap-1">
+      <label for="product-category" class="sr-only">Filter by category</label>
+      <select
+        id="product-category"
+        class="rounded-md border border-surface-300 px-3 py-2.5 sm:py-2 text-sm"
+        [value]="selectedCategory()"
+        (change)="onCategoryChange($any($event.target).value)"
+      >
+        <option value="">All categories</option>
+        @for (category of categories(); track category) {
+          <option [value]="category">{{ category }}</option>
+        }
+      </select>
+    </div>
   </div>
 
   @if (loading()) {
-    <p class="py-8 text-center text-sm text-gray-500" role="status">Loading products…</p>
+    <p class="py-8 text-center text-sm text-surface-500" role="status">Loading products…</p>
   } @else if (error()) {
     <p
-      class="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700"
+      class="rounded-md border border-danger-300 bg-danger-50 px-4 py-3 text-sm text-danger-700"
       role="alert"
     >
       {{ error() }}
     </p>
   } @else if (products().length === 0) {
-    <p class="py-8 text-center text-sm text-gray-500">No products found.</p>
+    <div class="flex flex-col items-center gap-3 py-12 text-center">
+      <svg
+        class="h-12 w-12 text-surface-300"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125h4.5M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v.75c0 .621.504 1.125 1.125 1.125z"
+        />
+      </svg>
+      <p class="text-sm text-surface-500">No products found.</p>
+      <a routerLink="/products/new" class="text-sm font-medium text-brand-600 hover:text-brand-800">
+        Add your first product
+      </a>
+    </div>
   } @else {
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       @for (product of products(); track product.sku) {
@@ -53,14 +80,14 @@
     </div>
 
     @if (paging(); as currentPaging) {
-      <div class="flex items-center justify-between pt-2">
-        <span class="text-sm text-gray-500">
+      <div class="flex flex-col items-center gap-3 pt-2 sm:flex-row sm:justify-between">
+        <span class="text-sm text-surface-500">
           Page {{ currentPaging.page }} · {{ currentPaging.total }} total products
         </span>
-        <div class="flex gap-2">
+        <div class="flex w-full gap-2 sm:w-auto">
           <button
             type="button"
-            class="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+            class="flex-1 rounded-md border border-surface-300 px-3 py-2.5 sm:flex-none sm:py-1.5 text-sm font-medium text-surface-700 disabled:cursor-not-allowed disabled:opacity-50"
             [disabled]="!currentPaging.prev"
             (click)="onPrevPage()"
           >
@@ -68,7 +95,7 @@
           </button>
           <button
             type="button"
-            class="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+            class="flex-1 rounded-md border border-surface-300 px-3 py-2.5 sm:flex-none sm:py-1.5 text-sm font-medium text-surface-700 disabled:cursor-not-allowed disabled:opacity-50"
             [disabled]="!currentPaging.next"
             (click)="onNextPage()"
           >

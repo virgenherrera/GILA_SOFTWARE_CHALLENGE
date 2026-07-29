@@ -102,6 +102,15 @@ describe('SearchPage', () => {
     expect(options).toEqual(['All categories', 'Footwear', 'Electronics']);
   });
 
+  it('should announce the result count in a polite aria-live region', async () => {
+    const fixture = await createAndFlush();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const liveRegion = compiled.querySelector('[aria-live="polite"]');
+
+    expect(liveRegion).not.toBeNull();
+    expect(liveRegion?.textContent).toContain('1 product found');
+  });
+
   it('should show a loading state while the request is in flight', () => {
     const fixture = TestBed.createComponent(SearchPage);
 

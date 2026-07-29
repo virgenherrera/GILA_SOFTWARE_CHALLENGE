@@ -1,3 +1,55 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import 'tailwindcss';
+
+@theme {
+  /* Brand — primary actions, links, focus states (replaces raw blue-*) */
+  --color-brand-50: #eff6ff;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+
+  /* Surface — neutral text, borders, backgrounds (replaces raw gray-*) */
+  --color-surface-50: #f9fafb;
+  --color-surface-100: #f3f4f6;
+  --color-surface-200: #e5e7eb;
+  --color-surface-300: #d1d5db;
+  --color-surface-400: #9ca3af;
+  --color-surface-500: #6b7280;
+  --color-surface-600: #4b5563;
+  --color-surface-700: #374151;
+  --color-surface-900: #111827;
+
+  /* Danger — errors, destructive actions (replaces raw red-*) */
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-300: #fca5a5;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+
+  /* Success — confirmations, positive values (replaces raw green-*) */
+  --color-success-50: #f0fdf4;
+  --color-success-200: #bbf7d0;
+  --color-success-300: #86efac;
+  --color-success-700: #15803d;
+  --color-success-800: #166534;
+
+  /* Focus ring used by the global focus-visible rule below */
+  --color-focus-ring: #2563eb;
+}
+
+/* Global focus-visible state — keyboard-only outline, no per-element classes */
+*:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Global color transition for interactive elements */
+a,
+button {
+  transition-property: color, background-color, border-color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}

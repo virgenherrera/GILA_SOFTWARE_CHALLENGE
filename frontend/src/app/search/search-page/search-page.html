@@ -1,5 +1,5 @@
 <section class="flex flex-col gap-4">
-  <h2 class="text-xl font-semibold text-gray-900">Search Products</h2>
+  <h2 class="text-xl font-semibold text-surface-900">Search Products</h2>
 
   <app-search-filters
     [categories]="categories()"
@@ -7,17 +7,19 @@
     (filtersChange)="onFiltersChange($event)"
   />
 
+  <div aria-live="polite" class="sr-only">{{ resultCountMessage() }}</div>
+
   @if (cartMessage(); as message) {
-    <p class="rounded-md border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-700">
+    <p class="rounded-md border border-success-300 bg-success-50 px-4 py-3 text-sm text-success-700">
       {{ message }}
     </p>
   }
 
   @if (loading()) {
-    <p class="py-8 text-center text-sm text-gray-500" role="status">Loading products…</p>
+    <p class="py-8 text-center text-sm text-surface-500" role="status">Loading products…</p>
   } @else if (error()) {
     <p
-      class="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700"
+      class="rounded-md border border-danger-300 bg-danger-50 px-4 py-3 text-sm text-danger-700"
       role="alert"
     >
       {{ error() }}
@@ -31,13 +33,13 @@
 
     @if (paging(); as currentPaging) {
       <div class="flex items-center justify-between pt-2">
-        <span class="text-sm text-gray-500">
+        <span class="text-sm text-surface-500">
           Page {{ currentPaging.page }} · {{ currentPaging.total }} total products
         </span>
         <div class="flex gap-2">
           <button
             type="button"
-            class="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+            class="rounded-md border border-surface-300 px-3 py-1.5 text-sm font-medium text-surface-700 disabled:cursor-not-allowed disabled:opacity-50"
             [disabled]="!currentPaging.prev"
             (click)="onPrevPage()"
           >
@@ -45,7 +47,7 @@
           </button>
           <button
             type="button"
-            class="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+            class="rounded-md border border-surface-300 px-3 py-1.5 text-sm font-medium text-surface-700 disabled:cursor-not-allowed disabled:opacity-50"
             [disabled]="!currentPaging.next"
             (click)="onNextPage()"
           >

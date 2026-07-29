@@ -75,6 +75,34 @@ describe('ImportResults', () => {
     expect(compiled.textContent).toContain('Processing');
   });
 
+  it('should mark the status indicator as a polite aria-live region', async () => {
+    const fixture = setup();
+
+    fixture.detectChanges();
+    httpMock.expectOne('/api/imports/job-1').flush(mockJob({ status: 'Processing' }));
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.querySelector('[aria-live="polite"]')).not.toBeNull();
+  });
+
+  it('should render the stats grid with a responsive column layout', async () => {
+    const fixture = setup();
+
+    fixture.detectChanges();
+    httpMock
+      .expectOne('/api/imports/job-1')
+      .flush(mockJob({ status: 'Completed', total_rows: 10, accepted_rows: 10, rejected_rows: 0 }));
+    await settle(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const grid = compiled.querySelector('dl');
+
+    expect(grid?.className).toContain('grid-cols-1');
+    expect(grid?.className).toContain('sm:grid-cols-3');
+  });
+
   it('should poll again while the job is still processing', async () => {
     vi.useFakeTimers();
 

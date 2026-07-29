@@ -52,6 +52,16 @@ test.describe('Search page', () => {
     await expect(page.getByRole('article').filter({ hasText: 'SHOE-001' })).toBeVisible();
   });
 
+  test('prefix search matches partial keywords', async ({ page }) => {
+    await page.goto('/search');
+
+    await page.getByPlaceholder(KEYWORD_PLACEHOLDER).fill('Run');
+
+    const card = page.getByRole('article').filter({ hasText: 'SHOE-001' });
+    await expect(card).toBeVisible();
+    await expect(card).toContainText('Running Shoes');
+  });
+
   test('searching for a non-existent term shows the empty state', async ({ page }) => {
     await page.goto('/search');
 

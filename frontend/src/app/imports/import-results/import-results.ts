@@ -11,11 +11,11 @@ import { ImportErrors } from '../import-errors/import-errors';
 const POLL_INTERVAL_MS = 2000;
 
 const STATUS_CLASSES: Record<ImportJob['status'], string> = {
-  Pending: 'bg-gray-100 text-gray-700',
-  Processing: 'bg-blue-100 text-blue-700',
-  Completed: 'bg-green-100 text-green-700',
-  CompletedWithErrors: 'bg-amber-100 text-amber-700',
-  Failed: 'bg-red-100 text-red-700',
+  Pending: 'bg-surface-100 text-surface-700',
+  Processing: 'bg-brand-50 text-brand-700',
+  Completed: 'bg-success-200 text-success-700',
+  CompletedWithErrors: 'bg-danger-50 text-danger-700',
+  Failed: 'bg-danger-100 text-danger-700',
 };
 
 @Component({

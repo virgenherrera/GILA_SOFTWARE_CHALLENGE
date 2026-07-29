@@ -1,17 +1,17 @@
-<tr class="border-b border-gray-100">
-  <td class="py-3 pr-4">
-    <span class="font-mono text-xs text-gray-500">{{ item().product_sku }}</span>
-    <p class="text-sm font-medium text-gray-900">{{ item().name }}</p>
+<tr class="border-b border-surface-100">
+  <td class="px-4 py-3">
+    <span class="font-mono text-xs text-surface-500">{{ item().product_sku }}</span>
+    <p class="text-sm font-medium text-surface-900">{{ item().name }}</p>
     @if (stockError()) {
-      <p class="mt-1 text-xs text-red-600" role="alert">{{ stockError() }}</p>
+      <p class="mt-1 text-xs text-danger-600" role="alert">{{ stockError() }}</p>
     }
   </td>
-  <td class="py-3 pr-4 text-sm text-gray-700">${{ formattedUnitPrice() }}</td>
-  <td class="py-3 pr-4">
+  <td class="px-4 py-3 text-sm text-surface-700">${{ formattedUnitPrice() }}</td>
+  <td class="px-4 py-3">
     <div class="flex items-center gap-2">
       <button
         type="button"
-        class="h-7 w-7 rounded-md border border-gray-300 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+        class="h-11 w-11 rounded-md border border-surface-300 text-sm font-medium text-surface-700 disabled:cursor-not-allowed disabled:opacity-50 sm:h-7 sm:w-7"
         [disabled]="updating() || item().quantity <= 1"
         (click)="onDecrement()"
       >
@@ -20,14 +20,14 @@
       <input
         type="number"
         min="1"
-        class="w-14 rounded-md border border-gray-300 px-2 py-1 text-center text-sm"
+        class="w-14 rounded-md border border-surface-300 px-2 py-1 text-center text-sm"
         [value]="item().quantity"
         [disabled]="updating()"
         (change)="onQuantityInput($any($event.target).value)"
       />
       <button
         type="button"
-        class="h-7 w-7 rounded-md border border-gray-300 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+        class="h-11 w-11 rounded-md border border-surface-300 text-sm font-medium text-surface-700 disabled:cursor-not-allowed disabled:opacity-50 sm:h-7 sm:w-7"
         [disabled]="updating()"
         (click)="onIncrement()"
       >
@@ -35,11 +35,12 @@
       </button>
     </div>
   </td>
-  <td class="py-3 pr-4 text-sm font-semibold text-gray-900">${{ formattedSubtotal() }}</td>
-  <td class="py-3">
+  <td class="px-4 py-3 text-sm font-semibold text-surface-900">${{ formattedSubtotal() }}</td>
+  <td class="px-4 py-3">
     <button
       type="button"
-      class="rounded-md border border-red-300 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+      class="rounded-md border border-danger-300 px-3 py-2.5 text-xs font-medium text-danger-700 hover:bg-danger-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-2 sm:py-1"
+      [attr.aria-label]="'Remove ' + item().name + ' from cart'"
       [disabled]="updating()"
       (click)="onRemove()"
     >

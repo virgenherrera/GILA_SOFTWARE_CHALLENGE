@@ -17,6 +17,15 @@ describe('CheckoutPage', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
+  it('should render a Checkout heading', () => {
+    const fixture = TestBed.createComponent(CheckoutPage);
+
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.querySelector('h2')?.textContent).toContain('Checkout');
+  });
+
   it('should render a link back to the cart', () => {
     const fixture = TestBed.createComponent(CheckoutPage);
 

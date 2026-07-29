@@ -66,6 +66,24 @@ describe('ImportErrors', () => {
     expect(compiled.textContent).toContain('Must be a positive number');
   });
 
+  it('should give the table an accessible caption and scoped column headers', async () => {
+    const fixture = await createAndFlush();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const caption = compiled.querySelector('table caption');
+    const headers = compiled.querySelectorAll('th[scope="col"]');
+
+    expect(caption?.textContent).toContain('Rejected import rows');
+    expect(headers.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('should render a stacked card layout for mobile viewports', async () => {
+    const fixture = await createAndFlush();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const cards = compiled.querySelectorAll('dl');
+
+    expect(cards.length).toBeGreaterThan(0);
+  });
+
   it('should truncate long raw row data', async () => {
     const longRow = 'x'.repeat(80);
     const fixture = await createAndFlush({

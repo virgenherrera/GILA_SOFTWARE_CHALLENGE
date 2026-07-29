@@ -104,14 +104,26 @@
       {:errors errors}
       {:params (dissoc parsed :_raw)})))
 
+(defn- to-prefix-tsquery
+  "Convert user input to a prefix-matching tsquery string.
+   Strips tsquery operators, splits into words, appends :* to each, joins with &."
+  [input]
+  (let [clean (str/replace input #"[&|!()<>:*'\\@]" "")
+        words (->> (str/split (str/trim clean) #"\s+")
+                   (remove str/blank?))]
+    (if (empty? words)
+      nil
+      (str/join " & " (map #(str % ":*") words)))))
+
 (defn- build-where-clauses
   "Build WHERE clause from validated params. Returns nil if no filters.
    Uses [:lift val] inside [:raw ...] for parameterized tsvector queries."
   [params]
-  (let [clauses (cond-> []
-                  (:q params)
-                  (conj [:raw ["search_vector @@ plainto_tsquery('english', "
-                               [:lift (:q params)] ")"]])
+  (let [prefix-q (when (:q params) (to-prefix-tsquery (:q params)))
+        clauses (cond-> []
+                  prefix-q
+                  (conj [:raw ["search_vector @@ to_tsquery('english', "
+                               [:lift prefix-q] ")"]])
 
                   (:category params)
                   (conj [:= :category (:category params)])
@@ -137,9 +149,12 @@
     [[(keyword (:sort-by params)) (keyword (or (:sort-order params) "asc"))]]
 
     (:q params)
-    [[[:raw ["ts_rank(search_vector, plainto_tsquery('english', "
-             [:lift (:q params)] "))"]]
-      :desc]]
+    (let [prefix-q (to-prefix-tsquery (:q params))]
+      (if prefix-q
+        [[[:raw ["ts_rank(search_vector, to_tsquery('english', "
+                 [:lift prefix-q] "))"]]
+          :desc]]
+        [[:name :asc]]))
 
     :else
     [[:name :asc]]))

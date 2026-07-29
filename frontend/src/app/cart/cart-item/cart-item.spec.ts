@@ -121,6 +121,13 @@ describe('CartItemRow', () => {
     expect(emitted).toEqual(['RS-001']);
   });
 
+  it('should give the Remove button an aria-label naming the product', () => {
+    const fixture = setup();
+    const removeButton = findButtonByText(fixture.nativeElement as HTMLElement, 'Remove');
+
+    expect(removeButton?.getAttribute('aria-label')).toBe('Remove Running Shoes from cart');
+  });
+
   it('should disable controls when updating is true', () => {
     const fixture = TestBed.createComponent(CartItemRow);
 

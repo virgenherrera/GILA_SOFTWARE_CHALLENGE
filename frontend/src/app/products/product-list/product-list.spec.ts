@@ -185,6 +185,16 @@ describe('ProductList', () => {
     req.flush(mockPage);
   });
 
+  it('should associate the search input with a label', async () => {
+    const fixture = await createAndFlush();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const searchInput = compiled.querySelector('input[type="search"]') as HTMLInputElement;
+    const label = compiled.querySelector(`label[for="${searchInput.id}"]`);
+
+    expect(searchInput.id).toBeTruthy();
+    expect(label).toBeTruthy();
+  });
+
   it('should re-fetch with the selected category when the category select changes', async () => {
     const fixture = await createAndFlush();
     const compiled = fixture.nativeElement as HTMLElement;

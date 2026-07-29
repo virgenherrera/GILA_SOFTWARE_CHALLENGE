@@ -42,6 +42,13 @@ describe('SearchResults', () => {
     expect(compiled.textContent).toContain('150');
   });
 
+  it('should reuse app-product-card instead of duplicating its markup', () => {
+    const fixture = setup();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.querySelector('app-product-card')).not.toBeNull();
+  });
+
   it('should show an out-of-stock badge when stock is zero', () => {
     const fixture = setup([{ ...mockProduct, stock: 0 }]);
     const compiled = fixture.nativeElement as HTMLElement;

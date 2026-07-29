@@ -87,6 +87,26 @@ describe('ProductForm', () => {
       expect(compiled.textContent).toContain('SKU is required');
     });
 
+    it('should set aria-invalid and aria-describedby on invalid fields after touch', () => {
+      const fixture = setup(null);
+
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const form = compiled.querySelector('form') as HTMLFormElement;
+
+      form.dispatchEvent(new Event('submit'));
+      fixture.detectChanges();
+
+      const skuInput = compiled.querySelector('#sku') as HTMLInputElement;
+      const skuError = compiled.querySelector('#sku-error');
+
+      expect(skuInput.getAttribute('aria-invalid')).toBe('true');
+      expect(skuInput.getAttribute('aria-describedby')).toBe('sku-error');
+      expect(skuError).toBeTruthy();
+      expect(skuError?.id).toBe('sku-error');
+    });
+
     it('should submit a valid form and navigate to the product list', async () => {
       const fixture = setup(null);
 

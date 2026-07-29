@@ -192,6 +192,18 @@ describe('CartPage', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['/checkout/confirmation', 'order-1']);
   });
 
+  it('should render the cart table with an accessible caption and column scope', () => {
+    const fixture = createAndFlush();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const table = compiled.querySelector('table');
+    const caption = table?.querySelector('caption');
+    const headers = Array.from(table?.querySelectorAll('th') ?? []);
+
+    expect(caption?.textContent).toContain('Shopping cart items');
+    expect(headers.length).toBeGreaterThan(0);
+    expect(headers.every((th) => th.getAttribute('scope') === 'col')).toBe(true);
+  });
+
   it('should show which items have stock issues on checkout 409', () => {
     const fixture = createAndFlush();
 

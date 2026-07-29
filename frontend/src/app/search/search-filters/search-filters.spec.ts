@@ -28,6 +28,16 @@ describe('SearchFiltersPanel', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
+  it('should associate every filter control with a label', () => {
+    const fixture = setup();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const ids = ['keyword', 'category', 'price-min', 'price-max', 'sort-by'];
+
+    for (const id of ids) {
+      expect(compiled.querySelector(`label[for="${id}"]`)).not.toBeNull();
+    }
+  });
+
   it('should render an option for each category', () => {
     const fixture = setup();
     const compiled = fixture.nativeElement as HTMLElement;

@@ -73,6 +73,16 @@ export class SearchPage {
   protected readonly paging = computed(() => this.productsResource.value()?.paging ?? null);
   protected readonly loading = computed(() => this.productsResource.isLoading());
 
+  protected readonly resultCountMessage = computed(() => {
+    if (this.loading() || this.error()) {
+      return '';
+    }
+
+    const count = this.paging()?.total ?? this.products().length;
+
+    return `${count} product${count === 1 ? '' : 's'} found`;
+  });
+
   constructor() {
     effect(() => {
       this.keyword();

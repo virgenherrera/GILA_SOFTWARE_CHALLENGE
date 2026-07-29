@@ -1,21 +1,85 @@
-<header class="border-b border-gray-200 bg-white">
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<header class="relative border-b border-surface-200 bg-white">
   <nav class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-    <h1 class="text-xl font-semibold text-gray-900">{{ title() }}</h1>
-    <div class="flex items-center gap-4">
-      <a routerLink="/products" class="text-sm font-medium text-blue-600 hover:text-blue-800"
+    <h1 class="text-xl font-semibold text-surface-900">{{ title() }}</h1>
+
+    <button
+      type="button"
+      class="text-surface-700 hover:text-brand-600 md:hidden"
+      aria-controls="primary-navigation"
+      [attr.aria-expanded]="menuOpen()"
+      aria-label="Toggle navigation menu"
+      (click)="toggleMenu()"
+    >
+      @if (menuOpen()) {
+        <svg
+          class="h-6 w-6"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+        </svg>
+      } @else {
+        <svg
+          class="h-6 w-6"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"
+          />
+        </svg>
+      }
+    </button>
+
+    <div
+      id="primary-navigation"
+      class="nav-links absolute inset-x-0 top-full flex-col gap-4 border-b border-surface-200 bg-white px-4 py-3 md:static md:flex md:flex-row md:items-center md:border-0 md:bg-transparent md:p-0"
+      [class.hidden]="!menuOpen()"
+      [class.flex]="menuOpen()"
+    >
+      <a
+        routerLink="/products"
+        routerLinkActive="text-brand-800 font-semibold"
+        [ariaCurrentWhenActive]="'page'"
+        class="text-sm font-medium text-brand-600 hover:text-brand-800"
         >Products</a
       >
-      <a routerLink="/search" class="text-sm font-medium text-blue-600 hover:text-blue-800"
+      <a
+        routerLink="/search"
+        routerLinkActive="text-brand-800 font-semibold"
+        [ariaCurrentWhenActive]="'page'"
+        class="text-sm font-medium text-brand-600 hover:text-brand-800"
         >Search</a
       >
-      <a routerLink="/imports" class="text-sm font-medium text-blue-600 hover:text-blue-800"
+      <a
+        routerLink="/imports"
+        routerLinkActive="text-brand-800 font-semibold"
+        [ariaCurrentWhenActive]="'page'"
+        class="text-sm font-medium text-brand-600 hover:text-brand-800"
         >Imports</a
       >
-      <a routerLink="/cart" class="relative text-sm font-medium text-blue-600 hover:text-blue-800">
+      <a
+        routerLink="/cart"
+        routerLinkActive="text-brand-800 font-semibold"
+        [ariaCurrentWhenActive]="'page'"
+        class="relative text-sm font-medium text-brand-600 hover:text-brand-800"
+      >
         Cart
         @if (cartItemCount() > 0) {
           <span
-            class="absolute -right-3 -top-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white"
+            class="absolute -right-3 -top-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-danger-600 px-1 text-[10px] font-semibold text-white"
           >
             {{ cartItemCount() }}
           </span>
@@ -25,6 +89,6 @@
   </nav>
 </header>
 
-<main class="mx-auto max-w-6xl px-4 py-6">
+<main id="main-content" class="mx-auto max-w-6xl px-4 py-6">
   <router-outlet />
 </main>

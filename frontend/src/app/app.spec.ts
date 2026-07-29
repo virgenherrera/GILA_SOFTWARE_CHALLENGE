@@ -92,4 +92,48 @@ describe('App', () => {
 
     expect(badge?.textContent?.trim()).toBe('2');
   });
+
+  it('should render a skip-to-content link targeting the main content', async () => {
+    const fixture = TestBed.createComponent(App);
+
+    httpMock.expectOne('/api/cart').flush({ items: [], total: 0 });
+    await fixture.whenStable();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const skipLink = compiled.querySelector<HTMLAnchorElement>('a[href="#main-content"]');
+
+    expect(skipLink?.textContent).toContain('Skip to main content');
+    expect(compiled.querySelector('main#main-content')).toBeTruthy();
+  });
+
+  it('should hide the mobile navigation menu by default and toggle it on hamburger click', async () => {
+    const fixture = TestBed.createComponent(App);
+
+    httpMock.expectOne('/api/cart').flush({ items: [], total: 0 });
+    await fixture.whenStable();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const toggleButton = compiled.querySelector<HTMLButtonElement>(
+      'button[aria-controls="primary-navigation"]',
+    );
+    const nav = compiled.querySelector<HTMLElement>('#primary-navigation');
+
+    expect(toggleButton?.getAttribute('aria-expanded')).toBe('false');
+    expect(nav?.classList.contains('hidden')).toBe(true);
+
+    toggleButton?.click();
+    await fixture.whenStable();
+
+    expect(toggleButton?.getAttribute('aria-expanded')).toBe('true');
+    expect(nav?.classList.contains('hidden')).toBe(false);
+  });
+
+  it('should wire routerLinkActive on nav links so the active route is highlighted', async () => {
+    const fixture = TestBed.createComponent(App);
+
+    httpMock.expectOne('/api/cart').flush({ items: [], total: 0 });
+    await fixture.whenStable();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const link = compiled.querySelector('a[href="/products"]');
+
+    expect(link?.getAttribute('routerlinkactive')).not.toBeNull();
+  });
 });

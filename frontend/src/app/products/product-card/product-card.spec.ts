@@ -78,4 +78,16 @@ describe('ProductCard', () => {
 
     expect(emitted).toEqual(['RS-001']);
   });
+
+  it('should give each action button an aria-label that includes the product name', () => {
+    const fixture = setup();
+
+    const viewButton = findButtonByText(fixture.nativeElement as HTMLElement, 'View');
+    const editButton = findButtonByText(fixture.nativeElement as HTMLElement, 'Edit');
+    const deleteButton = findButtonByText(fixture.nativeElement as HTMLElement, 'Delete');
+
+    expect(viewButton?.getAttribute('aria-label')).toBe('View Running Shoes');
+    expect(editButton?.getAttribute('aria-label')).toBe('Edit Running Shoes');
+    expect(deleteButton?.getAttribute('aria-label')).toBe('Delete Running Shoes');
+  });
 });

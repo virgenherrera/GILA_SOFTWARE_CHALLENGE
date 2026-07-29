@@ -80,6 +80,35 @@ describe('OrderConfirmation', () => {
     expect(compiled.textContent).toContain('179.98');
   });
 
+  it('should render an Order Confirmation heading', async () => {
+    const fixture = setup();
+
+    fixture.detectChanges();
+    httpMock.expectOne('/api/orders/order-1').flush(mockOrder);
+    await fixture.whenStable();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.querySelector('h2')?.textContent).toContain('Order Confirmation');
+  });
+
+  it('should render the order items table with an accessible caption and column scope', async () => {
+    const fixture = setup();
+
+    fixture.detectChanges();
+    httpMock.expectOne('/api/orders/order-1').flush(mockOrder);
+    await fixture.whenStable();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const table = compiled.querySelector('table');
+    const caption = table?.querySelector('caption');
+    const headers = Array.from(table?.querySelectorAll('th') ?? []);
+
+    expect(caption?.textContent).toContain('Order items');
+    expect(headers.length).toBeGreaterThan(0);
+    expect(headers.every((th) => th.getAttribute('scope') === 'col')).toBe(true);
+  });
+
   it('should show a not-found state on 404', async () => {
     const fixture = setup();
 

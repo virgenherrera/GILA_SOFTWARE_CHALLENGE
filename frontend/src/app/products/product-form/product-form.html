@@ -1,16 +1,16 @@
 <section class="flex flex-col gap-4">
-  <a routerLink="/products" class="text-sm font-medium text-blue-600 hover:text-blue-800"
+  <a routerLink="/products" class="text-sm font-medium text-brand-600 hover:text-brand-800"
     >&larr; Back to products</a
   >
 
-  <h2 class="text-xl font-semibold text-gray-900">{{ heading() }}</h2>
+  <h2 class="text-xl font-semibold text-surface-900">{{ heading() }}</h2>
 
   @if (loading()) {
-    <p class="py-8 text-center text-sm text-gray-500" role="status">Loading product…</p>
+    <p class="py-8 text-center text-sm text-surface-500" role="status">Loading product…</p>
   } @else {
     @if (apiError()) {
       <p
-        class="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700"
+        class="rounded-md border border-danger-300 bg-danger-50 px-4 py-3 text-sm text-danger-700"
         role="alert"
       >
         {{ apiError() }}
@@ -19,91 +19,135 @@
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex max-w-lg flex-col gap-4">
       <div class="flex flex-col gap-1">
-        <label for="sku" class="text-sm font-medium text-gray-700">SKU</label>
+        <label for="sku" class="text-sm font-medium text-surface-700">SKU</label>
         <input
           id="sku"
           type="text"
           formControlName="sku"
-          class="rounded-md border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-100 disabled:text-gray-500"
+          class="rounded-md border px-3 py-2.5 sm:py-2 text-sm disabled:bg-surface-100 disabled:text-surface-500"
+          [class.border-surface-300]="!(form.controls.sku.invalid && form.controls.sku.touched)"
+          [class.border-danger-300]="form.controls.sku.invalid && form.controls.sku.touched"
+          [attr.aria-describedby]="form.controls.sku.invalid && form.controls.sku.touched ? 'sku-error' : null"
+          [attr.aria-invalid]="form.controls.sku.invalid && form.controls.sku.touched"
         />
         @if (form.controls.sku.invalid && form.controls.sku.touched) {
-          <p class="text-xs text-red-600">
+          <p id="sku-error" class="text-xs text-danger-600">
             {{ form.controls.sku.errors?.['conflict'] || 'SKU is required (max 50 characters).' }}
           </p>
         }
       </div>
 
       <div class="flex flex-col gap-1">
-        <label for="name" class="text-sm font-medium text-gray-700">Name</label>
+        <label for="name" class="text-sm font-medium text-surface-700">Name</label>
         <input
           id="name"
           type="text"
           formControlName="name"
-          class="rounded-md border border-gray-300 px-3 py-2 text-sm"
+          class="rounded-md border px-3 py-2.5 sm:py-2 text-sm"
+          [class.border-surface-300]="!(form.controls.name.invalid && form.controls.name.touched)"
+          [class.border-danger-300]="form.controls.name.invalid && form.controls.name.touched"
+          [attr.aria-describedby]="form.controls.name.invalid && form.controls.name.touched ? 'name-error' : null"
+          [attr.aria-invalid]="form.controls.name.invalid && form.controls.name.touched"
         />
         @if (form.controls.name.invalid && form.controls.name.touched) {
-          <p class="text-xs text-red-600">
+          <p id="name-error" class="text-xs text-danger-600">
             {{ form.controls.name.errors?.['zod'] || 'Name is required.' }}
           </p>
         }
       </div>
 
       <div class="flex flex-col gap-1">
-        <label for="description" class="text-sm font-medium text-gray-700">Description</label>
+        <label for="description" class="text-sm font-medium text-surface-700">Description</label>
         <textarea
           id="description"
           formControlName="description"
           rows="3"
-          class="rounded-md border border-gray-300 px-3 py-2 text-sm"
+          class="rounded-md border px-3 py-2.5 sm:py-2 text-sm"
+          [class.border-surface-300]="
+            !(form.controls.description.invalid && form.controls.description.touched)
+          "
+          [class.border-danger-300]="
+            form.controls.description.invalid && form.controls.description.touched
+          "
+          [attr.aria-describedby]="
+            form.controls.description.invalid && form.controls.description.touched
+              ? 'description-error'
+              : null
+          "
+          [attr.aria-invalid]="form.controls.description.invalid && form.controls.description.touched"
         ></textarea>
         @if (form.controls.description.invalid && form.controls.description.touched) {
-          <p class="text-xs text-red-600">{{ form.controls.description.errors?.['zod'] }}</p>
+          <p id="description-error" class="text-xs text-danger-600">
+            {{ form.controls.description.errors?.['zod'] }}
+          </p>
         }
       </div>
 
       <div class="flex flex-col gap-1">
-        <label for="category" class="text-sm font-medium text-gray-700">Category</label>
+        <label for="category" class="text-sm font-medium text-surface-700">Category</label>
         <input
           id="category"
           type="text"
           formControlName="category"
-          class="rounded-md border border-gray-300 px-3 py-2 text-sm"
+          class="rounded-md border px-3 py-2.5 sm:py-2 text-sm"
+          [class.border-surface-300]="
+            !(form.controls.category.invalid && form.controls.category.touched)
+          "
+          [class.border-danger-300]="form.controls.category.invalid && form.controls.category.touched"
+          [attr.aria-describedby]="
+            form.controls.category.invalid && form.controls.category.touched
+              ? 'category-error'
+              : null
+          "
+          [attr.aria-invalid]="form.controls.category.invalid && form.controls.category.touched"
         />
         @if (form.controls.category.invalid && form.controls.category.touched) {
-          <p class="text-xs text-red-600">
+          <p id="category-error" class="text-xs text-danger-600">
             {{ form.controls.category.errors?.['zod'] || 'Category is required.' }}
           </p>
         }
       </div>
 
-      <div class="flex gap-4">
+      <div class="flex flex-col gap-4 sm:flex-row sm:gap-4">
         <div class="flex flex-1 flex-col gap-1">
-          <label for="price" class="text-sm font-medium text-gray-700">Price</label>
+          <label for="price" class="text-sm font-medium text-surface-700">Price</label>
           <input
             id="price"
             type="number"
             step="0.01"
             formControlName="price"
-            class="rounded-md border border-gray-300 px-3 py-2 text-sm"
+            class="rounded-md border px-3 py-2.5 sm:py-2 text-sm"
+            [class.border-surface-300]="!(form.controls.price.invalid && form.controls.price.touched)"
+            [class.border-danger-300]="form.controls.price.invalid && form.controls.price.touched"
+            [attr.aria-describedby]="
+              form.controls.price.invalid && form.controls.price.touched ? 'price-error' : null
+            "
+            [attr.aria-invalid]="form.controls.price.invalid && form.controls.price.touched"
           />
           @if (form.controls.price.invalid && form.controls.price.touched) {
-            <p class="text-xs text-red-600">
+            <p id="price-error" class="text-xs text-danger-600">
               {{ form.controls.price.errors?.['zod'] || 'Enter a valid price.' }}
             </p>
           }
         </div>
 
         <div class="flex flex-1 flex-col gap-1">
-          <label for="stock" class="text-sm font-medium text-gray-700">Stock</label>
+          <label for="stock" class="text-sm font-medium text-surface-700">Stock</label>
           <input
             id="stock"
             type="number"
             step="1"
             formControlName="stock"
-            class="rounded-md border border-gray-300 px-3 py-2 text-sm"
+            class="rounded-md border px-3 py-2.5 sm:py-2 text-sm"
+            [class.border-surface-300]="!(form.controls.stock.invalid && form.controls.stock.touched)"
+            [class.border-danger-300]="form.controls.stock.invalid && form.controls.stock.touched"
+            [attr.aria-describedby]="
+              form.controls.stock.invalid && form.controls.stock.touched ? 'stock-error' : null
+            "
+            [attr.aria-invalid]="form.controls.stock.invalid && form.controls.stock.touched"
           />
           @if (form.controls.stock.invalid && form.controls.stock.touched) {
-            <p class="text-xs text-red-600">
+            <p id="stock-error" class="text-xs text-danger-600">
               {{ form.controls.stock.errors?.['zod'] || 'Enter a valid stock amount.' }}
             </p>
           }
@@ -113,7 +157,7 @@
       <button
         type="submit"
         [disabled]="submitting()"
-        class="mt-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        class="mt-2 rounded-md bg-brand-600 px-4 py-2.5 sm:py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {{ submitting() ? 'Saving…' : 'Save' }}
       </button>
