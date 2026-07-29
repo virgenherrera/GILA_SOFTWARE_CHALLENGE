@@ -1,0 +1,71 @@
+<div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+  <div class="flex flex-wrap gap-3">
+    <input
+      id="keyword"
+      type="search"
+      placeholder="Search by name, description, or SKU…"
+      class="min-w-[220px] flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
+      [value]="keyword()"
+      (input)="onKeywordInput($any($event.target).value)"
+    />
+
+    <select
+      id="category"
+      class="rounded-md border border-gray-300 px-3 py-2 text-sm"
+      [value]="category()"
+      (change)="onCategoryChange($any($event.target).value)"
+    >
+      <option value="">All categories</option>
+      @for (categoryOption of categories(); track categoryOption) {
+        <option [value]="categoryOption">{{ categoryOption }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="flex flex-wrap items-start gap-3">
+    <div class="flex items-center gap-2">
+      <label for="price-min" class="text-sm text-gray-600">Price</label>
+      <input
+        id="price-min"
+        type="number"
+        placeholder="Min"
+        class="w-24 rounded-md border border-gray-300 px-3 py-2 text-sm"
+        (input)="onPriceMinInput($any($event.target).value)"
+      />
+      <span class="text-sm text-gray-400">to</span>
+      <input
+        id="price-max"
+        type="number"
+        placeholder="Max"
+        class="w-24 rounded-md border border-gray-300 px-3 py-2 text-sm"
+        (input)="onPriceMaxInput($any($event.target).value)"
+      />
+    </div>
+
+    <select
+      id="sort-by"
+      class="rounded-md border border-gray-300 px-3 py-2 text-sm"
+      [value]="sortBy()"
+      (change)="onSortByChange($any($event.target).value)"
+    >
+      @for (field of sortFields; track field) {
+        <option [value]="field">Sort: {{ field }}</option>
+      }
+    </select>
+
+    <button
+      id="sort-order-toggle"
+      type="button"
+      class="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+      (click)="onToggleSortOrder()"
+    >
+      {{ sortOrder() === 'asc' ? 'Ascending ↑' : 'Descending ↓' }}
+    </button>
+  </div>
+
+  @if (priceRangeInvalid()) {
+    <p class="text-sm text-red-600" role="alert">
+      Minimum price must not be greater than maximum price.
+    </p>
+  }
+</div>
