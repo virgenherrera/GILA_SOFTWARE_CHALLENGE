@@ -169,7 +169,10 @@ describe('CartPage', () => {
   it('should checkout and navigate to the order confirmation on success', () => {
     const fixture = createAndFlush();
 
+    vi.useFakeTimers();
     findButtonByText(fixture.nativeElement as HTMLElement, 'Proceed to Checkout')?.click();
+    vi.advanceTimersByTime(1500);
+    vi.useRealTimers();
 
     const order: Order = {
       id: 'order-1',
@@ -207,7 +210,10 @@ describe('CartPage', () => {
   it('should show which items have stock issues on checkout 409', () => {
     const fixture = createAndFlush();
 
+    vi.useFakeTimers();
     findButtonByText(fixture.nativeElement as HTMLElement, 'Proceed to Checkout')?.click();
+    vi.advanceTimersByTime(1500);
+    vi.useRealTimers();
 
     httpMock
       .expectOne((r) => r.url === '/api/checkout' && r.method === 'POST')

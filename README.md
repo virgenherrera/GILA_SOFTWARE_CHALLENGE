@@ -2,7 +2,7 @@
 
 **Clojure 1.12** | **Angular 22** | **PostgreSQL 17.5** | **Docker Compose**
 
-Full-stack e-commerce application built for the [Gila Software Code Challenge](docs/challenge/Code-Challenge-E-Commerce.pdf). Product catalog with CRUD, CSV bulk import, full-text search, shopping cart, and checkout -- all running in Docker with zero host dependencies.
+Full-stack e-commerce application built for the Gila Software Code Challenge. Product catalog with CRUD, CSV bulk import, full-text search, shopping cart, and checkout -- all running in Docker with zero host dependencies.
 
 ---
 
@@ -14,7 +14,6 @@ Full-stack e-commerce application built for the [Gila Software Code Challenge](d
 - [Project Structure](#project-structure)
 - [Configuration](#configuration)
 - [Testing](#testing)
-- [Architecture Documentation](#architecture-documentation)
 - [Deliberate Scope Decisions](#deliberate-scope-decisions)
 
 ---
@@ -359,8 +358,7 @@ The challenge asks for decisions, rationale, and alternatives considered. Each d
 ├── Dockerfile.backend          # Multi-stage: Clojure builder -> JRE 21 runtime (non-root)
 ├── Dockerfile.frontend         # Multi-stage: Node 24 builder -> nginx
 ├── docker-compose.yml          # 4-service orchestration (db, backend, frontend, playwright)
-├── nginx.conf                  # Reverse proxy config + SPA fallback routing
-└── docs/                       # Architecture documentation (12 documents)
+└── nginx.conf                  # Reverse proxy config + SPA fallback routing
 ```
 
 [Back to top](#table-of-contents)
@@ -424,29 +422,6 @@ The project includes a pre-commit hook that runs build, test, and audit stages i
 ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
 ```
-
-[Back to top](#table-of-contents)
-
----
-
-## Architecture Documentation
-
-Detailed documentation for each subsystem lives in `docs/architecture/`. Each document is self-contained and cross-referenced.
-
-| Document | Description |
-|----------|-------------|
-| [Tech Stack](docs/architecture/tech-stack.md) | Technology choices, exact versions, rationale, and alternatives for every layer |
-| [API Contract](docs/architecture/api-contract.md) | HTTP API specification: endpoints, request/response shapes, error codes, pagination |
-| [API Documentation Strategy](docs/architecture/api-docs-strategy.md) | Swagger/OpenAPI auto-generation from Malli schemas via Reitit |
-| [Data Model](docs/architecture/data-model.md) | PostgreSQL schema: tables, columns, constraints, indexes, and foreign keys |
-| [Middleware Pipeline](docs/architecture/middleware-pipeline.md) | Ring middleware ordering, request lifecycle, and why the order is load-bearing |
-| [Error Handling](docs/architecture/error-handling.md) | How exceptions are translated into the standard error envelope |
-| [Health Check Strategy](docs/architecture/health-check-strategy.md) | Zombie service prevention: health probes that verify real database connectivity |
-| [Security Guidelines](docs/architecture/security-guidelines.md) | Security model for anonymous cart sessions: what is protected, how, and what is deferred |
-| [Testing Strategy](docs/architecture/testing-strategy.md) | TDD workflow, test pyramid enforcement, per-epic test matrix |
-| [TDD Workflow](docs/architecture/tdd-workflow.md) | Concrete Red-Green-Refactor steps for Clojure and Angular |
-| [Validation & Pruning](docs/architecture/validation-pruning.md) | How Malli and Reitit coercion validate and strip unexpected fields |
-| [Package Management](docs/architecture/pnpm-config.md) | pnpm enforcement via Corepack, lockfile integrity, and dependency policy |
 
 [Back to top](#table-of-contents)
 

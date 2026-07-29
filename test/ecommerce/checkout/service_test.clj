@@ -63,7 +63,7 @@
 
 (deftest checkout-cart-not-found-test
   (testing "Checkout with nonexistent cart throws 400 EMPTY_CART"
-    (with-redefs [cart-repo/find-cart-by-id (fn [_ds _id] nil)]
+    (with-redefs [cart-repo/find-cart-by-id-for-update (fn [_ds _id] nil)]
       (let [ds (mock-datasource)]
         (try
           (service/perform-checkout! ds test-cart-id)
@@ -75,7 +75,7 @@
 
 (deftest checkout-cart-already-checked-out-test
   (testing "Checkout with already-checked-out cart throws 400 CART_NOT_ACTIVE"
-    (with-redefs [cart-repo/find-cart-by-id (fn [_ds _id] checked-out-cart)]
+    (with-redefs [cart-repo/find-cart-by-id-for-update (fn [_ds _id] checked-out-cart)]
       (let [ds (mock-datasource)]
         (try
           (service/perform-checkout! ds test-cart-id)
@@ -87,7 +87,7 @@
 
 (deftest checkout-empty-cart-test
   (testing "Checkout with empty cart throws 400 EMPTY_CART"
-    (with-redefs [cart-repo/find-cart-by-id (fn [_ds _id] active-cart)
+    (with-redefs [cart-repo/find-cart-by-id-for-update (fn [_ds _id] active-cart)
                   cart-repo/get-cart-items (fn [_ds _id] [])]
       (let [ds (mock-datasource)]
         (try
@@ -100,7 +100,7 @@
 
 (deftest checkout-insufficient-stock-test
   (testing "Checkout with insufficient stock throws 409 with per-item details"
-    (with-redefs [cart-repo/find-cart-by-id (fn [_ds _id] active-cart)
+    (with-redefs [cart-repo/find-cart-by-id-for-update (fn [_ds _id] active-cart)
                   cart-repo/get-cart-items
                   (fn [_ds _id]
                     [{:product_sku "RS-001" :name "Running Shoes"
@@ -125,7 +125,7 @@
 
 (deftest checkout-insufficient-stock-multiple-items-test
   (testing "Checkout reports ALL items with insufficient stock, not just the first"
-    (with-redefs [cart-repo/find-cart-by-id (fn [_ds _id] active-cart)
+    (with-redefs [cart-repo/find-cart-by-id-for-update (fn [_ds _id] active-cart)
                   cart-repo/get-cart-items
                   (fn [_ds _id]
                     [{:product_sku "RS-001" :name "Running Shoes"
@@ -151,7 +151,7 @@
 (deftest checkout-atomic-rollback-test
   (testing "If stock check fails, no stock is decremented (atomic rollback)"
     (let [decrement-calls (atom [])]
-      (with-redefs [cart-repo/find-cart-by-id (fn [_ds _id] active-cart)
+      (with-redefs [cart-repo/find-cart-by-id-for-update (fn [_ds _id] active-cart)
                     cart-repo/get-cart-items
                     (fn [_ds _id]
                       [{:product_sku "RS-001" :name "Running Shoes"
@@ -181,7 +181,7 @@
     (let [decremented (atom [])
           created-items (atom [])
           cart-status (atom nil)]
-      (with-redefs [cart-repo/find-cart-by-id (fn [_ds _id] active-cart)
+      (with-redefs [cart-repo/find-cart-by-id-for-update (fn [_ds _id] active-cart)
                     cart-repo/get-cart-items (fn [_ds _id] test-cart-items)
                     order-repo/lock-products-for-update!
                     (fn [_tx _skus] test-locked-products)
@@ -239,7 +239,7 @@
 
 (deftest checkout-uses-snapshot-price-test
   (testing "Order uses cart snapshot price, not current product price"
-    (with-redefs [cart-repo/find-cart-by-id (fn [_ds _id] active-cart)
+    (with-redefs [cart-repo/find-cart-by-id-for-update (fn [_ds _id] active-cart)
                   cart-repo/get-cart-items
                   (fn [_ds _id]
                     ;; Snapshot price: $89.99

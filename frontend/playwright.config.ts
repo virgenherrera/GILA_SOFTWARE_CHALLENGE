@@ -6,8 +6,6 @@ import { defineConfig, devices } from '@playwright/test';
  * This config assumes the full stack is already running via
  * `docker compose up` (or the dedicated `playwright` Compose service),
  * so no `webServer` is configured here.
- *
- * See docs/architecture/tech-stack.md, Section 3 (E2E, Playwright).
  */
 export default defineConfig({
   testDir: './e2e',

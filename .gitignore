@@ -50,3 +50,7 @@ pgdata/
 
 # Challenge source files
 ignoreThisPath/
+
+# Planning artifacts (local reference only)
+docs/
+AGENTS.md

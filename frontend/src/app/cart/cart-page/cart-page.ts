@@ -1,6 +1,7 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { HttpErrorResponse } from '@angular/common/http';
+import { switchMap, timer } from 'rxjs';
 import { Router, RouterLink } from '@angular/router';
 import { CartItemRow } from '../cart-item/cart-item';
 import type { QuantityChangeEvent } from '../cart-item/cart-item';
@@ -74,19 +75,19 @@ export class CartPage {
     this.itemErrors.set({});
     this.checkingOut.set(true);
 
-    this.cartService
-      .checkout()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (order) => {
-          this.checkingOut.set(false);
-          void this.router.navigate(['/checkout/confirmation', order.id]);
-        },
-        error: (err: HttpErrorResponse) => {
-          this.checkingOut.set(false);
-          this.handleCheckoutError(err);
-        },
-      });
+    timer(1500).pipe(
+      switchMap(() => this.cartService.checkout()),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: (order) => {
+        this.checkingOut.set(false);
+        void this.router.navigate(['/checkout/confirmation', order.id]);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.checkingOut.set(false);
+        this.handleCheckoutError(err);
+      },
+    });
   }
 
   private loadCart(): void {
