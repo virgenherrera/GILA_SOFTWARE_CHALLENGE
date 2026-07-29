@@ -9,6 +9,7 @@
 | Epic | [EP04 --- Purchase Workflow](../epics/EP04-purchase-workflow.md) |
 | Priority | Must Have |
 | Status | Ready |
+| Estimation | M |
 
 ## 2. Story
 
@@ -24,6 +25,7 @@ As a Shopper, I want to add products to my cart, view the cart, update quantitie
 - [x] Test plan exists with test names mapped to ACs
 - [x] Out-of-scope items listed
 - [x] API contract endpoints touched by this story are defined
+- [x] Role-gate review completed (PO + Dev Lead + SM readiness review 2026-07-28)
 
 ## 4. Acceptance Criteria
 

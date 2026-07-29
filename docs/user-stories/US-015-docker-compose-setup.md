@@ -9,6 +9,7 @@
 | Epic | [EP06 --- Containerization & Documentation](../epics/EP06-containerization-docs.md) |
 | Priority | Must Have |
 | Status | Ready |
+| Estimation | M |
 
 ## 2. Story
 
@@ -26,6 +27,7 @@
 - [x] Test plan exists with test names mapped to ACs
 - [x] Out-of-scope items listed
 - [x] API contract endpoints touched by this story are defined
+- [x] Role-gate review completed (PO + Dev Lead + SM readiness review 2026-07-28)
 
 ## 4. Acceptance Criteria
 
@@ -63,13 +65,14 @@
   - **Given** the frontend nginx container is running
   - **When** a request is made to `http://localhost:8080/api/health`
   - **Then** nginx proxies the request to `backend:3000/api/health`
-  - **And** the response is `200 OK` with `{"status": "ok"}`
+  - **And** the response is `200 OK` with `{"status": "healthy", "uptime_seconds": <integer>, "db": {"status": "connected", "latency_ms": <integer>}}`
   - **And** no CORS configuration is required because all requests go through the same origin via the proxy
 
 - [ ] **AC-015.6: Health check endpoints work**
   - **Given** all three services are running
   - **When** the Docker health checks execute
-  - **Then** the backend health check (`GET /api/health`) returns HTTP 200
+  - **Then** the backend health check (`GET /api/health`) returns HTTP 200 with a body of shape `{"status": "healthy", "uptime_seconds": <integer>, "db": {"status": "connected", "latency_ms": <integer>}}`
+  - **And** the Docker Compose `healthcheck` for the `backend` service is configured to treat this 200 response as the healthy signal
   - **And** the database health check (`pg_isready`) succeeds
   - **And** all services report `healthy` status in `docker compose ps`
 
@@ -145,7 +148,7 @@
 | `backend-tests-run-in-docker` | AC-015.3 | Build logs show test stage executing and passing |
 | `frontend-static-in-production-image` | AC-015.4 | Frontend production container has no Node.js, only nginx and static files |
 | `frontend-tests-run-in-docker` | AC-015.4 | Build logs show test stage executing and passing |
-| `nginx-proxies-api-health` | AC-015.5 | `curl http://localhost:8080/api/health` returns `{"status": "ok"}` |
+| `nginx-proxies-api-health` | AC-015.5 | `curl http://localhost:8080/api/health` returns `{"status": "healthy", "uptime_seconds": <integer>, "db": {"status": "connected", "latency_ms": <integer>}}` |
 | `nginx-serves-angular-app` | AC-015.5 | `curl http://localhost:8080/` returns HTML containing Angular app |
 | `health-check-backend-200` | AC-015.6 | `GET /api/health` returns HTTP 200 |
 | `health-check-db-ready` | AC-015.6 | `pg_isready` inside db container succeeds |
@@ -202,7 +205,7 @@
 - [API Contract](../architecture/api-contract.md) --- health check endpoint
 - [Testing Strategy](../architecture/testing-strategy.md) --- tests run inside Docker build
 - [US-001 --- Project Scaffolding](./US-001-project-scaffolding.md) --- initial Docker skeleton
-- [US-002 --- Product CRUD API](./US-002-product-crud-api.md) through [US-010 --- Checkout & Orders API](./US-010-checkout-orders-api.md) --- all backend features
+- [US-002 --- Create Product with Validation & Sanitization](./US-002-create-product.md) through [US-010 --- Checkout & Order Creation](./US-010-checkout-order.md) --- all backend features
 - [US-011 --- Product Management Views](./US-011-product-management-views.md) through [US-014 --- Cart & Checkout Views](./US-014-cart-checkout-views.md) --- all frontend features
 - [US-016 --- README & Decision Documentation](./US-016-readme-documentation.md) --- documents run instructions
 

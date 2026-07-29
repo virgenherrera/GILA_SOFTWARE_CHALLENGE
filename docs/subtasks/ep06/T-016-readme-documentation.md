@@ -28,23 +28,23 @@ Write README.md documenting run instructions, prerequisites, architectural decis
 
 | File | Lines | Why Needed |
 |------|-------|------------|
-| docs/architecture/tech-stack.md | all | Technology choices and versions |
-| docs/architecture/data-model.md | all | Database design for architecture overview |
-| docs/architecture/api-contract.md | all | API surface for architecture overview |
-| docs/architecture/security-guidelines.md | all | Security approach for decisions section |
-| docs/architecture/middleware-pipeline.md | all | Request lifecycle and middleware ordering for architecture overview |
-| docs/architecture/validation-pruning.md | all | Validation strategy for decisions section |
-| docs/architecture/error-handling.md | all | Error handling approach for architecture overview |
-| docs/architecture/tdd-workflow.md | all | Testing strategy section |
-| docs/architecture/api-docs-strategy.md | all | API documentation approach for architecture overview |
-| docs/architecture/pnpm-config.md | all | Frontend tooling decisions section |
-| docs/architecture/health-check-strategy.md | all | Health check behavior for architecture overview |
+| docs/architecture/tech-stack.md | Section 1 (Stack Overview), Section 12 (Alternatives Considered) | Technology choices and versions |
+| docs/architecture/data-model.md | Section 1 (Schema Overview), Section 5 (Entity Relationship Diagram) | Database design for architecture overview |
+| docs/architecture/api-contract.md | Section 3 (Products API), Section 4 (CSV Import API), Section 5 (Cart API), Section 6 (Checkout and Orders API) | API surface for architecture overview |
+| docs/architecture/security-guidelines.md | Section 1 (Security Model Overview), Section 11 (Deferred Security Concerns) | Security approach for decisions section |
+| docs/architecture/middleware-pipeline.md | Section 1 (Request Lifecycle Overview), Section 2 (Middleware Stack) | Request lifecycle and middleware ordering for architecture overview |
+| docs/architecture/validation-pruning.md | Section 2 (Malli Schema Design --- Closed Maps), Section 6 (Validation Contract) | Validation strategy for decisions section |
+| docs/architecture/error-handling.md | Section 1 (Design Principle), Section 2 (Exception → Error Code Mapping) | Error handling approach for architecture overview |
+| docs/architecture/tdd-workflow.md | Section 1 (Red-Green-Refactor Cycle) | Testing strategy section |
+| docs/architecture/api-docs-strategy.md | Section 1 (Approach), Section 6 (Benefits) | API documentation approach for architecture overview |
+| docs/architecture/pnpm-config.md | Section 1 (Package Manager), Section 7 (Why pnpm) | Frontend tooling decisions section |
+| docs/architecture/health-check-strategy.md | Decision: 503 + Stay Alive + HikariCP Reconnection | Health check behavior for architecture overview |
 | docker-compose.yml | all | Actual run configuration to document |
 | Dockerfile.backend | all | Build process for architecture overview |
 | Dockerfile.frontend | all | Build process for architecture overview |
-| docs/domain-glossary.md | all | Domain terms for consistency |
+| docs/domain-glossary.md | Entities, Value Objects, Conventions | Domain terms for consistency |
 | docs/user-stories/US-016-readme-documentation.md | all | Acceptance criteria for README documentation |
-| docs/architecture/testing-strategy.md | all | Test pyramid, documentation verification |
+| docs/architecture/testing-strategy.md | Section 2 (Test Pyramid), Section 8 (Coverage Policy) | Test pyramid, documentation verification |
 
 ## Deliverables
 
@@ -85,11 +85,11 @@ None.
 
 ## Boundaries
 
-- NOT in scope: Auto-generated API documentation (Swagger/OpenAPI)
-- NOT in scope: Architecture diagrams in README (reference docs/ directory)
-- NOT in scope: Contribution guidelines
-- NOT in scope: License file
-- NOT in scope: Changelog
+- NOT in scope: Auto-generated API documentation (Swagger/OpenAPI) --- already generated and served at `/api-docs/` by the backend itself (api-docs-strategy.md); duplicating it in the README would drift out of sync
+- NOT in scope: Architecture diagrams in README (reference docs/ directory) --- the architecture docs already contain the authoritative Mermaid diagrams; the README references them rather than duplicating them (see Anti-patterns: "Copy-paste architecture docs verbatim")
+- NOT in scope: Contribution guidelines --- this is a single-evaluator technical challenge submission, not an open-source project accepting external contributions
+- NOT in scope: License file --- not requested by any acceptance criterion and irrelevant to a take-home evaluation submission
+- NOT in scope: Changelog --- a single-delivery challenge has no release history to log; the git commit history already documents the change sequence
 
 ## Anti-patterns
 

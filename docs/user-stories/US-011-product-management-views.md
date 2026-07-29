@@ -9,6 +9,7 @@
 | Epic | [EP05 --- User Interface](../epics/EP05-user-interface.md) |
 | Priority | Must Have |
 | Status | Ready |
+| Estimation | M |
 
 ## 2. Story
 
@@ -24,6 +25,7 @@ As a user, I want a product list view, detail view, and create/edit form with in
 - [x] Test plan exists with test names mapped to ACs
 - [x] Out-of-scope items listed
 - [x] API contract endpoints touched by this story are defined
+- [x] Role-gate review completed (PO + Dev Lead + SM readiness review 2026-07-28)
 
 ## 4. Acceptance Criteria
 
@@ -231,7 +233,7 @@ As a user, I want a product list view, detail view, and create/edit form with in
 - [EP05 --- User Interface](../epics/EP05-user-interface.md) --- parent epic
 - [Testing Strategy](../architecture/testing-strategy.md) --- component and contract testing approach
 - [US-001 --- Project Scaffolding](US-001-project-scaffolding.md) --- frontend scaffold dependency
-- [US-002 --- Product CRUD](US-002-product-crud.md) --- backend API for products (must exist)
+- [US-002 --- Create Product with Validation & Sanitization](US-002-create-product.md) --- backend API for products (must exist)
 
 ## 13. Handoff Files
 

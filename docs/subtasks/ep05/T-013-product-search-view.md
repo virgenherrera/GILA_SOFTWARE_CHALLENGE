@@ -22,23 +22,23 @@ Implement an Angular 22 search interface with keyword input, category filter dro
 - [ ] T-008 backend search API is complete and returns paged results
 - [ ] Angular scaffold exists (from T-001)
 - [ ] `frontend/src/app/products/product.service.ts` exists (from T-011)
-- [ ] GET /api/products accepts query params: q, category, min_price, max_price, sort, page, per_page
+- [ ] GET /api/products accepts query params: q, category, priceMin, priceMax, sortBy, sortOrder, page, perPage
 
 ## Context Bundle
 
 | File | Lines | Why Needed |
 |------|-------|------------|
-| docs/architecture/api-contract.md | GET /api/products section | Query params, paging envelope, response shape |
-| docs/architecture/tech-stack.md | all | Angular 22 version, Zod version, zoneless config |
+| docs/architecture/api-contract.md | Section 3 (Products API --- GET /api/products query parameters: q, category, priceMin, priceMax, sortBy, sortOrder), Section 1 (Overview --- Paging Envelope) | Query params, paging envelope, response shape |
+| docs/architecture/tech-stack.md | Section 3 (Frontend) | Angular 22 version, Zod version, zoneless config |
 | docs/user-stories/US-013-product-search-view.md | all | Acceptance criteria |
 | frontend/src/app/products/product.service.ts | all | Existing service to reuse for API calls |
 | frontend/src/app/app.routes.ts | all | Current route config to extend |
-| docs/domain-glossary.md | all | Domain terms for naming consistency |
-| docs/architecture/error-handling.md | all | API error response shape for search errors |
-| docs/architecture/security-guidelines.md | all | Search input must not render as HTML |
-| docs/architecture/tdd-workflow.md | all | TDD process for Angular components |
-| docs/architecture/pnpm-config.md | all | pnpm configuration reference |
-| docs/architecture/testing-strategy.md | all | Test pyramid, search view test matrix |
+| docs/domain-glossary.md | Entities, Conventions | Domain terms for naming consistency |
+| docs/architecture/error-handling.md | Section 2 (Exception → Error Code Mapping) | API error response shape for search errors |
+| docs/architecture/security-guidelines.md | Section 6 (Input Security --- XSS) | Search input must not render as HTML |
+| docs/architecture/tdd-workflow.md | Section 5 (Frontend TDD) | TDD process for Angular components |
+| docs/architecture/pnpm-config.md | Section 6 (Commands) | pnpm configuration reference |
+| docs/architecture/testing-strategy.md | Section 2 (Test Pyramid), Section 3 (What to Test per Epic --- EP05) | Test pyramid, search view test matrix |
 
 ## Deliverables
 
@@ -70,7 +70,7 @@ Implement an Angular 22 search interface with keyword input, category filter dro
 | 1 | Search triggers API | Type keyword, verify GET /api/products?q=... fires | MANUAL | Request sent with query param |
 | 2 | Category filter | Select category, verify &category= param sent | MANUAL | Filtered results returned |
 | 3 | Price range validation | Enter invalid range (min > max), verify Zod error shown | MANUAL | Error message displayed, no API call |
-| 4 | Sort controls | Select sort option, verify &sort= param sent | MANUAL | Results re-ordered |
+| 4 | Sort controls | Select sort option, verify `&sortBy=` and `&sortOrder=` params sent | MANUAL | Results re-ordered |
 | 5 | Cumulative filters | Apply keyword + category + price, verify all params sent | MANUAL | All filters combine correctly |
 | 6 | Results grid | Verify product cards show name, price, category | MANUAL | All fields rendered |
 | 7 | Pagination | Navigate pages, verify &page= param changes | MANUAL | Correct page of results shown |
@@ -87,10 +87,10 @@ Implement an Angular 22 search interface with keyword input, category filter dro
 
 ## Boundaries
 
-- NOT in scope: Search suggestions or autocomplete
-- NOT in scope: Session-remembered filters (filters reset on navigation)
-- NOT in scope: Faceted search (count per category)
-- NOT in scope: Responsive design or mobile layout
+- NOT in scope: Search suggestions or autocomplete --- the backend (T-008) does not expose a suggestions endpoint; no acceptance criterion requires predictive input
+- NOT in scope: Session-remembered filters (filters reset on navigation) --- no acceptance criterion requires persisting filter state; each visit to the search page starts from a clean state
+- NOT in scope: Faceted search (count per category) --- the backend (T-008) does not compute per-category counts; adding it is an unrequested aggregation feature
+- NOT in scope: Responsive design or mobile layout --- no acceptance criterion requires mobile support; the evaluator uses a desktop browser
 
 ## Anti-patterns
 

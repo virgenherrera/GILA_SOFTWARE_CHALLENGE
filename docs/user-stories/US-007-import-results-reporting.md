@@ -9,6 +9,7 @@
 | Epic     | EP02 --- CSV Import             |
 | Priority | Must Have                       |
 | Status | Ready                           |
+| Estimation | S                             |
 
 ## 2. Story
 
@@ -27,6 +28,7 @@
 - [x] Domain glossary terms aligned (CsvImportJob, ImportError, ImportRowReference)
 - [x] Out of scope items explicitly listed
 - [x] Test plan covers every acceptance criterion
+- [x] Role-gate review completed (PO + Dev Lead + SM readiness review 2026-07-28)
 
 ## 4. Acceptance Criteria
 

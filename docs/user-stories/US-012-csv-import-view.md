@@ -9,6 +9,7 @@
 | Epic | [EP05 --- User Interface](../epics/EP05-user-interface.md) |
 | Priority | Must Have |
 | Status | Ready |
+| Estimation | M |
 
 ## 2. Story
 
@@ -24,6 +25,7 @@ As an Administrator, I want a CSV import interface with file upload and a result
 - [x] Test plan exists with test names mapped to ACs
 - [x] Out-of-scope items listed
 - [x] API contract endpoints touched by this story are defined
+- [x] Role-gate review completed (PO + Dev Lead + SM readiness review 2026-07-28)
 
 ## 4. Acceptance Criteria
 
@@ -200,9 +202,9 @@ As an Administrator, I want a CSV import interface with file upload and a result
 - [EP02 --- CSV Import](../epics/EP02-csv-import.md) --- backend import pipeline
 - [Testing Strategy](../architecture/testing-strategy.md) --- component testing approach
 - [US-001 --- Project Scaffolding](US-001-project-scaffolding.md) --- frontend scaffold dependency
-- [US-005 --- CSV Upload](US-005-csv-upload.md) --- backend upload endpoint (must exist)
-- [US-006 --- CSV Processing](US-006-csv-processing.md) --- backend processing pipeline (must exist)
-- [US-007 --- Import Status](US-007-import-status.md) --- backend status/errors endpoints (must exist)
+- [US-005 --- CSV Upload & Background Processing Pipeline](US-005-csv-upload-processing.md) --- backend upload endpoint (must exist)
+- [US-006 --- CSV Row Validation](US-006-csv-row-validation.md) --- backend processing pipeline (must exist)
+- [US-007 --- Import Results & Error Reporting](US-007-import-results-reporting.md) --- backend status/errors endpoints (must exist)
 
 ## 13. Handoff Files
 

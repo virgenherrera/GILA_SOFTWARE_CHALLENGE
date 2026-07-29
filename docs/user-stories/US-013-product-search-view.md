@@ -9,6 +9,7 @@
 | Epic | [EP05 --- User Interface](../epics/EP05-user-interface.md) |
 | Priority | Must Have |
 | Status | Ready |
+| Estimation | M |
 
 ## 2. Story
 
@@ -26,6 +27,7 @@
 - [x] Test plan exists with test names mapped to ACs
 - [x] Out-of-scope items listed
 - [x] API contract endpoints touched by this story are defined
+- [x] Role-gate review completed (PO + Dev Lead + SM readiness review 2026-07-28)
 
 ## 4. Acceptance Criteria
 
@@ -223,7 +225,7 @@
 - All components are standalone (no `NgModule`), following Angular 22 conventions.
 - The container-presentational split is deliberate: `search-page` owns the state and API interactions; `search-filters` and `search-results` are pure presentational components that receive data via input signals and emit events via output signals.
 - The `resource()` API from Angular 22 provides built-in loading/error signal tracking, eliminating the need for manual loading state management.
-- Category list population strategy: on initial load, the container component fetches the full product list (or a dedicated endpoint if available) and extracts distinct categories. Since no dedicated categories endpoint exists in the API contract, categories are derived from the product catalog data.
+- Category list population strategy: the category dropdown is populated via the dedicated `GET /api/products/categories` endpoint being added to [API Contract](../architecture/api-contract.md#3-products-api), which returns the distinct, non-empty `category` values currently in use across the catalog. This avoids fetching the full product list solely to derive category options.
 
 ## 12. Related Documents
 
@@ -232,7 +234,7 @@
 - [Tech Stack](../architecture/tech-stack.md) --- Angular 22, Zod, standalone components
 - [Testing Strategy](../architecture/testing-strategy.md) --- frontend unit testing approach
 - [US-001 --- Project Scaffolding](./US-001-project-scaffolding.md) --- frontend scaffold dependency
-- [US-008 --- Product Search API](./US-008-product-search-api.md) --- backend search endpoint dependency
+- [US-008 --- Product Search with Filters, Sort & Pagination](./US-008-product-search.md) --- backend search endpoint dependency
 - [US-011 --- Product Management Views](./US-011-product-management-views.md) --- `product.service.ts` reuse
 - [US-014 --- Cart & Checkout Views](./US-014-cart-checkout-views.md) --- "Add to Cart" integration
 

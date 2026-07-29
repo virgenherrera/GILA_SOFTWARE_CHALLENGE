@@ -6,6 +6,16 @@
 
 An enterprise-grade e-commerce application that demonstrates production-level engineering judgment through robust product management, resilient data import, and a complete purchase workflow --- delivering not just working software but a codebase that evidences defensive design, data integrity enforcement, and thoughtful architectural decisions under a tight deadline.
 
+## Project Type
+
+**Project Type**: `product`
+
+Classified during Capture per the AGENTS.md framework. This is a user-facing e-commerce
+application (product CRUD, search, and purchase workflow), not a library, tool,
+extension, or bot. This classification requires the full set of Discover-phase
+artifacts: user personas, journey maps, competitive analysis, and a domain glossary
+covering both domain events and state lifecycles.
+
 ## Problem Statement
 
 Gila Software needs to evaluate senior engineering candidates beyond algorithmic puzzles, through a realistic e-commerce challenge that surfaces how candidates handle ambiguity, dirty data, security threats, and architectural trade-offs. The challenge provides a CSV file deliberately seeded with edge cases (XSS payloads, SQL injection attempts, malformed prices, duplicate SKUs, empty rows, negative stock) to test whether the candidate builds defensively or merely completes the happy path. The gap is not "can the candidate build CRUD" but "does the candidate recognize and handle the traps that production systems must survive."

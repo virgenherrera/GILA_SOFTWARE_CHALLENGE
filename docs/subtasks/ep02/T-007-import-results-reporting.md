@@ -30,14 +30,14 @@ Implement `GET /api/imports/:id` summary enhancement and `GET /api/imports/:id/e
 | File | Lines | Why Needed |
 |------|-------|------------|
 | docs/user-stories/US-007-import-results-reporting.md | all | All 8 acceptance criteria |
-| docs/architecture/api-contract.md | 76-100 | Standard paging envelope specification |
-| docs/architecture/api-contract.md | 605-670 | GET /api/imports/:id/errors contract |
-| docs/architecture/data-model.md | 140-184 | csv_import_jobs and import_errors table schemas |
-| docs/architecture/testing-strategy.md | all | Test pyramid, CSV trap types, security test cases |
+| docs/architecture/api-contract.md | Section 1 (Overview --- Paging Envelope) | Standard paging envelope specification |
+| docs/architecture/api-contract.md | Section 4 (CSV Import API --- GET /api/imports/:id/errors) | GET /api/imports/:id/errors contract |
+| docs/architecture/data-model.md | Section 2.6 (csv_import_jobs), Section 2.7 (import_errors) | csv_import_jobs and import_errors table schemas |
+| docs/architecture/testing-strategy.md | Section 2 (Test Pyramid), Section 4 (Test Data Strategy), Section 5 (Security Test Cases) | Test pyramid, CSV trap types, security test cases |
 | src/ecommerce/import/handler.clj | all | Existing handler to extend with errors endpoint |
 | src/ecommerce/import/repository.clj | all | Existing repository patterns for job queries |
-| docs/architecture/error-handling.md | all | Error response sanitization (no raw data leakage) |
-| docs/architecture/tdd-workflow.md | all | TDD process reference |
+| docs/architecture/error-handling.md | Section 5 (Security Sanitization) | Error response sanitization (no raw data leakage) |
+| docs/architecture/tdd-workflow.md | Section 4 (Integration Test Cycle) | TDD process reference |
 
 ## Deliverables
 
@@ -58,26 +58,26 @@ Implement `GET /api/imports/:id` summary enhancement and `GET /api/imports/:id/e
 
 | # | Gate | Command/Check | Type | Pass Criteria |
 |---|------|---------------|------|---------------|
-| 1 | Summary returns counts | `docker compose run --rm backend clojure -M:test` | EXE | GET /api/imports/:id returns status, total_rows, accepted_rows, rejected_rows |
-| 2 | Status distinction | `docker compose run --rm backend clojure -M:test` | EXE | Completed (0 errors), CompletedWithErrors (some errors), Failed (unparseable) |
-| 3 | Paginated errors | `docker compose run --rm backend clojure -M:test` | EXE | GET /api/imports/:id/errors returns items + paging envelope |
-| 4 | Error item shape | `docker compose run --rm backend clojure -M:test` | EXE | Each item has row_number, field_name, error_reason, raw_row_data |
-| 5 | raw_row_data sanitized | `docker compose run --rm backend clojure -M:test` | EXE | Script tags in raw_row_data are HTML-entity encoded |
-| 6 | Non-existent job 404 | `docker compose run --rm backend clojure -M:test` | EXE | Both summary and errors endpoints return 404 for unknown job |
-| 7 | Paging preserves params | `docker compose run --rm backend clojure -M:test` | EXE | prev/next URLs preserve page and perPage params |
-| 8 | Page beyond last | `docker compose run --rm backend clojure -M:test` | EXE | Returns 200 with empty items and correct paging.total |
-| 9 | No internal details leaked | `docker compose run --rm backend clojure -M:test` | EXE | Error responses contain no stack traces, SQL, or file paths |
+| 1 | Summary returns counts | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.error-reporting-integration-test` | EXE | GET /api/imports/:id returns status, total_rows, accepted_rows, rejected_rows |
+| 2 | Status distinction | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.error-reporting-integration-test` | EXE | Completed (0 errors), CompletedWithErrors (some errors), Failed (unparseable) |
+| 3 | Paginated errors | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.error-reporting-integration-test` | EXE | GET /api/imports/:id/errors returns items + paging envelope |
+| 4 | Error item shape | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.error-reporting-integration-test` | EXE | Each item has row_number, field_name, error_reason, raw_row_data |
+| 5 | raw_row_data sanitized | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.error-reporting-integration-test` | EXE | Script tags in raw_row_data are HTML-entity encoded |
+| 6 | Non-existent job 404 | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.error-reporting-integration-test` | EXE | Both summary and errors endpoints return 404 for unknown job |
+| 7 | Paging preserves params | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.error-reporting-integration-test` | EXE | prev/next URLs preserve page and perPage params |
+| 8 | Page beyond last | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.error-reporting-integration-test` | EXE | Returns 200 with empty items and correct paging.total |
+| 9 | No internal details leaked | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.error-reporting-integration-test` | EXE | Error responses contain no stack traces, SQL, or file paths |
 | 10 | All tests pass | `docker compose run --rm backend clojure -M:test` | EXE | exit 0 |
 | 11 | No side effects | `git diff --stat` | EXE | Only expected files modified |
 
 ## Boundaries
 
-- NOT in scope: CSV export or download of rejected rows
-- NOT in scope: SSE progress streaming (deferred to v2)
-- NOT in scope: Re-import functionality (upload corrected rows only)
-- NOT in scope: Import listing endpoint (GET /api/imports without :id --- not in API contract)
-- NOT in scope: Bulk error dismissal or acknowledgment
-- NOT in scope: Error filtering or search within a job's errors
+- NOT in scope: CSV export or download of rejected rows --- no acceptance criterion requires a file export; the paginated errors endpoint already exposes every field needed to fix the source file
+- NOT in scope: SSE progress streaming (deferred to v2) --- polling via GET /api/imports/:id (T-005) is the chosen v1 mechanism per api-contract.md §4
+- NOT in scope: Re-import functionality (upload corrected rows only) --- the documented recovery path is re-uploading a full corrected file, not merging partial re-imports
+- NOT in scope: Import listing endpoint (GET /api/imports without :id --- not in API contract) --- no acceptance criterion requires browsing past imports; the contract only defines lookup by ID
+- NOT in scope: Bulk error dismissal or acknowledgment --- errors are read-only diagnostic records; no acceptance criterion requires mutating or acknowledging them
+- NOT in scope: Error filtering or search within a job's errors --- pagination alone satisfies the stated acceptance criteria; filtering is an unrequested enhancement
 
 ## Anti-patterns
 

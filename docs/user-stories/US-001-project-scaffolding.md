@@ -9,6 +9,7 @@
 | Epic | [EP06 --- Containerization & Documentation](../epics/EP06-containerization-docs.md) |
 | Priority | Must Have |
 | Status | Ready |
+| Estimation | M |
 
 ## 2. Story
 
@@ -24,13 +25,14 @@ As a developer, I want the project skeleton (backend, frontend, Docker, database
 - [x] Test plan exists with test names mapped to ACs
 - [x] Out-of-scope items listed
 - [x] API contract endpoints touched by this story are defined
+- [x] Role-gate review completed (PO + Dev Lead + SM readiness review 2026-07-28)
 
 ## 4. Acceptance Criteria
 
 - [ ] **AC-001.1: Backend skeleton compiles**
   - **Given** a fresh clone of the repository with no prior build artifacts
   - **When** `clojure -P` is executed in the backend project root
-  - **Then** all dependencies resolve successfully, including: `org.clojure/clojure` 1.12.0, `ring/ring-core` 1.12.2, `ring/ring-jetty-adapter` 1.12.2, `metosin/reitit` 0.7.2, `metosin/malli` 0.16.4, `com.github.seancorfield/next.jdbc` 1.3.955, `com.github.seancorfield/honeysql` 2.6.1235, `org.postgresql/postgresql` 42.7.5, `com.zaxxer/HikariCP` 6.2.1, `org.clojure/core.async` 1.7.790, `org.clojure/data.csv` 1.1.0, `org.clojure/data.json` 2.5.1, `org.clojure/tools.logging` 1.3.0, `ch.qos.logback/logback-classic` 1.5.16; and `deps.edn` contains no floating version ranges, no `RELEASE` or `LATEST` markers; and the Reitit router defines a `GET /api/health` endpoint that returns `200 OK` with `{"status": "ok"}`; and Malli coercion middleware is registered in the router middleware stack; and a HikariCP connection pool is configured via `next.jdbc`; and error-envelope middleware is registered that catches unhandled exceptions and returns `{"error": {"code": "INTERNAL_ERROR", "message": "<safe message>"}}`
+  - **Then** all dependencies resolve successfully, including: `org.clojure/clojure` 1.12.0, `ring/ring-core` 1.12.2, `ring/ring-jetty-adapter` 1.12.2, `metosin/reitit` 0.7.2, `metosin/malli` 0.16.4, `com.github.seancorfield/next.jdbc` 1.3.955, `com.github.seancorfield/honeysql` 2.6.1235, `org.postgresql/postgresql` 42.7.5, `com.zaxxer/HikariCP` 6.2.1, `org.clojure/core.async` 1.7.790, `org.clojure/data.csv` 1.1.0, `org.clojure/data.json` 2.5.1, `org.clojure/tools.logging` 1.3.0, `ch.qos.logback/logback-classic` 1.5.16; and `deps.edn` contains no floating version ranges, no `RELEASE` or `LATEST` markers; and the Reitit router defines a `GET /api/health` endpoint that returns `200 OK` with `{"status": "healthy", "uptime_seconds": <integer>, "db": {"status": "connected", "latency_ms": <integer>}}`; and Malli coercion middleware is registered in the router middleware stack; and a HikariCP connection pool is configured via `next.jdbc`; and error-envelope middleware is registered that catches unhandled exceptions and returns `{"error": {"code": "INTERNAL_ERROR", "message": "<safe message>"}}`
 
 - [ ] **AC-001.2: Frontend skeleton builds**
   - **Given** a fresh clone of the repository with no prior `node_modules` or `dist/` artifacts
@@ -104,7 +106,7 @@ As a developer, I want the project skeleton (backend, frontend, Docker, database
 
 | Test Name | AC | Assertion |
 | --------- | -- | --------- |
-| `health-endpoint-returns-200` | AC-001.1 | `GET /api/health` returns HTTP 200 with body `{"status": "ok"}` |
+| `health-endpoint-returns-200` | AC-001.1 | `GET /api/health` returns HTTP 200 with body `{"status": "healthy", "uptime_seconds": <integer>, "db": {"status": "connected", "latency_ms": <integer>}}` |
 | `deps-edn-has-no-floating-versions` | AC-001.1 | All dependency coordinates in `deps.edn` specify exact `:mvn/version` strings with no ranges |
 | `error-middleware-returns-envelope-shape` | AC-001.1, AC-001.6 | An intentionally triggered exception returns `{"error": {"code": "INTERNAL_ERROR", "message": ...}}` |
 | `error-middleware-does-not-leak-stack-trace` | AC-001.6 | Error response body does not contain Java class names, `.clj` file paths, or SQL fragments |

@@ -28,18 +28,18 @@ Implement `POST /api/products` with full validation using shared Malli schemas, 
 | File | Lines | Why Needed |
 |------|-------|------------|
 | docs/user-stories/US-002-create-product.md | all | 13 acceptance criteria to implement |
-| docs/architecture/api-contract.md | all | Request/response shapes, error envelope |
-| docs/architecture/security-guidelines.md | all | XSS sanitization and SQLi prevention rules |
-| docs/architecture/data-model.md | all | Products table schema, constraints |
+| docs/architecture/api-contract.md | Section 3 (Products API --- POST /api/products), Section 7 (Validation Contract) | Request/response shapes, error envelope |
+| docs/architecture/security-guidelines.md | Section 6 (Input Security) | XSS sanitization and SQLi prevention rules |
+| docs/architecture/data-model.md | Section 2.1 (products table) | Products table schema, constraints |
 | src/ecommerce/validation.clj | all | Shared Malli schemas to reuse |
 | src/ecommerce/middleware.clj | all | Error middleware to integrate with |
 | src/ecommerce/router.clj | all | Router to add POST route to |
 | src/ecommerce/db.clj | all | DB connection for repository layer |
-| docs/architecture/middleware-pipeline.md | all | Middleware stack where validation and error handling execute |
-| docs/architecture/validation-pruning.md | all | Malli closed schema, multi-error collection for product fields |
-| docs/architecture/error-handling.md | all | Exception→error code translation (VALIDATION_ERROR, CONFLICT) |
-| docs/architecture/tdd-workflow.md | all | TDD process for validation rules and API handlers |
-| docs/architecture/testing-strategy.md | all | Test pyramid, security test cases, TDD workflow |
+| docs/architecture/middleware-pipeline.md | Section 2 (Middleware Stack) | Middleware stack where validation and error handling execute |
+| docs/architecture/validation-pruning.md | Section 2 (Malli Schema Design --- Closed Maps), Section 3 (Multi-Error Collection) | Malli closed schema, multi-error collection for product fields |
+| docs/architecture/error-handling.md | Section 2 (Exception → Error Code Mapping) | Exception→error code translation (VALIDATION_ERROR, CONFLICT) |
+| docs/architecture/tdd-workflow.md | Section 3 (Concrete Example), Section 4 (Integration Test Cycle) | TDD process for validation rules and API handlers |
+| docs/architecture/testing-strategy.md | Section 2 (Test Pyramid), Section 5 (Security Test Cases), Section 7 (TDD Workflow) | Test pyramid, security test cases, TDD workflow |
 
 ## Deliverables
 
@@ -63,8 +63,8 @@ Implement `POST /api/products` with full validation using shared Malli schemas, 
 | # | Gate | Command/Check | Type | Pass Criteria |
 |---|------|---------------|------|---------------|
 | 1 | Handoff exists | `test -f docs/subtasks/ep01/T-002-create-product.md` | EXE | exit 0 |
-| 2 | Unit tests pass | `docker compose run --rm backend clojure -M:test --skip-meta :integration` | EXE | exit 0 |
-| 3 | Integration tests pass | `docker compose run --rm backend clojure -M:test --focus-meta :integration` | EXE | exit 0 |
+| 2 | Unit tests pass | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.validation-test` | EXE | exit 0 |
+| 3 | Integration tests pass | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.handler-integration-test` | EXE | exit 0 |
 | 4 | Empty name rejected | `curl -s -X POST http://localhost:3000/api/products -H 'Content-Type: application/json' -d '{"name":"","sku":"TEST-001","price":10,"stock":5}' -w '%{http_code}'` | EXE | HTTP 400 |
 | 5 | Duplicate SKU rejected | Two POSTs with same SKU → second returns 409 | MANUAL | HTTP 409 with CONFLICT code |
 | 6 | XSS sanitized | POST with `<script>alert(1)</script>` in name → rejected or safely encoded per security-guidelines.md | MANUAL | Payload is either rejected at validation (400) or safely encoded on output; never tag-stripped |
@@ -75,10 +75,10 @@ Implement `POST /api/products` with full validation using shared Malli schemas, 
 
 ## Boundaries
 
-- NOT in scope: Read/list/update/delete endpoints
-- NOT in scope: Frontend UI for product creation
-- NOT in scope: CSV import endpoint
-- NOT in scope: Product search or filtering
+- NOT in scope: Read/list/update/delete endpoints --- these are T-003 (update), T-004 (delete), and T-008 (search/list); T-002 owns create exclusively per single-responsibility task scoping
+- NOT in scope: Frontend UI for product creation --- the Angular UI is delivered in EP05 (T-011) once the backend contract is stable
+- NOT in scope: CSV import endpoint --- bulk creation is a distinct pipeline (EP02/T-005) with its own validation and concurrency concerns
+- NOT in scope: Product search or filtering --- read-side querying belongs to EP03/T-008, not the create endpoint
 
 ## Anti-patterns
 

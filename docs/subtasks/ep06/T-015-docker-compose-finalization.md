@@ -7,7 +7,7 @@
 | Task ID | T-015 |
 | Batch | 3 |
 | Epic | EP06 --- Containerization & Docs |
-| Story | [US-015](../../user-stories/US-015-docker-compose-finalization.md) |
+| Story | [US-015](../../user-stories/US-015-docker-compose-setup.md) |
 | Persona | Evaluator |
 | Model Tier | standard |
 | Priority | Must Have |
@@ -36,13 +36,13 @@ Finalize Docker multi-stage builds and compose configuration so that `docker com
 | nginx.conf | all | Current nginx config to finalize |
 | deps.edn | all | Backend dependencies for build stage |
 | frontend/package.json | all | Frontend dependencies for build stage |
-| docs/architecture/tech-stack.md | all | Exact base image versions |
-| docs/architecture/api-contract.md | health endpoint | Health check endpoint for readiness probe |
-| docs/architecture/middleware-pipeline.md | all | Verify middleware assembly matches documented stack |
-| docs/architecture/pnpm-config.md | all | Frontend Dockerfile pnpm configuration |
-| docs/architecture/health-check-strategy.md | all | Docker healthcheck configuration |
-| docs/architecture/tdd-workflow.md | all | TDD process reference |
-| docs/architecture/testing-strategy.md | all | Test pyramid, per-epic test matrix, security test cases, TDD scaffolding exception |
+| docs/architecture/tech-stack.md | Section 6 (Docker Architecture) | Exact base image versions |
+| docs/architecture/api-contract.md | Section 1 (Overview --- Health Check Endpoint) | Health check endpoint for readiness probe |
+| docs/architecture/middleware-pipeline.md | Section 6 (Putting It All Together) | Verify middleware assembly matches documented stack |
+| docs/architecture/pnpm-config.md | Section 5 (Docker Integration) | Frontend Dockerfile pnpm configuration |
+| docs/architecture/health-check-strategy.md | Decision: 503 + Stay Alive + HikariCP Reconnection, Docker Compose Specifics | Docker healthcheck configuration |
+| docs/architecture/tdd-workflow.md | Section 7 (When TDD Doesn't Apply) | TDD process reference |
+| docs/architecture/testing-strategy.md | Section 2 (Test Pyramid), Section 3 (What to Test per Epic), Section 5 (Security Test Cases), Section 7 (TDD Workflow) | Test pyramid, per-epic test matrix, security test cases, TDD scaffolding exception |
 | docs/user-stories/US-015-docker-compose-setup.md | all | Acceptance criteria for Docker Compose finalization |
 
 ## Deliverables
@@ -91,11 +91,11 @@ Finalize Docker multi-stage builds and compose configuration so that `docker com
 
 ## Boundaries
 
-- NOT in scope: CI/CD pipeline configuration
-- NOT in scope: Production deployment (Kubernetes, ECS, etc.)
-- NOT in scope: Horizontal scaling or load balancing
-- NOT in scope: SSL/TLS termination
-- NOT in scope: Docker image size optimization beyond multi-stage (no distroless, no alpine micro-optimization)
+- NOT in scope: CI/CD pipeline configuration --- no CI/CD platform is specified in the project brief; the local Docker Compose pipeline (build → test → e2e → audit) is the full deliverable for this challenge
+- NOT in scope: Production deployment (Kubernetes, ECS, etc.) --- the challenge is evaluated via `docker compose up --build` on a single evaluator machine, not a production cluster
+- NOT in scope: Horizontal scaling or load balancing --- a single-evaluator local environment has no concurrent-load requirement to scale against
+- NOT in scope: SSL/TLS termination --- the evaluator runs over plain HTTP on localhost per security-guidelines.md §3 and §11; TLS is explicitly deferred there
+- NOT in scope: Docker image size optimization beyond multi-stage (no distroless, no alpine micro-optimization) --- multi-stage builds already remove build tooling from production images; further optimization has no evaluation weight
 
 ## Anti-patterns
 

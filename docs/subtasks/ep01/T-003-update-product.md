@@ -28,16 +28,16 @@ Implement `PUT /api/products/:sku` with shared Malli validation, SKU immutabilit
 | File | Lines | Why Needed |
 |------|-------|------------|
 | docs/user-stories/US-003-update-product.md | all | 7 acceptance criteria to implement |
-| docs/architecture/api-contract.md | all | PUT request/response shape, error codes |
-| docs/architecture/data-model.md | all | Products table, cart_items snapshot columns |
+| docs/architecture/api-contract.md | Section 3 (Products API --- PUT /api/products/:sku) | PUT request/response shape, error codes |
+| docs/architecture/data-model.md | Section 2.1 (products table), Section 2.3 (cart_items --- unit_price_snapshot) | Products table, cart_items snapshot columns |
 | src/ecommerce/product/handler.clj | all | Existing handler to add PUT endpoint to |
 | src/ecommerce/product/repository.clj | all | Existing repository to add update function to |
 | src/ecommerce/validation.clj | all | Shared schemas for validation reuse |
-| docs/architecture/validation-pruning.md | all | Malli closed schema, payload pruning on PUT body |
-| docs/architecture/error-handling.md | all | Exception→error code translation |
-| docs/architecture/security-guidelines.md | all | XSS screening, SQLi prevention, cookie config, security headers |
-| docs/architecture/tdd-workflow.md | all | TDD process reference |
-| docs/architecture/testing-strategy.md | all | Test pyramid, security test cases, TDD workflow |
+| docs/architecture/validation-pruning.md | Section 2 (Malli Schema Design --- Closed Maps) | Malli closed schema, payload pruning on PUT body |
+| docs/architecture/error-handling.md | Section 2 (Exception → Error Code Mapping) | Exception→error code translation |
+| docs/architecture/security-guidelines.md | Section 5 (Security Headers), Section 6 (Input Security) | XSS screening, SQLi prevention, cookie config, security headers |
+| docs/architecture/tdd-workflow.md | Section 3 (Concrete Example), Section 4 (Integration Test Cycle) | TDD process reference |
+| docs/architecture/testing-strategy.md | Section 2 (Test Pyramid), Section 5 (Security Test Cases), Section 7 (TDD Workflow) | Test pyramid, security test cases, TDD workflow |
 
 ## Deliverables
 
@@ -61,8 +61,8 @@ Implement `PUT /api/products/:sku` with shared Malli validation, SKU immutabilit
 | # | Gate | Command/Check | Type | Pass Criteria |
 |---|------|---------------|------|---------------|
 | 1 | Handoff exists | `test -f docs/subtasks/ep01/T-003-update-product.md` | EXE | exit 0 |
-| 2 | Unit tests pass | `docker compose run --rm backend clojure -M:test --skip-meta :integration` | EXE | exit 0 |
-| 3 | Integration tests pass | `docker compose run --rm backend clojure -M:test --focus-meta :integration` | EXE | exit 0 |
+| 2 | Unit tests pass | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.update-test` | EXE | exit 0 |
+| 3 | Integration tests pass | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.update-integration-test` | EXE | exit 0 |
 | 4 | SKU immutability | PUT `/api/products/:sku` with a body containing a different `sku` field → rejected | MANUAL | HTTP 400 BAD_REQUEST; the URL `:sku` parameter is always authoritative and the body `sku` field, if present, must match or be absent |
 | 5 | 404 for non-existent | PUT to `/api/products/NONEXISTENT-SKU` → 404 | MANUAL | HTTP 404 with NOT_FOUND |
 | 6 | Validation reuse | No duplicate Malli schemas in update handler | REVIEW | Same schemas as POST handler |
@@ -75,11 +75,11 @@ Implement `PUT /api/products/:sku` with shared Malli validation, SKU immutabilit
 
 ## Boundaries
 
-- NOT in scope: Cart recalculation when product price changes
-- NOT in scope: Price history tracking or audit log
-- NOT in scope: SKU rename or migration functionality
-- NOT in scope: Bulk update endpoint
-- NOT in scope: Frontend UI for product editing
+- NOT in scope: Cart recalculation when product price changes --- cart items intentionally retain a price snapshot; recalculating would violate the snapshot-pricing model documented in data-model.md
+- NOT in scope: Price history tracking or audit log --- no acceptance criterion requires historical price data; adds storage and query complexity without evaluation value
+- NOT in scope: SKU rename or migration functionality --- SKU is immutable by design (the natural primary key); renaming would require rewriting every FK reference in cart_items and order_items
+- NOT in scope: Bulk update endpoint --- the single-resource PUT satisfies all stated acceptance criteria; batch semantics (partial failure handling) are a different contract
+- NOT in scope: Frontend UI for product editing --- the Angular UI is delivered in EP05 (T-011) once the backend contract is stable
 
 ## Anti-patterns
 

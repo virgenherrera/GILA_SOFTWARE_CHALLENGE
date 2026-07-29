@@ -28,14 +28,14 @@ Implement `DELETE /api/products/:sku` with hard delete semantics. When a product
 | File | Lines | Why Needed |
 |------|-------|------------|
 | docs/user-stories/US-004-delete-product.md | all | 7 acceptance criteria to implement |
-| docs/architecture/api-contract.md | all | DELETE response shape, error codes |
-| docs/architecture/data-model.md | all | FK constraints from cart_items and order_items to products |
+| docs/architecture/api-contract.md | Section 3 (Products API --- DELETE /api/products/:sku) | DELETE response shape, error codes |
+| docs/architecture/data-model.md | Section 2.3 (cart_items FK), Section 2.5 (order_items FK) | FK constraints from cart_items and order_items to products |
 | src/ecommerce/product/handler.clj | all | Existing handler to add DELETE endpoint to |
 | src/ecommerce/product/repository.clj | all | Existing repository to add delete function to |
 | src/ecommerce/middleware.clj | all | Error middleware for exception translation |
-| docs/architecture/error-handling.md | all | PRODUCT_IN_USE error code translation |
-| docs/architecture/tdd-workflow.md | all | TDD process reference |
-| docs/architecture/testing-strategy.md | all | Test pyramid, security test cases, TDD workflow |
+| docs/architecture/error-handling.md | Section 2 (Exception → Error Code Mapping), Section 3 (Custom Exception Middleware) | PRODUCT_IN_USE error code translation |
+| docs/architecture/tdd-workflow.md | Section 4 (Integration Test Cycle) | TDD process reference |
+| docs/architecture/testing-strategy.md | Section 2 (Test Pyramid), Section 5 (Security Test Cases), Section 7 (TDD Workflow) | Test pyramid, security test cases, TDD workflow |
 
 ## Deliverables
 
@@ -59,8 +59,8 @@ Implement `DELETE /api/products/:sku` with hard delete semantics. When a product
 | # | Gate | Command/Check | Type | Pass Criteria |
 |---|------|---------------|------|---------------|
 | 1 | Handoff exists | `test -f docs/subtasks/ep01/T-004-delete-product.md` | EXE | exit 0 |
-| 2 | Unit tests pass | `docker compose run --rm backend clojure -M:test --skip-meta :integration` | EXE | exit 0 |
-| 3 | Integration tests pass | `docker compose run --rm backend clojure -M:test --focus-meta :integration` | EXE | exit 0 |
+| 2 | Unit tests pass | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.delete-test` | EXE | exit 0 |
+| 3 | Integration tests pass | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.delete-integration-test` | EXE | exit 0 |
 | 4 | 204 for unreferenced | DELETE product with no cart/order references → 204 | MANUAL | HTTP 204, empty body |
 | 5 | 404 for non-existent | DELETE `/api/products/NONEXISTENT-SKU` → 404 | MANUAL | HTTP 404 with NOT_FOUND |
 | 6 | 409 for order reference | DELETE product referenced by order_items → 409 | MANUAL | HTTP 409 with PRODUCT_IN_USE |
@@ -74,11 +74,11 @@ Implement `DELETE /api/products/:sku` with hard delete semantics. When a product
 
 ## Boundaries
 
-- NOT in scope: Soft delete or `is_active` flag
-- NOT in scope: Cascade delete of cart/order items
-- NOT in scope: Warning UI before delete confirmation
-- NOT in scope: Proactive warning endpoint ("this product is in X carts")
-- NOT in scope: Batch delete endpoint
+- NOT in scope: Soft delete or `is_active` flag --- hard delete with FK protection is the chosen strategy (see README decision log); a flag would require filtering it on every product query going forward
+- NOT in scope: Cascade delete of cart/order items --- cart_items and order_items reference products without `ON DELETE CASCADE` precisely so historical order data survives a product's removal
+- NOT in scope: Warning UI before delete confirmation --- that is a frontend concern delivered in EP05 (T-011), not the DELETE endpoint itself
+- NOT in scope: Proactive warning endpoint ("this product is in X carts") --- no acceptance criterion requires a pre-check; attempt-then-translate-FK-violation is the chosen pattern (see Anti-patterns)
+- NOT in scope: Batch delete endpoint --- no acceptance criterion requires bulk deletion; the single-resource DELETE covers all stated criteria
 
 ## Anti-patterns
 

@@ -9,6 +9,7 @@
 | Epic     | EP02 --- CSV Import             |
 | Priority | Must Have                       |
 | Status | Ready                           |
+| Estimation | M                             |
 
 ## 2. Story
 
@@ -28,6 +29,7 @@
 - [x] All 10 trap types identified and covered by dedicated ACs
 - [x] Out of scope items explicitly listed
 - [x] Test plan has one dedicated test per trap type
+- [x] Role-gate review completed (PO + Dev Lead + SM readiness review 2026-07-28)
 
 ## 4. Acceptance Criteria
 
@@ -282,7 +284,7 @@ If the team later decides SQLi payloads should also be rejected (defense-in-dept
 - [Data Model --- products, csv_import_jobs, import_errors](../architecture/data-model.md)
 - [Domain Glossary --- Product, CsvImportJob, ImportError, all value objects](../domain-glossary.md)
 - [US-001 --- Project Scaffolding](./US-001-project-scaffolding.md) (dependency)
-- [US-002 --- Shared Validation Module](./US-002-shared-validation.md) (dependency --- provides Malli schemas)
+- [US-002 --- Create Product with Validation & Sanitization](./US-002-create-product.md) (dependency --- provides Malli schemas)
 - [US-005 --- CSV Upload & Background Processing Pipeline](./US-005-csv-upload-processing.md) (dependency --- provides worker/channel)
 - [US-007 --- Import Results & Error Reporting](./US-007-import-results-reporting.md) (downstream)
 

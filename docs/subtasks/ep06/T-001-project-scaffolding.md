@@ -26,20 +26,20 @@ Bootstrap the entire project skeleton: Clojure backend (Ring/Reitit), Angular 22
 
 | File | Lines | Why Needed |
 |------|-------|------------|
-| docs/architecture/tech-stack.md | all | Exact versions and libraries to use |
-| docs/architecture/data-model.md | all | All 7 tables and their DDL |
-| docs/architecture/api-contract.md | all | Health endpoint contract, error envelope shape |
-| docs/architecture/security-guidelines.md | all | buddy-sign dependency, security headers middleware, cookie config, sanitization approach |
+| docs/architecture/tech-stack.md | Section 1 (Stack Overview), Section 2 (Backend), Section 3 (Frontend), Section 6 (Docker Architecture) | Exact versions and libraries to use |
+| docs/architecture/data-model.md | Section 2 (Table Definitions --- all 7 tables) | All 7 tables and their DDL |
+| docs/architecture/api-contract.md | Section 1 (Overview --- Health Check Endpoint), Section 2 (Standard Error Response) | Health endpoint contract, error envelope shape |
+| docs/architecture/security-guidelines.md | Section 2 (Cart Cookie --- Signed Identity), Section 5 (Security Headers), Section 6 (Input Security), Section 9 (Dependency --- buddy-sign) | buddy-sign dependency, security headers middleware, cookie config, sanitization approach |
 | docs/user-stories/US-001-project-scaffolding.md | all | Acceptance criteria for scaffolding |
-| docs/domain-glossary.md | all | Domain terms for naming consistency |
-| docs/architecture/middleware-pipeline.md | all | Middleware stack ordering and assembly |
-| docs/architecture/validation-pruning.md | all | Malli closed schema configuration |
-| docs/architecture/error-handling.md | all | Exception middleware setup |
-| docs/architecture/tdd-workflow.md | all | TDD process for implementation tasks |
-| docs/architecture/api-docs-strategy.md | all | OpenAPI/Swagger UI route setup |
-| docs/architecture/pnpm-config.md | all | pnpm configuration for frontend scaffold |
-| docs/architecture/health-check-strategy.md | all | Health endpoint contract and behavior |
-| docs/architecture/testing-strategy.md | all | Test pyramid, per-epic test matrix, security test cases, TDD scaffolding exception |
+| docs/domain-glossary.md | Entities, Value Objects, Conventions | Domain terms for naming consistency |
+| docs/architecture/middleware-pipeline.md | Section 2 (Middleware Stack), Section 6 (Putting It All Together) | Middleware stack ordering and assembly |
+| docs/architecture/validation-pruning.md | Section 2 (Malli Schema Design --- Closed Maps) | Malli closed schema configuration |
+| docs/architecture/error-handling.md | Section 3 (Custom Exception Middleware) | Exception middleware setup |
+| docs/architecture/tdd-workflow.md | Section 7 (When TDD Doesn't Apply) | TDD process for implementation tasks |
+| docs/architecture/api-docs-strategy.md | Section 4 (Setup) | OpenAPI/Swagger UI route setup |
+| docs/architecture/pnpm-config.md | Section 2 (package.json Configuration), Section 5 (Docker Integration) | pnpm configuration for frontend scaffold |
+| docs/architecture/health-check-strategy.md | Health Endpoint Contract, Shutdown Behavior | Health endpoint contract and behavior |
+| docs/architecture/testing-strategy.md | Section 2 (Test Pyramid), Section 3 (What to Test per Epic), Section 5 (Security Test Cases), Section 7 (TDD Workflow) | Test pyramid, per-epic test matrix, security test cases, TDD scaffolding exception |
 
 ## Deliverables
 
@@ -99,11 +99,11 @@ Bootstrap the entire project skeleton: Clojure backend (Ring/Reitit), Angular 22
 
 ## Boundaries
 
-- NOT in scope: Feature endpoints (CRUD, search, cart, import)
-- NOT in scope: E2E Playwright setup
-- NOT in scope: README content (placeholder README.md is a deliverable of this task)
-- NOT in scope: Frontend routing beyond app shell
-- NOT in scope: Seed data or sample records
+- NOT in scope: Feature endpoints (CRUD, search, cart, import) --- these depend on the scaffolding existing first; each is delivered as its own dedicated task (T-002 onward) per the epic DAG
+- NOT in scope: E2E Playwright setup --- requires the full application stack (every epic) to be meaningful; added in T-015 once every feature exists
+- NOT in scope: README content (placeholder README.md is a deliverable of this task) --- the full README (T-016) must document the final, working system; only a placeholder is needed now
+- NOT in scope: Frontend routing beyond app shell --- no feature views exist yet to route to; routes are added incrementally by each EP05 task
+- NOT in scope: Seed data or sample records --- not required by any acceptance criterion; would add maintenance burden without evaluation value
 
 ## Anti-patterns
 

@@ -9,6 +9,7 @@
 | Epic | [EP05 --- User Interface](../epics/EP05-user-interface.md) |
 | Priority | Must Have |
 | Status | Ready |
+| Estimation | M |
 
 ## 2. Story
 
@@ -26,6 +27,7 @@
 - [x] Test plan exists with test names mapped to ACs
 - [x] Out-of-scope items listed
 - [x] API contract endpoints touched by this story are defined
+- [x] Role-gate review completed (PO + Dev Lead + SM readiness review 2026-07-28)
 
 ## 4. Acceptance Criteria
 
@@ -246,8 +248,8 @@
 - [Testing Strategy](../architecture/testing-strategy.md) --- frontend testing approach
 - [Data Model](../architecture/data-model.md) --- carts, cart_items, orders, order_items tables
 - [US-001 --- Project Scaffolding](./US-001-project-scaffolding.md) --- frontend scaffold dependency
-- [US-009 --- Cart API](./US-009-cart-api.md) --- backend cart endpoints dependency
-- [US-010 --- Checkout & Orders API](./US-010-checkout-orders-api.md) --- backend checkout endpoint dependency
+- [US-009 --- Cart Operations](./US-009-cart-operations.md) --- backend cart endpoints dependency
+- [US-010 --- Checkout & Order Creation](./US-010-checkout-order.md) --- backend checkout endpoint dependency
 - [US-013 --- Product Search View](./US-013-product-search-view.md) --- "Browse Products" link target
 
 ## 13. Handoff Files

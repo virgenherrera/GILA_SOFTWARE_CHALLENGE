@@ -9,6 +9,7 @@
 | Epic | [EP01 --- Product Management](../epics/EP01-product-management.md) |
 | Priority | Must Have |
 | Status | Ready |
+| Estimation | S |
 
 ## 2. Story
 
@@ -24,6 +25,7 @@ As a Catalog Manager, I want to delete a product from the catalog, so that disco
 - [x] Test plan exists with test names mapped to ACs
 - [x] Out-of-scope items listed
 - [x] API contract endpoints touched by this story are defined
+- [x] Role-gate review completed (PO + Dev Lead + SM readiness review 2026-07-28)
 
 ## 4. Acceptance Criteria
 
@@ -47,9 +49,10 @@ As a Catalog Manager, I want to delete a product from the catalog, so that disco
   - **When** `DELETE /api/products/RS-001` is called
   - **Then** the response is `409 Conflict` with `{"error": {"code": "PRODUCT_IN_USE", "message": "Cannot delete product 'RS-001': referenced by existing orders"}}` (the generic message covers both order and cart references); and the product remains in the `products` table; and the `cart_items` row is unaffected
 
-- [ ] **AC-004.5: OrderItems retain historical snapshot after product deletion**
-  - **Given** a product with SKU `"TEMP-001"` was previously ordered (creating `order_items` with `unit_price: 49.99`, `quantity: 2`, `line_subtotal: 99.98`); and the product has since been deleted from the catalog (hypothetical --- this can only happen if the FK constraint is relaxed in a future version, or tested via the unreferenced-delete path where the order referenced a different product)
-  - **Then** for the purpose of this story: if a product is unreferenced and deleted, the deletion does not cascade to unrelated order_items; and order_items rows for OTHER products remain intact with their original `unit_price` and `line_subtotal` snapshots
+- [ ] **AC-004.5: Deleting one product does not affect another product's order_items**
+  - **Given** products `"RS-001"` and `"TEMP-001"` exist in the catalog; and product `"TEMP-001"` has associated `order_items` (`unit_price: 49.99`, `quantity: 2`, `line_subtotal: 99.98`); and product `"RS-001"` is unreferenced by any `cart_items` or `order_items` rows
+  - **When** `DELETE /api/products/RS-001` is called
+  - **Then** the response status is `204 No Content`; and product `"RS-001"` is removed from the `products` table; and product `"TEMP-001"`'s `order_items` rows remain intact and unaffected, retaining their original `unit_price: 49.99` and `line_subtotal: 99.98` values
 
 - [ ] **AC-004.6: Deleted product no longer appears in search results or listing**
   - **Given** a product with SKU `"RS-001"` exists and is unreferenced

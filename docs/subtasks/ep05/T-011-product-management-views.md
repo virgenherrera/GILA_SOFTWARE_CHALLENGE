@@ -30,18 +30,18 @@ Implement Angular 22 product management views: product list with pagination, pro
 | File | Lines | Why Needed |
 |------|-------|------------|
 | docs/user-stories/US-011-product-management-views.md | all | Acceptance criteria for product views |
-| docs/architecture/api-contract.md | all | Product API shapes, pagination params |
-| docs/architecture/tech-stack.md | all | Angular 22, Zod version, component patterns |
+| docs/architecture/api-contract.md | Section 3 (Products API), Section 1 (Overview --- Paging Envelope) | Product API shapes, pagination params |
+| docs/architecture/tech-stack.md | Section 3 (Frontend) | Angular 22, Zod version, component patterns |
 | frontend/src/app/app.routes.ts | all | Existing routes to extend |
 | frontend/src/app/shared/validation/product.schema.ts | all | Existing Zod schemas to reuse or extend |
 | src/ecommerce/validation.clj | all | Backend Malli schemas for contract test reference |
 | frontend/angular.json | all | Build/test configuration |
-| docs/architecture/validation-pruning.md | all | Validation rules that Zod schemas must mirror |
-| docs/architecture/error-handling.md | all | API error response shape for form error display |
-| docs/architecture/security-guidelines.md | all | XSS: Angular auto-escapes template bindings, never use innerHTML |
-| docs/architecture/tdd-workflow.md | all | TDD process for Angular components and Zod validators |
-| docs/architecture/pnpm-config.md | all | pnpm configuration for frontend dependencies |
-| docs/architecture/testing-strategy.md | all | Test pyramid, frontend component testing, EP05 test matrix |
+| docs/architecture/validation-pruning.md | Section 6 (Validation Contract) | Validation rules that Zod schemas must mirror |
+| docs/architecture/error-handling.md | Section 2 (Exception → Error Code Mapping) | API error response shape for form error display |
+| docs/architecture/security-guidelines.md | Section 6 (Input Security --- XSS) | XSS: Angular auto-escapes template bindings, never use innerHTML |
+| docs/architecture/tdd-workflow.md | Section 5 (Frontend TDD) | TDD process for Angular components and Zod validators |
+| docs/architecture/pnpm-config.md | Section 6 (Commands) | pnpm configuration for frontend dependencies |
+| docs/architecture/testing-strategy.md | Section 2 (Test Pyramid), Section 3 (What to Test per Epic --- EP05) | Test pyramid, frontend component testing, EP05 test matrix |
 
 ## Deliverables
 
@@ -100,12 +100,12 @@ Implement Angular 22 product management views: product list with pagination, pro
 
 ## Boundaries
 
-- NOT in scope: CSV import UI (T-012)
-- NOT in scope: Product search or filter UI (T-013)
-- NOT in scope: Responsive/mobile layout
-- NOT in scope: WCAG accessibility compliance
-- NOT in scope: Internationalization (i18n)
-- NOT in scope: Image upload for products
+- NOT in scope: CSV import UI (T-012) --- depends on a distinct backend pipeline (EP02); scoped as its own task to keep the two feature surfaces independently testable
+- NOT in scope: Product search or filter UI (T-013) --- depends on the EP03 search endpoint and is a separate view with its own routing and filter state
+- NOT in scope: Responsive/mobile layout --- no acceptance criterion requires mobile support; the evaluator uses a desktop browser
+- NOT in scope: WCAG accessibility compliance --- not a stated acceptance criterion for this 3-day challenge; noted as a known limitation in the README (T-016) instead
+- NOT in scope: Internationalization (i18n) --- the application targets a single English-speaking evaluator; no multi-locale requirement exists
+- NOT in scope: Image upload for products --- the Product entity (domain-glossary.md) has no image field; adding one would require a schema change outside this task's scope
 
 ## Anti-patterns
 

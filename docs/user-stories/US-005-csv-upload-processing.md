@@ -9,6 +9,7 @@
 | Epic     | EP02 --- CSV Import             |
 | Priority | Must Have                       |
 | Status | Ready                           |
+| Estimation | L                             |
 
 ## 2. Story
 
@@ -26,6 +27,7 @@
 - [x] Domain glossary terms aligned (CsvImportJob, ImportError, status lifecycle)
 - [x] Out of scope items explicitly listed
 - [x] Test plan covers every acceptance criterion
+- [x] Role-gate review completed (PO + Dev Lead + SM readiness review 2026-07-28)
 
 ## 4. Acceptance Criteria
 
@@ -197,7 +199,7 @@
 - [Domain Glossary --- CsvImportJob, ImportError](../domain-glossary.md)
 - [Tech Stack](../architecture/tech-stack.md)
 - [US-001 --- Project Scaffolding](./US-001-project-scaffolding.md) (dependency)
-- [US-002 --- Shared Validation Module](./US-002-shared-validation.md) (dependency)
+- [US-002 --- Create Product with Validation & Sanitization](./US-002-create-product.md) (dependency)
 - [US-006 --- CSV Row Validation](./US-006-csv-row-validation.md) (downstream)
 - [US-007 --- Import Results & Error Reporting](./US-007-import-results-reporting.md) (downstream)
 

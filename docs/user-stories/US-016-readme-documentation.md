@@ -9,6 +9,7 @@
 | Epic | [EP06 --- Containerization & Documentation](../epics/EP06-containerization-docs.md) |
 | Priority | Must Have |
 | Status | Ready |
+| Estimation | S |
 
 ## 2. Story
 
@@ -26,6 +27,7 @@
 - [x] Test plan exists with test names mapped to ACs
 - [x] Out-of-scope items listed
 - [x] API contract endpoints touched by this story are defined
+- [x] Role-gate review completed (PO + Dev Lead + SM readiness review 2026-07-28)
 
 ## 4. Acceptance Criteria
 

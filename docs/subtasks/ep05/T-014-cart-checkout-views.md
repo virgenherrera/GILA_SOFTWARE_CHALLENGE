@@ -28,17 +28,17 @@ Implement an Angular 22 cart view (item list, quantities, totals, adjustment), c
 
 | File | Lines | Why Needed |
 |------|-------|------------|
-| docs/architecture/api-contract.md | Cart and Checkout sections | Endpoints, request/response shapes, error codes |
-| docs/architecture/tech-stack.md | all | Angular 22, Zod, zoneless config |
+| docs/architecture/api-contract.md | Section 5 (Cart API), Section 6 (Checkout and Orders API) | Endpoints, request/response shapes, error codes |
+| docs/architecture/tech-stack.md | Section 3 (Frontend) | Angular 22, Zod, zoneless config |
 | docs/user-stories/US-014-cart-checkout-views.md | all | Acceptance criteria |
 | frontend/src/app/app.routes.ts | all | Current route config to extend |
 | frontend/src/app/shared/layout/ | all | Header component for cart badge |
-| docs/domain-glossary.md | all | Domain terms for naming consistency |
-| docs/architecture/security-guidelines.md | all | Cookie-based cart identity, SameSite behavior in browser |
-| docs/architecture/error-handling.md | all | INSUFFICIENT_STOCK error display at checkout |
-| docs/architecture/tdd-workflow.md | all | TDD process for Angular components |
-| docs/architecture/pnpm-config.md | all | pnpm configuration reference |
-| docs/architecture/testing-strategy.md | all | Test pyramid, purchase workflow test matrix |
+| docs/domain-glossary.md | Entities, Conventions | Domain terms for naming consistency |
+| docs/architecture/security-guidelines.md | Section 2 (Cart Cookie --- Signed Identity), Section 3 (Cookie Attributes) | Cookie-based cart identity, SameSite behavior in browser |
+| docs/architecture/error-handling.md | Section 2 (Exception → Error Code Mapping) | INSUFFICIENT_STOCK error display at checkout |
+| docs/architecture/tdd-workflow.md | Section 5 (Frontend TDD) | TDD process for Angular components |
+| docs/architecture/pnpm-config.md | Section 6 (Commands) | pnpm configuration reference |
+| docs/architecture/testing-strategy.md | Section 2 (Test Pyramid), Section 3 (What to Test per Epic --- EP04) | Test pyramid, purchase workflow test matrix |
 
 ## Deliverables
 
@@ -95,11 +95,11 @@ Implement an Angular 22 cart view (item list, quantities, totals, adjustment), c
 
 ## Boundaries
 
-- NOT in scope: Saved carts or wishlist
-- NOT in scope: Multi-device cart sync
-- NOT in scope: Order history page
-- NOT in scope: Order cancellation
-- NOT in scope: Responsive design or mobile layout
+- NOT in scope: Saved carts or wishlist --- there are no user accounts to attach a saved list to; the cart is intentionally anonymous and single-session
+- NOT in scope: Multi-device cart sync --- the cart is cookie-scoped by design (security-guidelines.md §1); there is no account identity to sync across devices
+- NOT in scope: Order history page --- GET /api/orders (listing) is not part of the API contract (T-010); only lookup by ID is defined
+- NOT in scope: Order cancellation --- orders are immutable once placed (data-model.md §2.4); no acceptance criterion requires reversing a completed purchase
+- NOT in scope: Responsive design or mobile layout --- no acceptance criterion requires mobile support; the evaluator uses a desktop browser
 
 ## Anti-patterns
 

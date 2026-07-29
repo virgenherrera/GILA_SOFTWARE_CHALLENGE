@@ -143,6 +143,7 @@ identifies the affected entity (e.g., the product SKU `"RS-001"`).
 | `PRODUCT_IN_USE` | 409 | Cannot delete a product referenced by existing orders or carts |
 | `INSUFFICIENT_STOCK` | 409 | One or more cart items exceed available stock at checkout time |
 | `INTERNAL_ERROR` | 500 | An unexpected server error; no stack traces, SQL fragments, or file paths are leaked |
+| `SERVICE_UNAVAILABLE` | 503 | The database is unreachable or the connection pool is exhausted; see [Health Check Strategy](health-check-strategy.md) |
 
 ### Security Invariant
 
@@ -162,6 +163,7 @@ Covers EP01 (Product Management) and EP03 (Product Search).
 | Method | Path | Description |
 | ------ | ---- | ----------- |
 | `GET` | `/api/products` | List products (paginated, with search and filters) |
+| `GET` | `/api/products/categories` | List distinct category values |
 | `GET` | `/api/products/:sku` | Get a single product by SKU |
 | `POST` | `/api/products` | Create a new product |
 | `PUT` | `/api/products/:sku` | Update an existing product |
@@ -240,6 +242,31 @@ Returned when filter parameters are malformed (e.g., `priceMin=abc`).
   matching both conditions.
 - Sort is always applied after filtering; applying a filter never resets the sort, and
   applying a sort never bypasses an active filter.
+
+---
+
+### GET /api/products/categories
+
+Returns the distinct category values present in the product catalog, for use in filter
+UIs (see `category` query parameter on `GET /api/products`).
+
+#### Response --- 200 OK
+
+```json
+{
+  "categories": ["Footwear", "Electronics", "Outdoor"]
+}
+```
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `categories` | array of string | Distinct, non-empty `category` values currently in use across the catalog |
+
+#### Behavior Notes
+
+- No authentication is required.
+- The response is not paginated; the full set of distinct categories is returned.
+- Products with an empty or omitted `category` are not represented in this list.
 
 ---
 
@@ -452,7 +479,7 @@ Returned when the product is referenced by existing order or cart items.
 
 Covers EP02 (CSV Import). The import runs as a background job using `core.async`
 channels; the HTTP request returns immediately with a job ID, and the client monitors
-progress via SSE.
+progress by polling `GET /api/imports/:id`.
 
 ### Endpoints
 
@@ -460,8 +487,12 @@ progress via SSE.
 | ------ | ---- | ----------- |
 | `POST` | `/api/imports` | Upload a CSV file (multipart/form-data) |
 | `GET` | `/api/imports/:id` | Get import job status |
-| `GET` | `/api/imports/:id/progress` | SSE stream for real-time progress |
 | `GET` | `/api/imports/:id/errors` | Get import errors (paginated) |
+
+> **v2 Deferred**: `GET /api/imports/:id/progress` (an SSE stream for real-time
+> row-by-row progress) is deferred to v2. MVP v1 uses polling on
+> `GET /api/imports/:id` for import status. All refined user stories unanimously
+> descoped the SSE endpoint from v1.
 
 ---
 
@@ -485,7 +516,7 @@ The file was received and the import job has been queued for background processi
 {
   "job_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
   "status": "Pending",
-  "message": "Import job created. Monitor progress at /api/imports/f47ac10b-58cc-4372-a567-0e02b2c3d479/progress"
+  "message": "Import job created. Poll /api/imports/f47ac10b-58cc-4372-a567-0e02b2c3d479 for status"
 }
 ```
 
@@ -534,6 +565,13 @@ Returns the current state of an import job.
 | `accepted_rows` | integer | Rows successfully imported |
 | `rejected_rows` | integer | Rows that failed validation |
 
+#### Behavior Notes
+
+- Skipped rows (e.g., completely empty rows) are excluded from both `accepted_rows` and
+  `rejected_rows` counts. The invariant is:
+  `accepted_rows + rejected_rows + skipped_rows = total_rows`. Skipped rows do NOT produce
+  `import_errors` entries.
+
 #### Response --- 404 Not Found
 
 ```json
@@ -547,58 +585,15 @@ Returns the current state of an import job.
 
 ---
 
-### GET /api/imports/:id/progress
+### GET /api/imports/:id/progress (v2 Deferred)
 
-Opens a Server-Sent Events (SSE) stream that delivers real-time progress updates as the
-import job processes each row.
+> **v2 Deferred**: This endpoint is deferred to v2. MVP v1 uses polling on
+> `GET /api/imports/:id` for import status.
 
-#### Response --- 200 OK
-
-Content-Type: `text/event-stream`
-
-**Row progress event:**
-
-```
-event: row
-data: {"row_number": 5, "status": "accepted", "sku": "RS-005"}
-```
-
-```
-event: row
-data: {"row_number": 6, "status": "rejected", "field": "price", "reason": "Must be a positive number"}
-```
-
-```
-event: row
-data: {"row_number": 7, "status": "skipped", "reason": "Empty row"}
-```
-
-**Completion event:**
-
-```
-event: complete
-data: {"status": "CompletedWithErrors", "total_rows": 100, "accepted_rows": 92, "rejected_rows": 8}
-```
-
-| SSE Event | Fields | Description |
-| --------- | ------ | ----------- |
-| `row` | `row_number`, `status` (`accepted`, `rejected`, `skipped`), `sku` (if accepted), `field` (if rejected), `reason` (if rejected/skipped) | Emitted after each row is processed |
-| `complete` | `status`, `total_rows`, `accepted_rows`, `rejected_rows` | Emitted once when the job finishes |
-
-#### Behavior Notes
-
-- The `row_number` is 1-indexed and includes the header row in the count, matching what a
-  human sees when opening the CSV in a spreadsheet.
-- If the client connects after the job has already completed, the server sends a single
-  `complete` event and closes the stream.
-- Skipped rows (e.g., completely empty rows) are excluded from both `accepted_rows` and
-  `rejected_rows` counts. The invariant is:
-  `accepted_rows + rejected_rows + skipped_rows = total_rows`. Skipped rows do NOT produce
-  `import_errors` entries.
-
-#### Response --- 404 Not Found
-
-Returned if the import job ID does not exist. Standard error response (JSON, not SSE).
+The v2 design opens a Server-Sent Events (SSE) stream that delivers real-time progress
+updates as the import job processes each row (a `row` event per row, a `complete` event
+on completion). It is documented here only as a forward-looking placeholder --- no v1
+handler, route, or client code should be built against it.
 
 ---
 

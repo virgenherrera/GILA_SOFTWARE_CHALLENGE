@@ -29,19 +29,19 @@ Implement cart API endpoints (GET /api/cart, POST /api/cart/items, PUT /api/cart
 | File | Lines | Why Needed |
 |------|-------|------------|
 | docs/user-stories/US-009-cart-operations.md | all | 17 acceptance criteria to implement |
-| docs/architecture/api-contract.md | 672-871 | Cart endpoint shapes, error envelope |
-| docs/architecture/data-model.md | carts/cart_items sections | carts/cart_items schema, FK constraints |
-| docs/architecture/tech-stack.md | all | Libraries for cookie signing |
+| docs/architecture/api-contract.md | Section 5 (Cart API) | Cart endpoint shapes, error envelope |
+| docs/architecture/data-model.md | Section 2.2 (carts), Section 2.3 (cart_items) | carts/cart_items schema, FK constraints |
+| docs/architecture/tech-stack.md | Section 2 (Backend --- buddy-sign) | Libraries for cookie signing |
 | src/ecommerce/router.clj | all | Router to add cart routes to |
 | src/ecommerce/product/repository.clj | all | Product lookup for stock and price |
 | src/ecommerce/validation.clj | all | Shared Malli schemas |
 | src/ecommerce/middleware.clj | all | Error middleware integration |
 | src/ecommerce/db.clj | all | DB connection for repository layer |
-| docs/architecture/middleware-pipeline.md | all | Cart cookie middleware placement (route-level) |
-| docs/architecture/security-guidelines.md | all | buddy-sign cookie signing, Path=/api, SameSite=Strict, CSRF protection |
-| docs/architecture/error-handling.md | all | INSUFFICIENT_STOCK error code |
-| docs/architecture/tdd-workflow.md | all | TDD process reference |
-| docs/architecture/testing-strategy.md | all | Test pyramid, security test cases, purchase workflow test matrix |
+| docs/architecture/middleware-pipeline.md | Section 7 (Route-Level Middleware) | Cart cookie middleware placement (route-level) |
+| docs/architecture/security-guidelines.md | Section 2 (Cart Cookie --- Signed Identity), Section 3 (Cookie Attributes), Section 4 (CSRF Protection) | buddy-sign cookie signing, Path=/api, SameSite=Strict, CSRF protection |
+| docs/architecture/error-handling.md | Section 2 (Exception → Error Code Mapping) | INSUFFICIENT_STOCK error code |
+| docs/architecture/tdd-workflow.md | Section 3 (Concrete Example), Section 4 (Integration Test Cycle) | TDD process reference |
+| docs/architecture/testing-strategy.md | Section 2 (Test Pyramid), Section 3 (What to Test per Epic --- EP04), Section 5 (Security Test Cases) | Test pyramid, security test cases, purchase workflow test matrix |
 
 ## Deliverables
 
@@ -84,12 +84,12 @@ Implement cart API endpoints (GET /api/cart, POST /api/cart/items, PUT /api/cart
 
 ## Boundaries
 
-- NOT in scope: Checkout flow (T-010)
-- NOT in scope: Cart abandonment or expiry
-- NOT in scope: Multi-device cart sync
-- NOT in scope: Saved/persistent carts for registered users
-- NOT in scope: Cart item quantity limits beyond stock
-- NOT in scope: Frontend cart UI
+- NOT in scope: Checkout flow (T-010) --- checkout is atomic and transactionally distinct from cart mutation; it is sequenced as its own task once cart operations are stable
+- NOT in scope: Cart abandonment or expiry --- the cookie's 30-day Max-Age (security-guidelines.md §3) is the only lifecycle rule required; an active sweep job is not requested by any acceptance criterion
+- NOT in scope: Multi-device cart sync --- the cart is anonymous and cookie-scoped by design (security-guidelines.md §1); there is no account identity to sync across devices
+- NOT in scope: Saved/persistent carts for registered users --- there are no user accounts in this application; the entire purchase flow is intentionally anonymous
+- NOT in scope: Cart item quantity limits beyond stock --- stock availability is the only quantity ceiling defined by any acceptance criterion; an arbitrary business limit is unrequested
+- NOT in scope: Frontend cart UI --- the Angular UI is delivered in EP05 (T-014) once the backend contract is stable
 
 ## Anti-patterns
 

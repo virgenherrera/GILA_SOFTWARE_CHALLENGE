@@ -30,16 +30,16 @@ Implement row-level validation for CSV import using shared Malli schemas from th
 | File | Lines | Why Needed |
 |------|-------|------------|
 | docs/user-stories/US-006-csv-row-validation.md | all | All 15 acceptance criteria and 10 trap types |
-| docs/architecture/api-contract.md | 992-1107 | Validation contract (shared field rules) |
-| docs/architecture/data-model.md | 27-50 | Products table schema (field types, constraints) |
-| docs/architecture/data-model.md | 140-184 | csv_import_jobs and import_errors table schemas |
-| docs/architecture/testing-strategy.md | all | Test pyramid, CSV trap types, security test cases |
+| docs/architecture/api-contract.md | Section 7 (Validation Contract) | Validation contract (shared field rules) |
+| docs/architecture/data-model.md | Section 2.1 (products table) | Products table schema (field types, constraints) |
+| docs/architecture/data-model.md | Section 2.6 (csv_import_jobs), Section 2.7 (import_errors) | csv_import_jobs and import_errors table schemas |
+| docs/architecture/testing-strategy.md | Section 2 (Test Pyramid), Section 4 (Test Data Strategy), Section 5 (Security Test Cases) | Test pyramid, CSV trap types, security test cases |
 | src/ecommerce/validation.clj | all | Shared Malli schemas to reuse (not duplicate) |
 | src/ecommerce/import/worker.clj | all | Go-loop to wire validator into |
 | src/ecommerce/import/repository.clj | all | Import job repository for status updates |
-| docs/architecture/validation-pruning.md | all | Malli validation rules, multi-error collection per row |
-| docs/architecture/security-guidelines.md | all | XSS payload rejection, SQL injection acceptance (parameterized) |
-| docs/architecture/tdd-workflow.md | all | TDD process for each trap type |
+| docs/architecture/validation-pruning.md | Section 3 (Multi-Error Collection), Section 6 (Validation Contract) | Malli validation rules, multi-error collection per row |
+| docs/architecture/security-guidelines.md | Section 6 (Input Security) | XSS payload rejection, SQL injection acceptance (parameterized) |
+| docs/architecture/tdd-workflow.md | Section 2 (What Gets Test-Driven), Section 3 (Concrete Example) | TDD process for each trap type |
 
 ## Deliverables
 
@@ -73,29 +73,29 @@ Implement row-level validation for CSV import using shared Malli schemas from th
 
 | # | Gate | Command/Check | Type | Pass Criteria |
 |---|------|---------------|------|---------------|
-| 1 | Malformed price rejected | `docker compose run --rm backend clojure -M:test` | EXE | Row with price="free" rejected; import_errors.field_name="price" |
-| 2 | Negative stock rejected | `docker compose run --rm backend clojure -M:test` | EXE | Row with stock=-5 rejected; import_errors.field_name="stock" |
-| 3 | Empty name rejected | `docker compose run --rm backend clojure -M:test` | EXE | Row with name="" rejected; import_errors.field_name="name" |
-| 4 | Missing category accepted | `docker compose run --rm backend clojure -M:test` | EXE | Row with empty category accepted; Product created with null category |
-| 5 | Missing weight accepted | `docker compose run --rm backend clojure -M:test` | EXE | Row with empty weight_kg accepted; Product created with null weight_kg |
-| 6 | Empty rows skipped | `docker compose run --rm backend clojure -M:test` | EXE | Empty row creates no ImportError; rejected_rows NOT incremented |
-| 7 | Duplicate SKU in-file | `docker compose run --rm backend clojure -M:test` | EXE | Second occurrence rejected; first accepted |
-| 8 | Duplicate SKU in catalog | `docker compose run --rm backend clojure -M:test` | EXE | Existing catalog SKU triggers upsert; counts as accepted |
-| 9 | XSS rejected | `docker compose run --rm backend clojure -M:test` | EXE | Script tag in name rejected with "Unsafe content detected" |
-| 10 | SQLi accepted as literal | `docker compose run --rm backend clojure -M:test` | EXE | SQL payload stored literally in products.name; table intact |
-| 11 | Shared validation contract | `docker compose run --rm backend clojure -M:test` | EXE | Validator references same Malli schemas as POST /api/products |
-| 12 | Row count reconciliation | `docker compose run --rm backend clojure -M:test` | EXE | total_rows = accepted + rejected + skipped reconciles |
+| 1 | Malformed price rejected | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.validator-test` | EXE | Row with price="free" rejected; import_errors.field_name="price" |
+| 2 | Negative stock rejected | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.validator-test` | EXE | Row with stock=-5 rejected; import_errors.field_name="stock" |
+| 3 | Empty name rejected | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.validator-test` | EXE | Row with name="" rejected; import_errors.field_name="name" |
+| 4 | Missing category accepted | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.validator-test` | EXE | Row with empty category accepted; Product created with null category |
+| 5 | Missing weight accepted | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.validator-test` | EXE | Row with empty weight_kg accepted; Product created with null weight_kg |
+| 6 | Empty rows skipped | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.validator-test` | EXE | Empty row creates no ImportError; rejected_rows NOT incremented |
+| 7 | Duplicate SKU in-file | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.validator-test` | EXE | Second occurrence rejected; first accepted |
+| 8 | Duplicate SKU in catalog | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.pipeline-integration-test` | EXE | Existing catalog SKU triggers upsert; counts as accepted |
+| 9 | XSS rejected | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.validator-test` | EXE | Script tag in name rejected with "Unsafe content detected" |
+| 10 | SQLi accepted as literal | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.pipeline-integration-test` | EXE | SQL payload stored literally in products.name; table intact |
+| 11 | Shared validation contract | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.validator-test` | EXE | Validator references same Malli schemas as POST /api/products |
+| 12 | Row count reconciliation | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.pipeline-integration-test` | EXE | total_rows = accepted + rejected + skipped reconciles |
 | 13 | All tests pass | `docker compose run --rm backend clojure -M:test` | EXE | exit 0 |
 | 14 | No side effects | `git diff --stat` | EXE | Only expected files modified |
 
 ## Boundaries
 
-- NOT in scope: Import results reporting UI or error listing endpoint (that is T-007)
-- NOT in scope: SSE progress streaming
-- NOT in scope: Dry-run preview mode
-- NOT in scope: Export of rejected rows as downloadable file
-- NOT in scope: Custom delimiter or encoding selection
-- NOT in scope: Row-level retry or re-import of individual failed rows
+- NOT in scope: Import results reporting UI or error listing endpoint (that is T-007) --- reporting depends on this task's validation output existing first, so it is sequenced as its own task
+- NOT in scope: SSE progress streaming --- deferred to v2 per api-contract.md §4; this task's row-level status is surfaced via polling instead
+- NOT in scope: Dry-run preview mode --- no acceptance criterion requires previewing validation results before committing rows
+- NOT in scope: Export of rejected rows as downloadable file --- error data is served via the API (T-007); export/download is a distinct, unrequested feature
+- NOT in scope: Custom delimiter or encoding selection --- the sample CSV and acceptance criteria assume a fixed comma-delimited, UTF-8 format; supporting alternatives adds parsing complexity with no stated requirement
+- NOT in scope: Row-level retry or re-import of individual failed rows --- the documented recovery path is re-uploading a corrected file, not per-row retry
 
 ## Anti-patterns
 

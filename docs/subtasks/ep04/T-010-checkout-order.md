@@ -29,19 +29,19 @@ Implement atomic checkout (POST /api/checkout) with SELECT FOR UPDATE concurrenc
 | File | Lines | Why Needed |
 |------|-------|------------|
 | docs/user-stories/US-010-checkout-order.md | all | Acceptance criteria for checkout and orders |
-| docs/architecture/api-contract.md | all | Checkout/order endpoint shapes |
-| docs/architecture/data-model.md | all | orders/order_items schema, cart status enum |
-| docs/architecture/tech-stack.md | all | Transaction support, JDBC details |
+| docs/architecture/api-contract.md | Section 6 (Checkout and Orders API) | Checkout/order endpoint shapes |
+| docs/architecture/data-model.md | Section 2.4 (orders), Section 2.5 (order_items), Section 3 (Status Column Summary) | orders/order_items schema, cart status enum |
+| docs/architecture/tech-stack.md | Section 2 (Backend --- next.jdbc/HikariCP) | Transaction support, JDBC details |
 | src/ecommerce/cart/handler.clj | all | Cart retrieval for checkout |
 | src/ecommerce/cart/repository.clj | all | Cart data access, status update |
 | src/ecommerce/product/repository.clj | all | Product stock lookup and decrement |
 | src/ecommerce/router.clj | all | Router to add checkout/order routes |
 | src/ecommerce/db.clj | all | DB connection, transaction support |
 | src/ecommerce/middleware.clj | all | Error middleware integration |
-| docs/architecture/security-guidelines.md | all | Cart cookie verification at checkout |
-| docs/architecture/error-handling.md | all | INSUFFICIENT_STOCK, atomic rollback error handling |
-| docs/architecture/tdd-workflow.md | all | TDD process for concurrent checkout race test |
-| docs/architecture/testing-strategy.md | all | Test pyramid, security test cases, purchase workflow test matrix |
+| docs/architecture/security-guidelines.md | Section 2 (Cart Cookie --- Signed Identity), Section 3 (Cookie Attributes) | Cart cookie verification at checkout |
+| docs/architecture/error-handling.md | Section 2 (Exception → Error Code Mapping) | INSUFFICIENT_STOCK, atomic rollback error handling |
+| docs/architecture/tdd-workflow.md | Section 4 (Integration Test Cycle) | TDD process for concurrent checkout race test |
+| docs/architecture/testing-strategy.md | Section 2 (Test Pyramid), Section 3 (What to Test per Epic --- EP04), Section 5 (Security Test Cases) | Test pyramid, security test cases, purchase workflow test matrix |
 
 ## Deliverables
 
@@ -84,12 +84,12 @@ Implement atomic checkout (POST /api/checkout) with SELECT FOR UPDATE concurrenc
 
 ## Boundaries
 
-- NOT in scope: Order cancellation or refund
-- NOT in scope: Order Fulfilled status transition
-- NOT in scope: Real payment provider integration
-- NOT in scope: Order history listing (GET /api/orders)
-- NOT in scope: Receipt generation or email
-- NOT in scope: Frontend checkout UI
+- NOT in scope: Order cancellation or refund --- orders are immutable once placed (data-model.md §2.4); no acceptance criterion requires reversing a completed purchase
+- NOT in scope: Order Fulfilled status transition --- v1 uses only `Pending`/`Paid` per data-model.md §2.4; `Fulfilled` is explicitly reserved for v2
+- NOT in scope: Real payment provider integration --- the challenge scope simulates payment (always succeeds); integrating a real provider is explicitly out of scope for a 3-day evaluation
+- NOT in scope: Order history listing (GET /api/orders) --- not part of the API contract; only lookup by ID (GET /api/orders/:id) is defined
+- NOT in scope: Receipt generation or email --- there is no email/notification infrastructure in this application; the order confirmation response itself is the receipt
+- NOT in scope: Frontend checkout UI --- the Angular UI is delivered in EP05 (T-014) once the backend contract is stable
 
 ## Anti-patterns
 

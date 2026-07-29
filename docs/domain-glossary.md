@@ -182,6 +182,19 @@ erDiagram
     CSV_IMPORT_JOB ||--o{ PRODUCT : "creates or updates"
 ```
 
+## Competitive Landscape
+
+Populated during Discover, per the `product` project type classification (see
+[Project Brief](project-brief.md#project-type)). Surveys existing solutions in the
+product-management and e-commerce-admin space to calibrate feature scope and UX
+expectations, not to duplicate their full feature sets.
+
+| Competitor/Alternative | Approach | Strengths | Weaknesses | Relevance |
+| ----------------------- | -------- | --------- | ---------- | --------- |
+| Shopify Admin | Full-featured SaaS e-commerce platform | Complete ecosystem, massive plugin library | Vendor lock-in, monthly costs, opaque customization | Sets UX expectations for product CRUD and CSV import |
+| WooCommerce | WordPress plugin for e-commerce | Open source, flexible, huge community | PHP-dependent, performance at scale, security surface | Validates CSV import and search as core features |
+| Custom admin panels (internal tools) | Bespoke CRUD interfaces for product catalogs | Exact fit for business rules, no vendor dependency | High build cost, no ecosystem, maintenance burden | Direct comparison --- this project IS a custom admin panel |
+
 ## Conventions
 
 ### Naming & Terminology

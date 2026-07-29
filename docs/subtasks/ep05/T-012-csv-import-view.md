@@ -30,15 +30,15 @@ Implement Angular 22 CSV import interface with file upload triggering POST /api/
 | File | Lines | Why Needed |
 |------|-------|------------|
 | docs/user-stories/US-012-csv-import-view.md | all | Acceptance criteria for import UI |
-| docs/architecture/api-contract.md | all | Import API shapes, multipart upload, status enum |
-| docs/architecture/tech-stack.md | all | Angular 22 conventions, polling approach |
+| docs/architecture/api-contract.md | Section 4 (CSV Import API) | Import API shapes, multipart upload, status enum |
+| docs/architecture/tech-stack.md | Section 3 (Frontend), Section 7 (CSV Import Pipeline) | Angular 22 conventions, polling approach |
 | frontend/src/app/app.routes.ts | all | Existing routes to extend |
 | frontend/angular.json | all | Build/test configuration |
-| docs/architecture/error-handling.md | all | API error response shape for import error display |
-| docs/architecture/security-guidelines.md | all | Display of raw_row_data must be safely escaped |
-| docs/architecture/tdd-workflow.md | all | TDD process for Angular components |
-| docs/architecture/pnpm-config.md | all | pnpm configuration reference |
-| docs/architecture/testing-strategy.md | all | Test pyramid, CSV import test matrix, security test cases |
+| docs/architecture/error-handling.md | Section 2 (Exception → Error Code Mapping) | API error response shape for import error display |
+| docs/architecture/security-guidelines.md | Section 6 (Input Security --- XSS) | Display of raw_row_data must be safely escaped |
+| docs/architecture/tdd-workflow.md | Section 5 (Frontend TDD) | TDD process for Angular components |
+| docs/architecture/pnpm-config.md | Section 6 (Commands) | pnpm configuration reference |
+| docs/architecture/testing-strategy.md | Section 2 (Test Pyramid), Section 3 (What to Test per Epic --- EP05), Section 5 (Security Test Cases) | Test pyramid, CSV import test matrix, security test cases |
 
 ## Deliverables
 
@@ -91,12 +91,12 @@ Implement Angular 22 CSV import interface with file upload triggering POST /api/
 
 ## Boundaries
 
-- NOT in scope: SSE real-time progress (deferred to v2)
-- NOT in scope: Drag-and-drop file upload
-- NOT in scope: Re-import failed rows
-- NOT in scope: CSV download of error report
-- NOT in scope: Multiple simultaneous uploads UI
-- NOT in scope: Upload progress bar (file transfer %)
+- NOT in scope: SSE real-time progress (deferred to v2) --- polling GET /api/imports/:id (backed by T-005/T-007) is the chosen v1 mechanism per api-contract.md §4
+- NOT in scope: Drag-and-drop file upload --- a standard file input satisfies AC-012's upload requirement; drag-and-drop is a UX enhancement, not a stated criterion
+- NOT in scope: Re-import failed rows --- the documented recovery path is re-uploading a full corrected file (T-005/T-006), not a per-row retry UI
+- NOT in scope: CSV download of error report --- the paginated error table already surfaces every field needed to fix the source file; export is unrequested
+- NOT in scope: Multiple simultaneous uploads UI --- no acceptance criterion requires concurrent uploads from a single user session; one active import at a time is sufficient
+- NOT in scope: Upload progress bar (file transfer %) --- distinct from job-processing status (Pending/Processing/Completed); no acceptance criterion requires transfer-percentage feedback
 
 ## Anti-patterns
 

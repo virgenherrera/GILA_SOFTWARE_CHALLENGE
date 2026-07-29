@@ -9,6 +9,7 @@
 | Epic     | EP03 --- Product Search (also serves EP01 listing) |
 | Priority | Must Have                                          |
 | Status | Ready                                              |
+| Estimation | M                                                |
 
 ## 2. Story
 
@@ -31,6 +32,7 @@ This story MERGES the original US-002 (Read & List Products) because `GET /api/p
 - [x] Sort vs relevance precedence rules defined
 - [x] Out of scope items explicitly listed
 - [x] Test plan covers every acceptance criterion
+- [x] Role-gate review completed (PO + Dev Lead + SM readiness review 2026-07-28)
 
 ## 4. Acceptance Criteria
 
@@ -322,7 +324,7 @@ This story MERGES the original US-002 (Read & List Products) because `GET /api/p
 - [Data Model --- products, search_vector, GIN index](../architecture/data-model.md)
 - [Domain Glossary --- Product, CategoryLabel, Price, SKU](../domain-glossary.md)
 - [US-001 --- Project Scaffolding](./US-001-project-scaffolding.md) (dependency)
-- [US-002 --- Shared Validation Module](./US-002-shared-validation.md) (dependency --- products must exist to search)
+- [US-002 --- Create Product with Validation & Sanitization](./US-002-create-product.md) (dependency --- products must exist to search)
 
 ## 13. Handoff Files
 

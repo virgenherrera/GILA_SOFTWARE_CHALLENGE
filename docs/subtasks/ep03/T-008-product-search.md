@@ -30,19 +30,19 @@ Implement `GET /api/products` (paginated listing with full-text search, category
 | File | Lines | Why Needed |
 |------|-------|------------|
 | docs/user-stories/US-008-product-search.md | all | All 18 acceptance criteria |
-| docs/architecture/api-contract.md | 108-200 | GET /api/products and GET /api/products/:sku contracts |
-| docs/architecture/api-contract.md | 36-66 | Standard paging envelope specification |
-| docs/architecture/data-model.md | 27-50 | Products table schema with search_vector column |
-| docs/architecture/data-model.md | 189-246 | Full-text search: trigger, GIN index, query pattern |
+| docs/architecture/api-contract.md | Section 3 (Products API --- GET /api/products, GET /api/products/:sku) | GET /api/products and GET /api/products/:sku contracts |
+| docs/architecture/api-contract.md | Section 1 (Overview --- Paging Envelope) | Standard paging envelope specification |
+| docs/architecture/data-model.md | Section 2.1 (products table --- search_vector column) | Products table schema with search_vector column |
+| docs/architecture/data-model.md | Section 4 (Full-Text Search) | Full-text search: trigger, GIN index, query pattern |
 | src/ecommerce/product/handler.clj | all | Existing handler to extend with GET endpoints |
 | src/ecommerce/product/repository.clj | all | Existing repository to add search query functions |
 | src/ecommerce/db.clj | all | Database connection pool usage |
-| docs/architecture/middleware-pipeline.md | all | Query parameter coercion via Reitit middleware |
-| docs/architecture/validation-pruning.md | all | Query parameter validation (priceMin, priceMax, sortBy) |
-| docs/architecture/error-handling.md | all | Exception→error code translation for search errors |
-| docs/architecture/security-guidelines.md | all | Search input security (script content in search queries) |
-| docs/architecture/tdd-workflow.md | all | TDD process reference |
-| docs/architecture/testing-strategy.md | all | Test pyramid, security test cases, search-specific test matrix |
+| docs/architecture/middleware-pipeline.md | Section 2 (Middleware Stack) | Query parameter coercion via Reitit middleware |
+| docs/architecture/validation-pruning.md | Section 4 (Coercion Behavior) | Query parameter validation (priceMin, priceMax, sortBy) |
+| docs/architecture/error-handling.md | Section 2 (Exception → Error Code Mapping) | Exception→error code translation for search errors |
+| docs/architecture/security-guidelines.md | Section 6 (Input Security) | Search input security (script content in search queries) |
+| docs/architecture/tdd-workflow.md | Section 3 (Concrete Example), Section 4 (Integration Test Cycle) | TDD process reference |
+| docs/architecture/testing-strategy.md | Section 2 (Test Pyramid), Section 3 (What to Test per Epic --- EP03), Section 5 (Security Test Cases) | Test pyramid, security test cases, search-specific test matrix |
 
 ## Deliverables
 
@@ -65,32 +65,32 @@ Implement `GET /api/products` (paginated listing with full-text search, category
 
 | # | Gate | Command/Check | Type | Pass Criteria |
 |---|------|---------------|------|---------------|
-| 1 | Default listing | `docker compose run --rm backend clojure -M:test` | EXE | page=1, perPage=20, sortBy=name, sortOrder=asc |
-| 2 | Single product by SKU | `docker compose run --rm backend clojure -M:test` | EXE | GET /api/products/:sku returns 200 or 404 |
-| 3 | Full-text search | `docker compose run --rm backend clojure -M:test` | EXE | ?q=running matches via tsvector/plainto_tsquery |
-| 4 | Category filter | `docker compose run --rm backend clojure -M:test` | EXE | ?category=Footwear returns exact match only |
-| 5 | Price range filter | `docker compose run --rm backend clojure -M:test` | EXE | ?priceMin=10&priceMax=100 with inclusive bounds |
-| 6 | Sort controls | `docker compose run --rm backend clojure -M:test` | EXE | sortBy=price/stock/name with sortOrder=asc/desc |
-| 7 | Relevance ranking | `docker compose run --rm backend clojure -M:test` | EXE | q+no sortBy -> ts_rank DESC; q+sortBy -> sortBy wins; no q -> name ASC |
-| 8 | Cumulative filters | `docker compose run --rm backend clojure -M:test` | EXE | category+priceRange+search applied with AND logic |
-| 9 | Empty catalog | `docker compose run --rm backend clojure -M:test` | EXE | Returns 200, items=[], paging.total=0 |
-| 10 | Page beyond last | `docker compose run --rm backend clojure -M:test` | EXE | Returns 200, items=[], prev points to last valid page |
-| 11 | Invalid params 400 | `docker compose run --rm backend clojure -M:test` | EXE | page=0, perPage=200, priceMin=abc all return 400 |
-| 12 | XSS in query sanitized | `docker compose run --rm backend clojure -M:test` | EXE | Script tags treated as plain text by plainto_tsquery |
-| 13 | SQLi in query neutralized | `docker compose run --rm backend clojure -M:test` | EXE | SQL payload parameterized; products table intact |
-| 14 | Paging preserves params | `docker compose run --rm backend clojure -M:test` | EXE | next/prev URLs include q, category, priceMin, priceMax, sortBy, sortOrder |
-| 15 | No internal details leaked | `docker compose run --rm backend clojure -M:test` | EXE | Error responses contain no stack traces, SQL, or file paths |
+| 1 | Default listing | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.search-integration-test` | EXE | page=1, perPage=20, sortBy=name, sortOrder=asc |
+| 2 | Single product by SKU | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.search-integration-test` | EXE | GET /api/products/:sku returns 200 or 404 |
+| 3 | Full-text search | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.search-integration-test` | EXE | ?q=running matches via tsvector/plainto_tsquery |
+| 4 | Category filter | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.search-integration-test` | EXE | ?category=Footwear returns exact match only |
+| 5 | Price range filter | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.search-integration-test` | EXE | ?priceMin=10&priceMax=100 with inclusive bounds |
+| 6 | Sort controls | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.search-integration-test` | EXE | sortBy=price/stock/name with sortOrder=asc/desc |
+| 7 | Relevance ranking | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.search-integration-test` | EXE | q+no sortBy -> ts_rank DESC; q+sortBy -> sortBy wins; no q -> name ASC |
+| 8 | Cumulative filters | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.search-integration-test` | EXE | category+priceRange+search applied with AND logic |
+| 9 | Empty catalog | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.search-integration-test` | EXE | Returns 200, items=[], paging.total=0 |
+| 10 | Page beyond last | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.search-integration-test` | EXE | Returns 200, items=[], prev points to last valid page |
+| 11 | Invalid params 400 | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.search-test` | EXE | page=0, perPage=200, priceMin=abc all return 400 |
+| 12 | XSS in query sanitized | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.search-integration-test` | EXE | Script tags treated as plain text by plainto_tsquery |
+| 13 | SQLi in query neutralized | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.search-integration-test` | EXE | SQL payload parameterized; products table intact |
+| 14 | Paging preserves params | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.search-test` | EXE | next/prev URLs include q, category, priceMin, priceMax, sortBy, sortOrder |
+| 15 | No internal details leaked | `docker compose run --rm backend clojure -M:test --focus :ecommerce.product.search-integration-test` | EXE | Error responses contain no stack traces, SQL, or file paths |
 | 16 | All tests pass | `docker compose run --rm backend clojure -M:test` | EXE | exit 0 |
 | 17 | No side effects | `git diff --stat` | EXE | Only expected files modified |
 
 ## Boundaries
 
-- NOT in scope: Search suggestions or autocomplete
-- NOT in scope: Session-remembered filters (last-used filters within a session)
-- NOT in scope: Faceted search (showing category counts alongside results)
-- NOT in scope: Full-text search highlighting (bold matching terms in results)
-- NOT in scope: Result caching layer
-- NOT in scope: Fuzzy or typo-tolerant search
+- NOT in scope: Search suggestions or autocomplete --- no acceptance criterion requires predictive input; adds a separate query path with no evaluation weight
+- NOT in scope: Session-remembered filters (last-used filters within a session) --- the cart is the only session-scoped state in this application; persisting filter state adds complexity with no stated requirement
+- NOT in scope: Faceted search (showing category counts alongside results) --- requires an additional aggregation query per request; not required by any acceptance criterion at this catalog scale
+- NOT in scope: Full-text search highlighting (bold matching terms in results) --- a presentation concern with no backend contract implication; not requested by any acceptance criterion
+- NOT in scope: Result caching layer --- PostgreSQL's GIN index is sufficient at the expected catalog scale (see tech-stack.md §4); caching would add invalidation complexity without a demonstrated need
+- NOT in scope: Fuzzy or typo-tolerant search --- `plainto_tsquery` provides exact-token full-text matching; typo tolerance would require a separate extension (e.g., `pg_trgm`) not justified by the acceptance criteria
 
 ## Anti-patterns
 

@@ -192,16 +192,18 @@ All versions are pinned exactly in `package.json` --- no `^`, no `~`, no `*`.
 
 ## 5. Build Pipeline & Quality Gates
 
-Three sequential stages. Each stage is a gate --- a failure at any point aborts the
-pipeline. All stages run inside Docker containers.
+Four sequential stages. Each stage is a gate --- a failure at any point aborts the
+pipeline. All stages run inside Docker containers. Stage 4 (Audit) is **NON-WAIVABLE**
+per AGENTS.md AXIOM-ECHO --- every project must define `{audit_command}`.
 
 ```mermaid
 flowchart LR
-    BUILD["Stage 1: BUILD"] --> TEST["Stage 2: TEST"] --> E2E["Stage 3: E2E"]
+    BUILD["Stage 1: BUILD"] --> TEST["Stage 2: TEST"] --> E2E["Stage 3: E2E"] --> AUDIT["Stage 4: AUDIT"]
 
     style BUILD fill:#3b82f6,color:#fff
     style TEST fill:#f59e0b,color:#fff
     style E2E fill:#22c55e,color:#fff
+    style AUDIT fill:#ef4444,color:#fff
 ```
 
 ### Stage 1: BUILD (artifacts)
@@ -227,10 +229,19 @@ feedback). Dynamic tests run second.
 
 | Check | Backend Command | Frontend Command |
 | ----- | --------------- | ---------------- |
-| Lint | `clojure -M:lint` (clj-kondo) | `pnpm exec ng lint` (eslint + angular-eslint) |
-| Format | `clojure -M:fmt --check` (cljfmt) | `pnpm exec prettier --check .` |
+| Lint | `clojure -M:lint` (clj-kondo `2024.08.01`) | `pnpm exec ng lint` (eslint `9.27.0` + angular-eslint `19.6.0`) |
+| Format | `clojure -M:fmt --check` (cljfmt `0.13.0`) | `pnpm exec prettier --check .` (prettier `3.4.2`) |
 
 **Gate**: zero lint errors, zero format violations. Warnings are allowed but tracked.
+
+| Dev Tool | Version | Ecosystem | Purpose |
+| -------- | ------- | --------- | ------- |
+| `clj-kondo/clj-kondo` | 2024.08.01 | Clojure (`:lint` alias in `deps.edn`) | Static analysis, linting |
+| `weavejester/cljfmt` | 0.13.0 | Clojure (`:fmt` alias in `deps.edn`) | Format checking/enforcement |
+| `prettier` | 3.4.2 | Node.js (`devDependencies` in `package.json`) | Format checking/enforcement |
+
+All three are pinned exactly --- same version-policy guarantee as the runtime and
+library dependency tables above. Compliance is verified by Stage 4 (Audit, Section 5).
 
 #### 2b. Dynamic Tests (unit + integration)
 
@@ -276,6 +287,34 @@ pnpm exec playwright test
 
 **Gate**: all E2E tests pass against the fully composed application.
 
+### Stage 4: AUDIT (dependency security + version policy)
+
+Verifies two independent concerns: known-vulnerability scanning of every dependency, and
+compliance with the version policy (Section 2/3: exact versions only, no floating
+ranges, LTS runtimes). This stage is **NON-WAIVABLE** --- it runs even when Stage 3 (E2E)
+is skipped or unavailable.
+
+| Check | Backend Command | Frontend Command |
+| ----- | --------------- | ----------------- |
+| Outdated/vulnerable deps | `clojure -M:outdated` (antq) | `pnpm audit --audit-level=moderate` |
+| Available upgrades | `clojure -M:outdated` (antq, same run) | `pnpm outdated` |
+| Version policy check | `deps.edn` has no `RELEASE`/`LATEST`/range markers (grep-verified) | `package.json` has no `^`, `~`, `*` markers (grep-verified) |
+
+**Composite command** (`{audit_command}`): runs both ecosystems' audits sequentially and
+fails on the first non-zero exit.
+
+```bash
+docker compose run --rm backend clojure -M:outdated && \
+  docker compose run --rm frontend pnpm audit --audit-level=moderate && \
+  docker compose run --rm frontend pnpm outdated --long
+```
+
+**Gate**: zero known vulnerabilities at `moderate` severity or above, and zero version
+policy violations (no floating/range version specifiers in `deps.edn` or
+`package.json`). `antq` and `pnpm outdated` reporting available-but-not-yet-adopted
+upgrades does NOT fail the gate --- only unresolved vulnerabilities and policy
+violations do.
+
 ### Pipeline Summary
 
 | Stage | What | Gate Condition | Type |
@@ -284,9 +323,71 @@ pnpm exec playwright test
 | 2a. TEST static | Lint + format | Zero errors | EXE |
 | 2b. TEST dynamic | Unit + integration (by name) | All pass, zero skipped | EXE |
 | 3. E2E | Playwright full-stack | All pass | EXE |
+| 4. AUDIT | Dependency vulnerability scan + version policy | Zero vulnerabilities, zero policy violations | EXE |
 
 Every gate is `EXE` (deterministic, automatable, copy-pasteable shell command). No
-subjective `MAN` gates exist in the build pipeline.
+subjective `MAN` gates exist in the build pipeline. Stage 4 (Audit) is NON-WAIVABLE
+per AGENTS.md AXIOM-ECHO --- unlike Stage 3 (E2E), it cannot be omitted with
+justification.
+
+### Pre-Commit Hook (Structural Enforcement of AXIOM-ECHO)
+
+Per AGENTS.md, the pre-commit hook MUST run the Echo System and exit non-zero on
+failure --- this is structural enforcement, not a suggestion the developer can skip.
+
+**Tool choice**: a plain POSIX shell script, not Husky. The zero-local-install
+guarantee (Section 6) means the host has no Node.js and no `npm`/`pnpm` outside
+Docker, so a Husky install step (`npx husky init`) would violate that guarantee
+before a single container exists. A shell script committed to the repo and wired
+into `.git/hooks/pre-commit` has no host dependency beyond `git` and `docker`,
+which are already required to run the project at all.
+
+`scripts/pre-commit.sh`:
+
+```bash
+#!/usr/bin/env sh
+# Structural enforcement of AXIOM-ECHO: runs the Echo System (Stages 1-4)
+# before allowing a commit. Exits non-zero on the first failing stage.
+set -e
+
+echo "Echo System: Stage 1 (BUILD)"
+docker compose run --rm backend clojure -T:build uber
+docker compose run --rm frontend pnpm exec ng build --configuration=production
+
+echo "Echo System: Stage 2a (STATIC ANALYSIS)"
+docker compose run --rm backend clojure -M:lint
+docker compose run --rm backend clojure -M:fmt --check
+docker compose run --rm frontend pnpm exec ng lint
+docker compose run --rm frontend pnpm exec prettier --check .
+
+echo "Echo System: Stage 2b (DYNAMIC TESTS)"
+docker compose run --rm backend clojure -M:test
+docker compose run --rm frontend pnpm exec vitest run
+
+echo "Echo System: Stage 4 (AUDIT)"
+docker compose run --rm backend clojure -M:outdated
+docker compose run --rm frontend pnpm audit --audit-level=moderate
+
+echo "Echo System: all gates green --- commit allowed"
+```
+
+**Installation** (one-time, per clone --- documented in `README.md`):
+
+```bash
+ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
+
+**Rules**:
+
+- `set -e` ensures the script exits non-zero on the first failing command --- `git commit`
+  is aborted and no gate can be silently skipped.
+- Stage 3 (E2E) is intentionally excluded from the pre-commit hook: it requires the full
+  Compose stack running (`docker compose up`), which is too slow for a per-commit gate.
+  Stage 3 still runs in the full pipeline (Section 9) before merge/delivery.
+- `scripts/pre-commit.sh` is the single source of truth for the hook body; `.git/hooks/`
+  is never committed (git does not track it), so the symlink step above is required
+  once per clone.
 
 ## 6. Docker Architecture
 
@@ -625,10 +726,19 @@ flowchart TD
         E1 --> E2
     end
 
+    subgraph "Stage 4: AUDIT"
+        A1[Backend: clojure -M:outdated / antq]
+        A2[Frontend: pnpm audit]
+        A3[Frontend: pnpm outdated]
+        A2 --> A3
+    end
+
     B2 --> S1
     B4 --> S3
     D1 --> E1
     D2 --> E1
+    E2 --> A1
+    E2 --> A2
 
     style B2 fill:#3b82f6,color:#fff
     style B4 fill:#3b82f6,color:#fff
@@ -637,6 +747,8 @@ flowchart TD
     style D1 fill:#f59e0b,color:#fff
     style D2 fill:#f59e0b,color:#fff
     style E2 fill:#22c55e,color:#fff
+    style A1 fill:#ef4444,color:#fff
+    style A2 fill:#ef4444,color:#fff
 ```
 
 ### Gate Echo Protocol
@@ -679,6 +791,17 @@ VERDICT: STAGE 2 CLEAR — proceeding to E2E
 GATE: Stage 3 — E2E
 ───────────────────────────────────────────────────
   [PASS] Playwright:           8 passed, 0 failed
+───────────────────────────────────────────────────
+VERDICT: STAGE 3 CLEAR — proceeding to AUDIT
+═══════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════
+GATE: Stage 4 — AUDIT
+───────────────────────────────────────────────────
+  [PASS] clojure -M:outdated:  0 vulnerable, 3 outdated (non-blocking)
+  [PASS] pnpm audit:           0 vulnerabilities (moderate+)
+  [PASS] pnpm outdated:        1 outdated (non-blocking)
+  [PASS] Version policy:       0 floating/range specifiers in deps.edn, package.json
 ───────────────────────────────────────────────────
 VERDICT: ALL GATES CLEAR — pipeline complete
 ═══════════════════════════════════════════════════
@@ -742,6 +865,19 @@ docker compose run --rm frontend pnpm exec vitest run '**/*.integration.spec.ts'
 docker compose run --rm playwright pnpm exec playwright test
 ```
 
+### Stage 4: Audit Commands
+
+```bash
+# Backend: outdated + vulnerable dependency report (antq)
+docker compose run --rm backend clojure -M:outdated
+
+# Frontend: known-vulnerability scan (fails at moderate severity or above)
+docker compose run --rm frontend pnpm audit --audit-level=moderate
+
+# Frontend: outdated dependency report (non-blocking, informational)
+docker compose run --rm frontend pnpm outdated --long
+```
+
 ### Database Commands
 
 ```bash
@@ -763,8 +899,110 @@ docker compose down -v && docker compose up --build
 | `{test_command}` | `docker compose run --rm backend clojure -M:test` |
 | `{test_command_fe}` | `docker compose run --rm frontend pnpm exec vitest run` |
 | `{e2e_command}` | `docker compose run --rm playwright pnpm exec playwright test` |
+| `{audit_command}` | `docker compose run --rm backend clojure -M:outdated && docker compose run --rm frontend pnpm audit --audit-level=moderate && docker compose run --rm frontend pnpm outdated --long` |
+| `{audit_command_be}` | `docker compose run --rm backend clojure -M:outdated` |
+| `{audit_command_fe}` | `docker compose run --rm frontend pnpm audit --audit-level=moderate` |
 
-## 10. Alternatives Considered
+## 10. Epic Dependency DAG
+
+Epic-and-capability-level dependency mapping (Dependency Mapping gate, Architect phase
+per AGENTS.md). This is the coarse-grained DAG; it is refined to story-level at the
+Dependency Ordering gate during Refine/Plan, and to task-level in each batch plan.
+
+### Epic-Level Dependencies
+
+```mermaid
+flowchart TD
+    EP06A["EP06: Infrastructure<br/>(Docker scaffolding, DB schema)"] --> EP01["EP01: Product Management<br/>(Product CRUD + entity)"]
+
+    EP01 --> EP02["EP02: CSV Import"]
+    EP01 --> EP03["EP03: Product Search"]
+    EP01 --> EP04["EP04: Purchase Workflow"]
+
+    EP01 --> EP05["EP05: User Interface<br/>(Angular frontend)"]
+    EP02 --> EP05
+    EP03 --> EP05
+    EP04 --> EP05
+    EP06A --> EP05
+
+    EP05 --> EP06B["EP06: Docker Finalization<br/>+ README"]
+
+    style EP06A fill:#64748b,color:#fff
+    style EP06B fill:#64748b,color:#fff
+    style EP01 fill:#3b82f6,color:#fff
+    style EP02 fill:#f59e0b,color:#fff
+    style EP03 fill:#f59e0b,color:#fff
+    style EP04 fill:#f59e0b,color:#fff
+    style EP05 fill:#22c55e,color:#fff
+```
+
+**Reading the graph**:
+
+- **EP06 (Infrastructure)** runs first: Docker Compose skeleton, database schema, and CI
+  scaffolding. Nothing else can start until containers and the schema exist.
+- **EP01 (Product Management)** is the load-bearing epic: it owns the Product entity and
+  its CRUD API. EP02, EP03, EP04, and EP05 all depend on EP01 being in place before their
+  own work can begin, because they all read or write Product records.
+- **EP02 (CSV Import)**, **EP03 (Product Search)**, and **EP04 (Purchase Workflow)** are
+  mutually independent --- they share no code with each other, only with EP01. They can be
+  built in parallel once EP01 lands.
+- **EP05 (User Interface)** depends on all four backend epics (EP01-EP04): the Angular
+  frontend needs the Product CRUD API, the CSV import endpoint, the search endpoint, and
+  the cart/checkout endpoints all to exist before their corresponding views can be wired
+  up. It also depends on EP06's initial scaffolding (the frontend Docker service and
+  nginx proxy configuration).
+- **EP06 (Docker Finalization + README)** is a second, later phase of EP06: once EP05
+  (the frontend) is complete, the Compose topology is finalized (health checks, service
+  dependencies, `.env.example`) and the README is written against the fully working
+  system. It is split from EP06's initial scaffolding phase because it can only be
+  written accurately after every other epic is functional.
+
+### Capability-Level Shared Dependency: the Product Entity
+
+```mermaid
+flowchart LR
+    EP01["EP01: Product Management<br/>(owns schema + repository)"] -->|"provides Product<br/>entity + repository"| PE[("Product entity")]
+    PE -->|"read/write"| EP02["EP02: CSV Import"]
+    PE -->|"read (filtered)"| EP03["EP03: Product Search"]
+    PE -->|"read + stock decrement"| EP04["EP04: Purchase Workflow"]
+
+    style EP01 fill:#3b82f6,color:#fff
+    style PE fill:#f59e0b,color:#000
+```
+
+The Product entity (schema, repository namespace, and Malli/Zod validation contract) is
+defined once in EP01 and consumed --- never redefined --- by EP02, EP03, and EP04:
+
+| Epic | Relationship to Product entity |
+| ---- | ------------------------------- |
+| EP01 | Owns the schema, repository, and CRUD API. Source of truth. |
+| EP02 | Writes (insert/update) via the same repository functions EP01 exposes; does not redefine validation rules. |
+| EP03 | Reads via `tsvector`/`tsquery` search queries against the same table; no schema changes. |
+| EP04 | Reads for cart/order line items and decrements `stock` transactionally; no schema changes. |
+
+This is the shared entity contract required by the Dependency Mapping gate: any change to
+the Product schema in EP01 is a breaking change for EP02, EP03, and EP04, and must be
+coordinated as such rather than treated as an isolated EP01 change.
+
+## 11. Non-Functional Requirement Targets
+
+Measurable targets, not qualitative claims. These replace prior wording such as "in
+seconds" or "sufficient" with concrete, testable thresholds.
+
+| NFR | Target | Applies To |
+| --- | ------ | ---------- |
+| API response time (CRUD) | < 200ms p95 | Product CRUD endpoints (EP01) |
+| API response time (search/CSV) | < 500ms p95 | Search queries (EP03), CSV row processing (EP02) |
+| CSV import throughput | 1,000 rows in < 10s | Background import job (EP02) |
+| Test coverage | > 80% line coverage | Backend (Kaocha + Cloverage) and frontend (Vitest) |
+| Health check response time | < 50ms | `/api/health` endpoint (see [Health Check Strategy](health-check-strategy.md)) |
+
+These targets are verified by the Dynamic Tests stage (Section 5, Stage 2b) and, for
+response-time targets, by dedicated performance assertions in the integration test
+suite. A target that cannot be met MUST be renegotiated via the ADR process (see
+AGENTS.md) before being silently downgraded to a qualitative claim.
+
+## 12. Alternatives Considered
 
 Consolidated decision table covering all major architectural choices.
 

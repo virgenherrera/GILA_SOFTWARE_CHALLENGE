@@ -29,19 +29,19 @@ Implement `POST /api/imports` for CSV file upload with background processing via
 
 | File | Lines | Why Needed |
 |------|-------|------------|
-| docs/architecture/api-contract.md | 468-546 | POST /api/imports and GET /api/imports/:id contracts |
-| docs/architecture/data-model.md | 140-184 | csv_import_jobs and import_errors table schemas |
-| docs/architecture/testing-strategy.md | all | Test pyramid, CSV trap types, security test cases |
+| docs/architecture/api-contract.md | Section 4 (CSV Import API --- POST /api/imports, GET /api/imports/:id) | POST /api/imports and GET /api/imports/:id contracts |
+| docs/architecture/data-model.md | Section 2.6 (csv_import_jobs), Section 2.7 (import_errors) | csv_import_jobs and import_errors table schemas |
+| docs/architecture/testing-strategy.md | Section 2 (Test Pyramid), Section 4 (Test Data Strategy), Section 5 (Security Test Cases) | Test pyramid, CSV trap types, security test cases |
 | docs/user-stories/US-005-csv-upload-processing.md | all | All 9 acceptance criteria |
-| docs/architecture/tech-stack.md | all | Library versions (core.async, clojure.data.csv, Ring) |
+| docs/architecture/tech-stack.md | Section 2 (Backend --- Libraries), Section 7 (CSV Import Pipeline) | Library versions (core.async, clojure.data.csv, Ring) |
 | src/ecommerce/router.clj | all | Current route definitions to extend |
 | src/ecommerce/middleware.clj | all | Error handling middleware patterns |
 | src/ecommerce/db.clj | all | Database connection pool usage |
-| docs/architecture/middleware-pipeline.md | all | Multipart middleware placement (route-level only on POST /api/imports) |
-| docs/architecture/validation-pruning.md | all | Malli validation rules for CSV row fields |
-| docs/architecture/error-handling.md | all | Import error handling and error response shape |
-| docs/architecture/security-guidelines.md | all | XSS/SQL injection handling in CSV rows |
-| docs/architecture/tdd-workflow.md | all | TDD process for CSV parsing |
+| docs/architecture/middleware-pipeline.md | Section 7 (Route-Level Middleware) | Multipart middleware placement (route-level only on POST /api/imports) |
+| docs/architecture/validation-pruning.md | Section 6 (Validation Contract) | Malli validation rules for CSV row fields |
+| docs/architecture/error-handling.md | Section 2 (Exception → Error Code Mapping) | Import error handling and error response shape |
+| docs/architecture/security-guidelines.md | Section 6 (Input Security) | XSS/SQL injection handling in CSV rows |
+| docs/architecture/tdd-workflow.md | Section 2 (What Gets Test-Driven), Section 4 (Integration Test Cycle) | TDD process for CSV parsing |
 
 ## Deliverables
 
@@ -66,25 +66,25 @@ Implement `POST /api/imports` for CSV file upload with background processing via
 
 | # | Gate | Command/Check | Type | Pass Criteria |
 |---|------|---------------|------|---------------|
-| 1 | Upload returns 202 | `docker compose run --rm backend clojure -M:test` | EXE | POST with valid CSV returns 202 with `job_id` and `status: "Pending"` |
-| 2 | Job status transitions | `docker compose run --rm backend clojure -M:test` | EXE | Pending -> Processing -> Completed/CompletedWithErrors verified |
-| 3 | Non-CSV rejected 400 | `docker compose run --rm backend clojure -M:test` | EXE | POST with .json file returns 400 VALIDATION_ERROR |
-| 4 | GET status returns counts | `docker compose run --rm backend clojure -M:test` | EXE | GET /api/imports/:id returns id, status, total/accepted/rejected counts |
-| 5 | Non-existent job 404 | `docker compose run --rm backend clojure -M:test` | EXE | GET /api/imports/:nonexistent returns 404 NOT_FOUND |
-| 6 | Background processing | `docker compose run --rm backend clojure -M:test` | EXE | HTTP 202 returns before any rows are processed |
-| 7 | Concurrent imports | `docker compose run --rm backend clojure -M:test` | EXE | Two simultaneous uploads produce distinct job_ids with independent counts |
-| 8 | No internal details leaked | `docker compose run --rm backend clojure -M:test` | EXE | Error responses contain no stack traces, SQL, or file paths |
+| 1 | Upload returns 202 | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.handler-integration-test` | EXE | POST with valid CSV returns 202 with `job_id` and `status: "Pending"` |
+| 2 | Job status transitions | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.handler-integration-test` | EXE | Pending -> Processing -> Completed/CompletedWithErrors verified |
+| 3 | Non-CSV rejected 400 | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.parser-test` | EXE | POST with .json file returns 400 VALIDATION_ERROR |
+| 4 | GET status returns counts | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.handler-integration-test` | EXE | GET /api/imports/:id returns id, status, total/accepted/rejected counts |
+| 5 | Non-existent job 404 | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.handler-integration-test` | EXE | GET /api/imports/:nonexistent returns 404 NOT_FOUND |
+| 6 | Background processing | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.handler-integration-test` | EXE | HTTP 202 returns before any rows are processed |
+| 7 | Concurrent imports | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.handler-integration-test` | EXE | Two simultaneous uploads produce distinct job_ids with independent counts |
+| 8 | No internal details leaked | `docker compose run --rm backend clojure -M:test --focus :ecommerce.import.handler-integration-test` | EXE | Error responses contain no stack traces, SQL, or file paths |
 | 9 | All tests pass | `docker compose run --rm backend clojure -M:test` | EXE | exit 0 |
 | 10 | No side effects | `git diff --stat` | EXE | Only expected files modified |
 
 ## Boundaries
 
-- NOT in scope: SSE progress streaming (GET /api/imports/:id/progress). Note: api-contract.md §4 references SSE for progress monitoring. SSE is deferred to v2; this task uses polling via GET /api/imports/:id instead.
-- NOT in scope: Dry-run preview of import results before committing
-- NOT in scope: Row-level validation logic (that is T-006)
-- NOT in scope: Import error listing endpoint (GET /api/imports/:id/errors --- that is T-007)
-- NOT in scope: Import history listing (GET /api/imports without :id)
-- NOT in scope: File size limits configuration UI
+- NOT in scope: SSE progress streaming (GET /api/imports/:id/progress) --- api-contract.md §4 references SSE for progress monitoring, but it is deferred to v2; this task uses polling via GET /api/imports/:id instead
+- NOT in scope: Dry-run preview of import results before committing --- no acceptance criterion requires a preview mode; the import runs to completion with row-level error reporting available afterward
+- NOT in scope: Row-level validation logic (that is T-006) --- this task owns the transport pipeline (upload, job tracking, background processing); per-row business rules are a dedicated, separately testable concern
+- NOT in scope: Import error listing endpoint (GET /api/imports/:id/errors --- that is T-007) --- error reporting depends on validation (T-006) existing first, so it is sequenced as its own task
+- NOT in scope: Import history listing (GET /api/imports without :id) --- not part of the API contract; no acceptance criterion requires browsing past imports
+- NOT in scope: File size limits configuration UI --- file size limits are an infrastructure/nginx concern, not a user-facing configuration surface
 
 ## Anti-patterns
 
